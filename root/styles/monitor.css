@@ -1,0 +1,266 @@
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #0e0e0e;
+  color: #eee;
+}
+
+/* Header Styling */
+header {
+    text-align: center;
+    padding: 40px 20px 10px;
+    background: radial-gradient(circle at top, #0ff1, #0e0e0e);
+    border-bottom: 2px solid rgba(0, 247, 255, 0.2);
+  }
+  
+  header h1 {
+    font-size: 40px;
+    font-family: 'Orbitron', sans-serif;
+    color: #00f7ff;
+    text-shadow: 0 0 15px rgba(0, 247, 255, 0.8);
+    margin-bottom: 10px;
+    letter-spacing: 2px;
+  }
+  
+  header p {
+    font-style: italic;
+    font-size: 14px;
+    color: #8ae0f7;
+  }
+
+/* Summary Metric Cards */
+.wallet-metrics {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  flex-wrap: wrap;
+  padding: 20px;
+  max-width: 960px;
+  margin: 0 auto 40px;
+}
+.metric-card {
+  background: rgba(255, 255, 255, 0.03);
+  padding: 20px 25px;
+  border-radius: 12px;
+  text-align: center;
+  flex: 1 1 200px;
+  color: #00f7ff;
+  box-shadow: 0 0 10px rgba(0, 247, 255, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.metric-card:hover {
+  transform: scale(1.03);
+  box-shadow: 0 0 20px rgba(0, 247, 255, 0.2);
+}
+.metric-card p {
+  font-size: 16px;
+  color: #eee;
+  margin-top: 10px;
+}
+
+/* Trade Stats Block */
+.trade-dashboard {
+  max-width: 1000px;
+  margin: 0 auto 40px;
+  padding: 0 20px;
+}
+.trade-stats {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  margin-bottom: 30px;
+}
+.stat-card {
+  background: rgba(255, 255, 255, 0.04);
+  padding: 20px;
+  width: 200px;
+  margin: 10px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 0 10px rgba(0, 247, 255, 0.1);
+  border: 1px solid rgba(0, 247, 255, 0.2);
+  transition: transform 0.3s ease;
+}
+.stat-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 0 20px rgba(0, 247, 255, 0.3);
+}
+
+/* Trade Feed Log */
+.trade-feed {
+  background: rgba(255, 255, 255, 0.02);
+  padding: 25px;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 247, 255, 0.1);
+  box-shadow: 0 0 14px rgba(0, 247, 255, 0.08);
+}
+.trade-feed h2 {
+  color: #00f7ff;
+  margin-bottom: 15px;
+  font-size: 20px;
+  text-shadow: 0 0 8px rgba(0, 247, 255, 0.15);
+}
+.feed-log {
+  max-height: 260px;
+  overflow-y: auto;
+  font-size: 15px;
+  line-height: 1.5;
+}
+.log-entry {
+  margin-bottom: 12px;
+  padding: 10px 15px;
+  border-left: 4px solid #00f7ff;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  transition: transform 0.2s ease;
+}
+.log-entry:hover {
+  transform: scale(1.01);
+  box-shadow: 0 0 16px rgba(0, 247, 255, 0.2);
+}/* === Enhanced Glow and Pulse for Trade Logs === */
+@keyframes glowPulse {
+    0% {
+      box-shadow: 0 0 6px rgba(0, 247, 255, 0.2);
+    }
+    50% {
+      box-shadow: 0 0 18px rgba(0, 247, 255, 0.5);
+    }
+    100% {
+      box-shadow: 0 0 6px rgba(0, 247, 255, 0.2);
+    }
+  }
+  
+  .log-entry {
+    position: relative;
+    margin-bottom: 12px;
+    padding: 12px 18px;
+    border-left: 4px solid #00f7ff;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 10px;
+    transition: transform 0.2s ease;
+    animation: glowPulse 2.5s ease-in-out infinite;
+  }
+  
+  .log-entry:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 20px rgba(0, 247, 255, 0.3);
+  }
+  
+  /* Optional: Highlight new entries with a flash */
+  .log-entry.new {
+    border-left-color: #00ffa2;
+    animation: glowPulse 1.5s ease-in-out infinite, flashFade 1s ease-in-out;
+  }
+  
+  @keyframes flashFade {
+    0% {
+      background-color: rgba(0, 255, 162, 0.2);
+    }
+    100% {
+      background-color: rgba(255, 255, 255, 0.04);
+    }
+  }/* === Animated and Themed Log Entries === */
+@keyframes glowPulse {
+    0% { box-shadow: 0 0 6px rgba(0, 247, 255, 0.2); }
+    50% { box-shadow: 0 0 18px rgba(0, 247, 255, 0.5); }
+    100% { box-shadow: 0 0 6px rgba(0, 247, 255, 0.2); }
+  }
+  
+  .log-entry {
+    margin-bottom: 12px;
+    padding: 12px 18px;
+    border-left: 4px solid #00f7ff;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 10px;
+    transition: transform 0.2s ease;
+    animation: glowPulse 2.5s ease-in-out infinite;
+  }
+  
+  .log-entry:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 20px rgba(0, 247, 255, 0.3);
+  }
+  
+  .log-entry.new {
+    animation: glowPulse 1.5s ease-in-out infinite, flashFade 1s ease-in-out;
+    border-left-color: #00ffa2;
+  }
+  
+  @keyframes flashFade {
+    0% { background-color: rgba(0, 255, 162, 0.2); }
+    100% { background-color: rgba(255, 255, 255, 0.04); }
+  }
+  .log-entry span.badge {
+    display: inline-block;
+    margin-right: 10px;
+    padding: 3px 8px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #111;
+    background-color: #00f7ff;
+    box-shadow: 0 0 8px rgba(0, 247, 255, 0.5);
+  }
+  
+  .badge-buy {
+    background-color: #00ff00;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.4);
+  }
+  
+  .badge-sell {
+    background-color: #ff4444;
+    box-shadow: 0 0 10px rgba(255, 68, 68, 0.4);
+  }
+  
+  .badge-whale {
+    background-color: #ffff00;
+    box-shadow: 0 0 10px rgba(255, 255, 0, 0.5);
+  }
+  
+  .badge-bot {
+    background-color: #00ffff;
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.4);
+  }
+  
+  .badge-insider {
+    background-color: #ff00ff;
+    box-shadow: 0 0 10px rgba(255, 0, 255, 0.4);
+  }
+  /* === Badge Styling for Trade Feed === */
+.badge {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 3px 8px;
+    border-radius: 8px;
+    margin-right: 8px;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .badge-buy {
+    background-color: #00ffae;
+    box-shadow: 0 0 6px rgba(0, 255, 174, 0.4);
+  }
+  
+  .badge-sell {
+    background-color: #ff4d4d;
+    box-shadow: 0 0 6px rgba(255, 77, 77, 0.4);
+  }
+  
+  .badge-whale {
+    background-color: #007bff;
+    box-shadow: 0 0 6px rgba(0, 123, 255, 0.4);
+  }
+  
+  .badge-insider {
+    background-color: #ffc107;
+    color: #111;
+    box-shadow: 0 0 6px rgba(255, 193, 7, 0.4);
+  }
+  
+  .badge-bot {
+    background-color: #9c27b0;
+    box-shadow: 0 0 6px rgba(156, 39, 176, 0.4);
+  }

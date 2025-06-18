@@ -1,0 +1,12 @@
+{
+  "name": "poseidon-pump-proxy",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "node-fetch": "^2.6.7",
+    "ws": "^8.18.2"
+  }
+}

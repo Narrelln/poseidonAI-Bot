@@ -1,0 +1,24 @@
+[
+  {
+    "walletId": "Groovy",
+    "token": "XYZToken",
+    "entryMC": 70000,
+    "bondingAtEntry": 28,
+    "timeHeld": "00:02:15",
+    "exitMC": 140000,
+    "dcaCount": 1,
+    "outcome": "win",
+    "timestamp": "2025-06-14T12:45:00Z"
+  },
+  {
+    "walletId": "Assassin",
+    "token": "ABCToken",
+    "entryMC": 80000,
+    "bondingAtEntry": 35,
+    "timeHeld": "00:03:42",
+    "exitMC": 65000,
+    "dcaCount": 0,
+    "outcome": "loss",
+    "timestamp": "2025-06-14T13:00:00Z"
+  }
+]

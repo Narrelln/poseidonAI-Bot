@@ -1,0 +1,16 @@
+{
+  "BTCUSDT": {
+    "symbol": "BTCUSDT",
+    "direction": "Buy",
+    "size": 0.01,
+    "confidence": 92,
+    "timestamp": "2025-06-14T12:33:00Z"
+  },
+  "ETHUSDT": {
+    "symbol": "ETHUSDT",
+    "direction": "Sell",
+    "size": 0.05,
+    "confidence": 88,
+    "timestamp": "2025-06-14T12:34:00Z"
+  }
+}

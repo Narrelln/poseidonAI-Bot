@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Poseidon AI Dashboard</title>
+    <link rel="stylesheet" href="../styles/poseidon-dashboard.css" />
+</head>
+<body>
+    <header class="header">
+        <h1>Welcome to Poseidon AI</h1>
+        <p class="ninja-banner">Unleashing the Internet Ninja Within</p>
+
+        <nav class="nav">
+            <ul>
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="wallet-tracker.html">Wallet Tracker</a></li>
+                <li><a href="sniper-watch.html">Sniper Watch</a></li>
+            </ul>
+        </nav>
+
+        <div class="dashboard-cards">
+            <div class="card">
+                <h3>Real-Time Analysis</h3>
+                <p>Continuously monitor market data and trends</p>
+            </div>
+            <div class="card">
+                <h3>Behavioral Insights</h3>
+                <p>Detect behaviors of insider traders and developer wallets</p>
+            </div>
+            <div class="card">
+                <h3>Automated Execution</h3>
+                <p>Execute trades automatically based on market conditions</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Animated Poseidon Bot -->
+    <section class="bot-section">
+        <img id="poseidonBot" class="robot-animated" src="../assets/robot.png" alt="Poseidon Bot" />
+        <div class="bot-shadow"></div>
+    </section>
+
+    <!-- System Stats -->
+    <section class="stats-panel">
+        <div class="stats-card">
+            <h3>📊 System Stats</h3>
+            <ul>
+                <li><strong>Sniper Wallets:</strong> <span id="walletCount">0</span></li>
+                <li><strong>Smart Signals:</strong> <span id="signalCount">0</span></li>
+                <li><strong>Execution Rate:</strong> <span id="executionRate">0</span>%</li>
+            </ul>
+        </div>
+    </section>
+<!-- Place this just before your <script> line in body -->
+  <section id="poseidon-awareness-panel">
+    <h2>🧠 Poseidon's Awareness Panel</h2>
+    <div id="strategy-summary">Loading strategy...</div>
+    <div id="trade-summary">Loading trade stats...</div>
+    <div id="recent-triggers">Loading triggers...</div>
+  </section>
+    <script src="../scripts/script.js"></script>
+</body>
+
+<footer class="footer">
+    <p>&copy; 2025 Poseidon AI — Built for Degen Mastery ⚡</p>
+</footer>
+</html>

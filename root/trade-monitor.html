@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Poseidon Sniper Reactive Dashboard</title>
+  <link rel="stylesheet" href="../styles/dashboard.css" />
+
+  <style>
+    header {
+      text-align: center;
+      margin-top: 30px;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>Poseidon Sniper Reactive Dashboard</h1>
+  </header>
+
+  <section class="sniper-cards">
+    <div class="card">
+      <h3>Wallets Scanned</h3>
+      <p id="wallets">1234</p>
+    </div>
+    <div class="card">
+      <h3>Market Sentiment</h3>
+      <p id="sentiment">Bullish</p>
+    </div>
+    <div class="card">
+      <h3>Open Trades</h3>
+      <p id="trades">3</p>
+    </div>
+    <div class="card">
+      <h3>Today’s PnL</h3>
+      <p id="pnl">+5.2 SOL</p>
+    </div>
+  </section>
+
+  <section class="reactive-events">
+    <h2>Reactive Sniper Events</h2>
+    <div class="log-feed" id="log-feed">
+      <!-- Example Logs (Replace dynamically via JS) -->
+      <div class="log-entry">[10:31:02] 🟢 Sniper <strong>Cupsey</strong> entered <strong>$APEKING</strong> at 18K MC</div>
+      <div class="log-entry">[10:32:15] 🚀 Exited at +312%</div>
+      <div class="log-entry">[10:33:44] 🟡 Sniper <strong>Groovy</strong> opened new trade: <strong>$BRAIN</strong></div>
+    </div>
+  </section>
+
+  <!-- Smart Wallet Activity Feed -->
+  <section id="wallet-activity-feed" class="reactive-events">
+    <h2>🔍 Smart Wallet Activity Feed</h2>
+    <div class="log-entry">Awaiting wallet activity...</div>
+  </section>
+
+  <!-- Capital Allocator Panel -->
+  <section id="capital-allocator-panel" class="reactive-events">
+    <h2>💰 Capital Allocation Decision</h2>
+    <div id="allocation-decision" class="log-entry">Evaluating...</div>
+    <div id="allocation-reason" class="log-entry">Reasoning will appear here.</div>
+  </section>
+
+  
+<!-- Live Trade Monitor -->
+<section id="live-trade-monitor" class="reactive-events">
+  <h2>📡 Live Trade Monitor</h2>
+  <div class="log-entry">Scanning for smart wallet activity...</div>
+</section>
+
+  <script src="../scripts/dashboard.js"></script>
+</body>
+</html>

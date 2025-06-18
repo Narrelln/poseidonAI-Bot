@@ -1,0 +1,201 @@
+/* === Global Styling === */
+body {
+    background-color: #111;
+    color: #eee;
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0;
+    padding: 0;
+  }
+  
+  /* === Header Section === */
+  .wallet-header {
+    text-align: center;
+    margin: 40px 0 20px;
+  }
+  
+  .wallet-header h1 {
+    color: #00f7ff;
+    font-size: 36px;
+    text-shadow: 0 0 12px rgba(0, 247, 255, 0.6);
+  }
+  
+  .wallet-header p {
+    color: #ccc;
+    font-style: italic;
+    font-size: 16px;
+    margin-top: 5px;
+  }
+  
+  /* === Layout Container === */
+  .wallet-layout {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 0 20px;
+    gap: 20px;
+  }
+  
+  /* === Left Column: Stats === */
+  .wallet-stats {
+    flex: 1;
+    min-width: 200px;
+    max-width: 300px;
+  }
+  
+  .wallet-stats h3 {
+    margin: 10px 0 5px;
+    color: #fff;
+    font-size: 18px;
+  }
+  
+  .wallet-stats p {
+    font-weight: bold;
+    color: #00f7ff;
+    margin-bottom: 15px;
+  }
+  
+  /* === Right Column: Metric Cards === */
+  .wallet-metrics {
+    display: flex;
+    flex: 2;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+    max-width: 700px;
+  }
+  
+  .metric-card {
+    background: rgba(255, 255, 255, 0.03);
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    min-width: 180px;
+    flex: 1;
+    box-shadow: 0 0 15px rgba(0, 247, 255, 0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .metric-card:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 20px rgba(0, 247, 255, 0.25);
+  }
+  
+  .metric-card h3 {
+    color: #00f7ff;
+    margin-bottom: 8px;
+  }
+  
+  .metric-card p {
+    font-weight: bold;
+    color: #ccc;
+  }
+  
+  /* === Wallet Feed Section === */
+  .wallet-feed {
+    background: rgba(255, 255, 255, 0.02);
+    margin: 40px auto;
+    padding: 30px;
+    border-radius: 12px;
+    max-width: 960px;
+    width: 90%;
+    box-shadow: 0 0 20px rgba(0, 247, 255, 0.1);
+    transition: box-shadow 0.3s ease;
+  }
+  
+  .wallet-feed:hover {
+    box-shadow: 0 0 25px rgba(0, 247, 255, 0.2);
+  }
+  
+  .wallet-feed h2 {
+    font-size: 22px;
+    color: #00f7ff;
+    margin-bottom: 20px;
+    text-shadow: 0 0 8px rgba(0, 247, 255, 0.2);
+  }
+  
+  /* === Feed Entry Items (Optional Future Use) === */
+  .wallet-log-entry {
+    background: rgba(255, 255, 255, 0.05);
+    border-left: 4px solid #00f7ff;
+    padding: 10px 16px;
+    margin-bottom: 12px;
+    border-radius: 8px;
+    color: #eee;
+    box-shadow: 0 0 10px rgba(0, 247, 255, 0.05);
+    transition: transform 0.2s ease;
+  }
+  
+  .wallet-log-entry:hover {
+    transform: scale(1.01);
+    box-shadow: 0 0 16px rgba(0, 247, 255, 0.1);
+  }
+  .wallet-metrics {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin: 30px auto 40px;
+    flex-wrap: wrap;
+    width: 90%;
+    max-width: 960px;
+  }
+  
+  .metric-card {
+    background: rgba(255, 255, 255, 0.03);
+    padding: 25px 30px;
+    border-radius: 12px;
+    text-align: center;
+    flex: 1 1 220px;
+    min-width: 180px;
+    color: #00f7ff;
+    font-weight: bold;
+    box-shadow: 0 0 12px rgba(0, 247, 255, 0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .metric-card:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 24px rgba(0, 247, 255, 0.25);
+  }
+  
+  .metric-card p {
+    margin-top: 10px;
+    color: #eee;
+    font-size: 16px;
+  }
+  .wallet-overview {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin: 30px auto 20px;
+    flex-wrap: wrap;
+    width: 90%;
+    max-width: 960px;
+  }
+  
+  .wallet-box {
+    background: rgba(255, 255, 255, 0.03);
+    padding: 20px 25px;
+    border-radius: 10px;
+    text-align: center;
+    flex: 1 1 200px;
+    color: #eee;
+    box-shadow: 0 0 10px rgba(0, 247, 255, 0.05);
+    border-left: 4px solid #00f7ff;
+    transition: transform 0.3s ease;
+  }
+  
+  .wallet-box:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0 16px rgba(0, 247, 255, 0.15);
+  }
+  
+  .wallet-box h3 {
+    color: #00f7ff;
+    font-size: 18px;
+    margin-bottom: 8px;
+  }
+  
+  .wallet-box p {
+    color: #eee;
+    font-size: 16px;
+  }

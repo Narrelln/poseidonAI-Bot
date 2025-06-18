@@ -1,0 +1,323 @@
+/* ========== BASE STYLES ========== */
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(to bottom, #0f0f0f, #1a1a1a); /* Soft dark gradient */
+  color: white;
+}
+
+@keyframes fadeSlideIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ========== HEADER ========== */
+/* Branding Header */
+.header {
+  text-align: center;
+  margin-top: 30px;
+  color: white;
+}
+
+.header h1 {
+  font-size: 36px;
+  font-weight: bold;
+  text-shadow: 0 0 8px #00f7ff;
+  margin-bottom: 10px;
+}
+
+.header p {
+  font-size: 18px;
+  color: #ccc;
+  font-style: italic;
+}
+/* ========== NAVIGATION ========== */
+.nav ul {
+  list-style: none;
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-top: 20px;
+  padding-left: 0;
+}
+
+.nav a {
+  color: #00f7ff;
+  text-decoration: none;
+  font-weight: bold;
+  transition: color 0.3s, text-shadow 0.3s;
+}
+
+.nav a:hover {
+  color: #fff;
+  text-shadow: 0 0 10px #00f7ff;
+}
+
+/* ========== DASHBOARD CARDS ========== */
+.dashboard-cards {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding: 20px;
+}
+
+.card {
+  background: #222;
+  border-radius: 10px;
+  padding: 20px;
+  width: 20%;
+  text-align: center;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 0 20px rgba(0, 247, 255, 0.5);
+}
+
+.robot-animated {
+  display: block;
+  margin: 40px auto;
+  width: 180px;
+  animation: float-rotate 3s ease-in-out infinite, glowPulse 3s infinite;
+  transform-origin: center;
+  transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+.robot-animated:hover {
+  animation-play-state: paused;
+  transform: scale(1.1) rotate(2deg);
+  filter: drop-shadow(0 0 15px #03dac5);
+}
+
+@keyframes float-rotate {
+  0%   { transform: translateY(0px) rotate(0deg); }
+  50%  { transform: translateY(-15px) rotate(5deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}
+
+@keyframes glowPulse {
+  0%   { filter: drop-shadow(0 0 5px #00f7ff); }
+  25%  { filter: drop-shadow(0 0 10px #03dac5); }
+  50%  { filter: drop-shadow(0 0 15px #ff0266); }
+  75%  { filter: drop-shadow(0 0 10px #fbbc05); }
+  100% { filter: drop-shadow(0 0 5px #00f7ff); }
+}
+
+  /* ========== SYSTEM STATS ========== */
+  .stats-panel {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+  }
+
+  .stats-card {
+    background: rgba(255, 255, 255, 0.06);
+    border-left: 4px solid #00e1ff;
+    padding: 15px 20px;
+    border-radius: 12px;
+    width: 280px;
+    text-align: left;
+    box-shadow: 0 0 12px rgba(0, 225, 255, 0.3);
+    color: #ffffff;
+    backdrop-filter: blur(6px);
+    transition: all 0.3s ease-in-out;
+  }
+
+  .stats-card h3 {
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+    color: #00e1ff;
+  }
+
+  .stats-card ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .stats-card li {
+    margin: 6px 0;
+    font-weight: 400;
+    font-size: 0.9rem;
+  }
+
+  .footer {
+    text-align: center;
+    color: #888;
+    font-size: 14px;
+    margin-top: 50px;
+    padding-bottom: 20px;
+  }
+
+  .bot-section {
+    margin-top: 40px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.02);  /* very soft background */
+    border-radius: 12px;
+    box-shadow: 0 0 15px rgba(3, 218, 197, 0.15);
+    text-align: center;
+  }
+    .bot-shadow {
+      width: 80px;
+      height: 10px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 50%;
+      margin: 0 auto;
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+    }
+
+/* ==================== SNIPER DASHBOARD STYLES ==================== */
+.sniper-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  justify-content: center;
+  padding: 20px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.sniper-cards .card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(0, 247, 255, 0.2);
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 247, 255, 0.05);
+  transition: box-shadow 0.3s ease;
+  color: white;
+}
+
+.sniper-cards .card:hover {
+  box-shadow: 0 0 20px rgba(0, 247, 255, 0.6);
+  transform: translateY(-5px);
+}
+
+.reactive-events {
+  background: rgba(255, 255, 255, 0.03);
+  padding: 30px;
+  margin: 60px auto 40px;
+  border-radius: 16px;
+  max-width: 960px;
+  width: 90%;
+  color: #eee;
+  box-shadow: 0 0 20px rgba(0, 247, 255, 0.1);
+  transition: box-shadow 0.3s ease;
+}
+
+.reactive-events h2 {
+  font-size: 22px;
+  color: #00f7ff;
+  margin-bottom: 20px;
+  text-shadow: 0 0 8px rgba(0, 247, 255, 0.2);
+}
+
+.log-entry {
+  background: rgba(255, 255, 255, 0.05);
+  border-left: 4px solid #00f7ff;
+  padding: 12px 18px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  color: #eee;
+  box-shadow: 0 0 10px rgba(0, 247, 255, 0.05);
+  transition: transform 0.2s ease;
+}
+
+.log-entry:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 16px rgba(0, 247, 255, 0.2);
+}
+
+.ninja-banner {
+  background: rgba(0, 255, 200, 0.08);
+  color: #00ffc8;
+  text-align: center;
+  font-weight: 500;
+  padding: 6px 14px;
+  border-radius: 8px;
+  margin: 10px auto 20px;
+  max-width: 420px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.4px;
+  box-shadow: 0 0 6px rgba(0, 255, 200, 0.25);
+  transition: box-shadow 0.3s ease;
+}
+
+.ninja-banner:hover {
+  box-shadow: 0 0 12px rgba(0, 255, 200, 0.4);
+}
+
+
+/* ========== AWARENESS PANEL ========== */
+#poseidon-awareness-panel {
+  background: rgba(255, 255, 255, 0.02);
+  border-left: 4px solid #03dac5;
+  padding: 20px;
+  margin: 40px auto 20px;
+  border-radius: 12px;
+  max-width: 900px;
+  box-shadow: 0 0 15px rgba(3, 218, 197, 0.15);
+  color: #e0e0e0;
+  font-size: 14px;
+  font-family: 'Segoe UI', sans-serif;
+  line-height: 1.6;
+}
+
+#poseidon-awareness-panel h2 {
+  font-size: 20px;
+  color: #03dac5;
+  text-shadow: 0 0 5px rgba(3, 218, 197, 0.2);
+  margin-bottom: 12px;
+}
+
+#poseidon-awareness-panel ul {
+  padding-left: 18px;
+  margin-top: 10px;
+}
+
+#poseidon-awareness-panel li {
+  margin-bottom: 6px;
+  color: #c7f9ff;
+  font-size: 13.5px;
+}
+
+/* === Smart Wallet Activity Feed Styles === */
+#wallet-activity-feed {
+  background: rgba(255, 255, 255, 0.03);
+  padding: 30px;
+  margin: 40px auto;
+  border-radius: 16px;
+  max-width: 960px;
+  width: 90%;
+  color: #eee;
+  box-shadow: 0 0 20px rgba(0, 247, 255, 0.1);
+  transition: box-shadow 0.3s ease;
+}
+
+#wallet-activity-feed h2 {
+  font-size: 22px;
+  color: #00f7ff;
+  margin-bottom: 20px;
+  text-shadow: 0 0 8px rgba(0, 247, 255, 0.2);
+}
+
+.log-entry {
+  background: rgba(255, 255, 255, 0.05);
+  border-left: 4px solid #00f7ff;
+  padding: 12px 18px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  color: #eee;
+  box-shadow: 0 0 10px rgba(0, 247, 255, 0.05);
+  transition: transform 0.2s ease;
+}
+
+.log-entry:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 16px rgba(0, 247, 255, 0.2);
+}

@@ -1,0 +1,253 @@
+/* === GLOBAL BASE === */
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #0e0e0e;
+    color: #eee;
+    font-family: 'Segoe UI', sans-serif;
+  }
+  
+  /* === HEADER (All Pages) === */
+  header {
+    text-align: center;
+    padding: 30px 20px 10px;
+  }
+  header h1 {
+    font-size: 36px;
+    color: #00f7ff;
+    text-shadow: 0 0 10px rgba(0, 247, 255, 0.4);
+    margin-bottom: 10px;
+  }
+  header p {
+    font-style: italic;
+    font-size: 16px;
+    color: #ccc;
+  }
+  
+  /* === NAVIGATION (Index) === */
+  .nav ul {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    list-style: none;
+    padding: 0;
+  }
+  .nav a {
+    text-decoration: none;
+    color: #00f7ff;
+    font-weight: bold;
+  }
+  .nav a:hover {
+    text-shadow: 0 0 5px rgba(0, 247, 255, 0.7);
+  }
+  
+  /* === INDEX Dashboard Cards === */
+  .dashboard-cards {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 40px 20px;
+    flex-wrap: wrap;
+  }
+  .card {
+    background: rgba(255, 255, 255, 0.04);
+    padding: 25px;
+    border-radius: 12px;
+    width: 250px;
+    text-align: center;
+    box-shadow: 0 0 10px rgba(0, 247, 255, 0.08);
+    transition: transform 0.3s ease;
+  }
+  .card:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 20px rgba(0, 247, 255, 0.2);
+  }
+  
+  /* === POSEIDON BOT ANIMATION (Index) === */
+  .robot-animated {
+    animation: float 3s ease-in-out infinite;
+    display: block;
+    margin: 40px auto 10px;
+  }
+  .bot-shadow {
+    width: 80px;
+    height: 10px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 50%;
+    margin: 0 auto;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  
+  /* === SYSTEM STATS PANEL (Index & Shared) === */
+  .stats-panel {
+    text-align: center;
+    margin-top: 30px;
+  }
+  .stats-panel h3 {
+    color: #00f7ff;
+    text-shadow: 0 0 6px rgba(0, 247, 255, 0.4);
+  }
+  .stats-panel ul {
+    list-style: none;
+    padding: 0;
+  }
+  .stats-panel li {
+    margin: 6px 0;
+    color: #ccc;
+  }
+  
+  /* === TRADE MONITOR SECTION === */
+  .trade-dashboard {
+    max-width: 1000px;
+    margin: 20px auto;
+    padding: 0 20px;
+  }
+  .trade-stats {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    margin-bottom: 30px;
+  }
+  .stat-card {
+    background: rgba(255, 255, 255, 0.04);
+    padding: 20px;
+    width: 200px;
+    margin: 10px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 0 10px rgba(0, 247, 255, 0.1);
+    border: 1px solid rgba(0, 247, 255, 0.2);
+    transition: transform 0.3s ease;
+  }
+  .stat-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 0 20px rgba(0, 247, 255, 0.3);
+  }
+  
+  /* === TRADE LOG FEED === */
+  .trade-feed {
+    background: rgba(255, 255, 255, 0.02);
+    padding: 20px;
+    border-radius: 14px;
+    border: 1px solid rgba(0, 247, 255, 0.1);
+    box-shadow: 0 0 12px rgba(0, 247, 255, 0.08);
+  }
+  .feed-log {
+    max-height: 260px;
+    overflow-y: auto;
+    font-size: 15px;
+    line-height: 1.5;
+    color: #eee;
+  }
+  .log-entry {
+    margin-bottom: 12px;
+    padding: 10px 15px;
+    border-left: 4px solid #00f7ff;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 10px;
+  }
+  .log-entry:hover {
+    transform: scale(1.01);
+    box-shadow: 0 0 12px rgba(0, 247, 255, 0.2);
+  }
+  
+  /* === BADGE LABELS (BUY/SELL/INSIDER etc.) === */
+  .badge {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 6px;
+    margin-right: 5px;
+    color: white;
+  }
+  .badge-buy { background-color: #00ff88; }
+  .badge-sell { background-color: #ff4d4d; }
+  .badge-insider { background-color: #ffcc00; }
+  .badge-whale { background-color: #3399ff; }
+  .badge-bot { background-color: #cc66ff; }
+  
+  /* === WALLET INSIGHTS === */
+  .wallet-header h1 {
+    color: #00f7ff;
+    font-size: 32px;
+    text-shadow: 0 0 12px rgba(0, 247, 255, 0.6);
+  }
+  .wallet-layout {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 0 20px;
+    gap: 20px;
+  }
+  .wallet-stats {
+    flex: 1;
+    min-width: 200px;
+    max-width: 300px;
+  }
+  .wallet-metrics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    max-width: 960px;
+    margin: 30px auto;
+  }
+  .metric-card {
+    background: rgba(255, 255, 255, 0.03);
+    padding: 25px 30px;
+    border-radius: 12px;
+    text-align: center;
+    flex: 1 1 220px;
+    min-width: 180px;
+    color: #00f7ff;
+    font-weight: bold;
+    box-shadow: 0 0 12px rgba(0, 247, 255, 0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .metric-card:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 24px rgba(0, 247, 255, 0.25);
+  }
+  .metric-card p {
+    margin-top: 10px;
+    color: #eee;
+    font-size: 16px;
+  }
+  
+  /* === SNIPER REACTIVE DASHBOARD (Optional Additional Styling) === */
+  .sniper-cards {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    padding: 20px;
+    flex-wrap: wrap;
+  }
+  .sniper-cards .card {
+    background-color: #111;
+    border-left: 4px solid #00f7ff;
+    padding: 18px;
+    border-radius: 10px;
+    color: #eee;
+    width: 220px;
+    transition: 0.3s;
+  }
+  .sniper-cards .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0 10px rgba(0, 247, 255, 0.15);
+  }
+  
+  /* === RESPONSIVE LAYOUT === */
+  @media (max-width: 600px) {
+    .dashboard-cards,
+    .wallet-metrics,
+    .wallet-overview,
+    .sniper-cards,
+    .trade-stats {
+      flex-direction: column;
+      align-items: center;
+    }
+  }

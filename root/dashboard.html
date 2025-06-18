@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="styles/dashboard_robotic_final.css">
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Poseidon Sniper Reactive Dashboard</title>
+<!-- Styles -->
+<link rel="stylesheet" href="styles/dashboard.css">
+
+<!-- Poseidon Floating Avatar -->
+<div id="poseidon-avatar">
+  <div class="pulse"></div>
+  <div class="poseidon-eyes">👁️‍🗨️</div>
+</div>
+
+
+  <style>
+    header {
+      text-align: center;
+      margin-top: 30px;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>Poseidon Sniper Reactive Dashboard</h1>
+  </header>
+<!-- === Enhanced Sniper Index Sidebar === -->
+
+  <div class="sidebar-header">
+    <button id="toggle-sniper-index" title="Toggle Sidebar">📊</button>
+    <span class="sidebar-title">Sniper Index</span>
+  </div>
+  <div id="sniper-index-feed" class="sidebar-content">
+    Loading snipers...
+  </div>
+</div>
+
+<button id="toggle-sniper" class="toggle-button">📊</button>
+
+<section class="sniper-cards">
+  <div class="card">
+    <h3>Wallets Scanned</h3>
+    <p id="wallets">Loading...</p>
+  </div>
+  <div class="card">
+    <h3>Market Sentiment</h3>
+    <p id="sentiment">Loading...</p>
+  </div>
+  <div class="card">
+    <h3>Open Trades</h3>
+    <p id="trades">Loading...</p>
+  </div>
+  <div class="card">
+    <h3>Today's PnL</h3>
+    <p id="pnl">Loading...</p>
+  </div>
+</section>
+
+<div id="manual-control-panel" class="control-panel">
+  <h3>Manual Trade Controls</h3>
+  <button id="pause-btn">⏸️ Pause Poseidon</button>
+  <button id="resume-btn" style="display:none;">▶️ Resume Poseidon</button>
+  <label for="tp-slider">Take Profit %</label>
+  <input type="range" id="tp-slider" min="10" max="100" step="5" value="35">
+  <span id="tp-value">35%</span>
+  <button id="take-profit-btn">💰 Take Profit</button>
+  <button id="force-exit-btn">❌ Exit Trade Now</button>
+</div>
+
+
+<!-- Manual CA Tracker -->
+<section class="reactive-events">
+  <h2>🎯 Track Token by CA</h2>
+  <div style="display: flex; gap: 10px;">
+    <input
+      type="text"
+      id="manual-ca-input"
+      placeholder="Enter Contract Address (CA)"
+      style="flex: 1; padding: 6px; border-radius: 4px; border: 1px solid #ccc;"
+    />
+    <button onclick="trackTokenByCA()" style="padding: 6px 10px; border-radius: 4px;">Start Tracking</button>
+  </div>
+  <div id="ca-tracker-log" class="log-entry">Awaiting CA input...</div>
+</section>
+
+  <section class="reactive-events">
+    <h2>Reactive Sniper Events</h2>
+    <div class="log-feed" id="log-feed">
+      <!-- Example Logs (Replace dynamically via JS) -->
+      <div class="log-entry">[10:31:02] 🟢 Sniper <strong>Cupsey</strong> entered <strong>$APEKING</strong> at 18K MC</div>
+      <div class="log-entry">[10:32:15] 🚀 Exited at +312%</div>
+      <div class="log-entry">[10:33:44] 🟡 Sniper <strong>Groovy</strong> opened new trade: <strong>$BRAIN</strong></div>
+    </div>
+  </section>
+
+  <div id="sniper-tracker-panel" class="panel">
+    <h3>🎯 Sniper Tracker</h3>
+    <input type="text" id="ca-input" placeholder="Enter Contract Address (CA)" />
+    <button onclick="startSniperTracking()">🚀 Track Token</button>
+    <button onclick="manualSniperEntry()">⚡ Enter Trade Now</button>
+  
+    <div id="sniper-status">
+      <p>📈 Market Cap: <span id="tracker-mc">-</span></p>
+      <p>📊 Bonding %: <span id="tracker-bond">-</span></p>
+      <p>👑 Smart Wallets In: <span id="tracker-wallets">-</span></p>
+      <p>📍 Status: <span id="tracker-status">Idle</span></p>
+    </div>
+  </div>
+
+<!-- === Futures Execution Log === -->
+<section id="futures-execution-log" class="log-panel">
+  <h2>🧠 Futures Execution Log</h2>
+  <div class="log-entry">Awaiting execution decisions...</div>
+</section>
+
+  <!-- Smart Wallet Activity Feed -->
+<section id="wallet-activity-feed" class="reactive-events">
+  <h2>⚡ Smart Wallet Activity</h2>
+  <div class="log-entry">Awaiting activity from Poseidon's core...</div>
+</section>
+
+  <!-- Capital Allocator Panel -->
+  <section id="capital-allocator-panel" class="reactive-events">
+    <h2>💰 Capital Allocation Decision</h2>
+    <div id="allocation-decision" class="log-entry">Evaluating...</div>
+    <div id="allocation-reason" class="log-entry">Reasoning will appear here.</div>
+  </section>
+
+  
+<!-- Live Trade Monitor -->
+<section id="live-trade-monitor" class="reactive-events">
+  <h2>📡 Live Trade Monitor</h2>
+  <div class="log-entry">Scanning for smart wallet activity...</div>
+</section>
+
+<!-- Wallet Insights Panel -->
+<section id="wallet-insights" class="reactive-events">
+  <h2>🧠 Wallet Insights</h2>
+  <div class="log-entry">Analyzing wallet behavior patterns...</div>
+</section>
+  
+<!-- Learning Kernel Memory Panel -->
+<section id="learning-kernel-panel" class="reactive-events">
+  <h2>🧠 Poseidon's Learning Memory</h2>
+  <div id="learning-log-feed" class="log-entry">Memory loading...</div>
+</section>
+
+<!-- Pattern Intelligence Panel -->
+<section id="pattern-intel-panel" class="reactive-events">
+  <h2>🧠 Pattern Intelligence</h2>
+  <div id="pattern-output" class="log-entry">Analyzing memory...</div>
+</section>
+
+<!-- === Wallet Convergence Panel === -->
+<section class="reactive-events">
+  <h2>🔁 Smart Wallet Convergence</h2>
+  <div id="wallet-convergence-log" class="log-entry">Awaiting convergence signals...</div>
+</section>
+
+<!-- === ROI Memory Panel === -->
+<section class="reactive-events">
+  <h2>📈 ROI Memory Panel</h2>
+  <div id="roi-memory-panel" class="log-entry">Analyzing returns...</div>
+</section>
+
+<!-- Live Trade Monitor -->
+<section id="live-trade-monitor" class="reactive-events">
+  <h2>📊 Live Trade Tracker</h2>
+  <div id="trade-monitor" class="log-entry">Awaiting trades...</div>
+</section>
+
+<!-- Auto-Signal Trigger Panel -->
+<section class="reactive-events">
+  <h2>📡 Auto Signal Trigger</h2>
+  <div id="auto-signal-log" class="log-entry">Awaiting sniper-triggered signals...</div>
+</section>
+
+<!-- 📊 Confidence Score Panel -->
+<section id="confidence-score-panel" class="reactive-events">
+  <h2>📊 Confidence Score Evaluation</h2>
+  <div id="confidence-log" class="log-entry">
+    Awaiting smart wallet activity...
+  </div>
+</section>
+
+
+
+<script src="./scripts/volume.js"></script>
+<script src="./scripts/dashboard_updated_poseidon.js"></script>
+<script src="./scripts/bollinger.js"></script>
+
+
+<!-- WebSocket monitor client -->
+<script src="./scripts/monitor-client.js"></script>
+
+<!-- Favicon-->
+<link rel="icon" href="/favicon.ico" type="image/x-icon">
+
+
