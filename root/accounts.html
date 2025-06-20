@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Poseidon AI – Account</title>
+  <link rel="stylesheet" href="../styles/dashboard.css">
+
+<script src="scripts/state.js"></script>
+<script src="scripts/utils.js"></script>
+<script src="scripts/api.js"></script>
+<script src="scripts/ui-render.js"></script>
+<script src="scripts/events.js"></script>
+<script src="scripts/dashboard.js"></script>
+
+
+  <style>
+    body {
+      background: radial-gradient(circle at 50% 40%, #08131c 70%, #10263e 100%) fixed;
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+    }
+    .poseidon-accounts-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 34px;
+    }
+    /* NAV BAR */
+    .nav-bar {
+      margin-bottom: 28px;
+      display: flex;
+      gap: 26px;
+      font-family: 'Orbitron', Arial, sans-serif;
+      font-size: 1.08em;
+    }
+    .nav-bar a {
+      color: #19eaff;
+      text-decoration: none;
+      font-weight: bold;
+      padding: 5px 14px;
+      border-radius: 5px;
+      transition: background 0.17s, color 0.15s;
+    }
+    .nav-bar a.active, .nav-bar a:hover {
+      background: #121f30;
+      color: #fff;
+      box-shadow: 0 2px 12px #1de3fa66;
+      text-shadow: 0 0 8px #19eaff55;
+    }
+    /* BOT AVATAR */
+    .avatar-bot {
+      width: 112px;
+      height: 112px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      animation: floatBot 3.3s infinite ease-in-out;
+    }
+    @keyframes floatBot {
+      0%, 100% { transform: translateY(0);}
+      50% { transform: translateY(-16px);}
+    }
+    .avatar-bot img {
+      width: 100%;
+      border-radius: 50%;
+      box-shadow: 0 0 60px #11eaff99, 0 0 0 7px #12ffe022;
+    }
+    /* PROFILE CARD from previous code */
+    .profile-card {
+      background: linear-gradient(110deg, #111a24 60%, #17303e 100%);
+      box-shadow: 0 10px 40px #00f7ff66, 0 0 20px #10ffe044;
+      border-radius: 22px;
+      max-width: 460px;
+      margin: 0 auto 32px auto;
+      padding: 46px 38px 32px 38px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      color: #eafcff;
+      position: relative;
+      overflow: hidden;
+      border: 2px solid #17eaff77;
+    }
+    .profile-card h2 {
+      font-size: 1.58em;
+      letter-spacing: 1.5px;
+      color: #19f9ff;
+      margin-bottom: 12px;
+      font-family: 'Orbitron', 'Segoe UI', Arial, sans-serif;
+      text-shadow: 0 0 24px #11e3ff88;
+    }
+    .profile-status {
+      display: inline-block;
+      background: linear-gradient(90deg, #1cfa80 70%, #12ffe4 100%);
+      color: #083924;
+      font-weight: bold;
+      border-radius: 16px;
+      padding: 6px 20px;
+      font-size: 1.06em;
+      margin-bottom: 10px;
+      margin-top: 2px;
+      box-shadow: 0 1px 10px #15ffe06a;
+    }
+    .profile-card .meta {
+      font-size: 1.09em;
+      color: #bafcff;
+      margin-bottom: 22px;
+    }
+    .profile-card h3 {
+      margin-top: 28px;
+      font-size: 1.12em;
+      color: #19eaff;
+      letter-spacing: 0.6px;
+      text-shadow: 0 0 10px #19eaff50;
+      margin-bottom: 8px;
+      border-bottom: 1.5px solid #1feaff55;
+      padding-bottom: 3px;
+    }
+    .wallets-list, .history-list {
+      margin: 0 auto 18px auto;
+      padding: 0;
+      list-style: none;
+      text-align: left;
+      max-width: 390px;
+    }
+    .wallets-list li {
+      padding: 11px 0;
+      border-bottom: 1px solid #18354b80;
+      font-family: 'Share Tech Mono', 'Consolas', monospace;
+      font-size: 1.07em;
+    }
+    .wallets-list li:last-child { border-bottom: none; }
+    .history-list li {
+      padding: 8px 0 6px 0;
+      border-left: 3.5px solid #17eaff40;
+      background: #182c3a50;
+      margin-bottom: 7px;
+      border-radius: 7px;
+      font-family: 'Share Tech Mono', 'Consolas', monospace;
+      color: #abf5ff;
+      font-size: 1.06em;
+    }
+    @media (max-width: 600px) {
+      .profile-card {
+        max-width: 99vw;
+        padding: 20px 3vw 14px 3vw;
+      }
+      .wallets-list, .history-list { max-width: 98vw; }
+    }
+  </style>
+</head>
+<body>
+  <div class="poseidon-accounts-container">
+    <nav class="nav-bar">
+      <a href="dashboard.html">Dashboard</a>
+      <a href="sniper.html">Sniper</a>
+      <a href="futures.html">Futures</a>
+      <a href="trade-monitor.html">Trade Monitor</a>
+      <a href="accounts.html" class="active">Accounts</a>
+      <a href="settings.html">Settings</a>
+      <a href="login.html" style="color:#e97b7b;font-weight:normal;">Log Out</a>
+    </nav>
+
+    <div id="poseidon-bot">
+      <img src="assets/robot.png" alt="Poseidon Bot">
+      <div class="bot-glow"></div>
+    </div>
+
+    <div class="profile-card">
+      <h2>WillisX</h2>
+      <div class="profile-status">Active</div>
+      <div class="meta">willis@poseidon.ai<br>Joined: 2024-06-01</div>
+      <h3>🪙 Connected Wallets</h3>
+      <ul class="wallets-list">
+        <li>Solana: 9He5...AbC2</li>
+        <li>ETH: 0x24b...79e3</li>
+        <li>BSC: 0xb33a...aa18</li>
+      </ul>
+      <h3>📜 Transaction History</h3>
+      <ul class="history-list">
+        <li>[2025-06-20] +0.18 ETH – Withdrawal <b style="color:#32ffb6">Successful</b></li>
+        <li>[2025-06-19] +1000 USDT – Deposit <b style="color:#fff9a0">Confirmed</b></li>
+        <li>[2025-06-17] +0.32 SOL – Trade PnL</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>

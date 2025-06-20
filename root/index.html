@@ -1,68 +1,328 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Poseidon AI Dashboard</title>
-    <link rel="stylesheet" href="../styles/poseidon-dashboard.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Poseidon AI – Welcome</title>
+  <link rel="stylesheet" href="styles/dashboard.css">
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+
+<script src="scripts/state.js"></script>
+<script src="scripts/utils.js"></script>
+<script src="scripts/api.js"></script>
+<script src="scripts/ui-render.js"></script>
+<script src="scripts/events.js"></script>
+<script src="scripts/dashboard.js"></script>
+
+
+  <style>
+    body {
+      background: linear-gradient(120deg, #060b13 0%, #10131a 100%);
+      min-height: 100vh;
+      margin: 0;
+      color: #e3f6fb;
+      font-family: 'Orbitron', 'Segoe UI', Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+    .starfield {
+      pointer-events: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 0;
+    }
+    .star {
+      position: absolute;
+      background: #b2eaff;
+      border-radius: 50%;
+      opacity: 0.07;
+      animation: twinkle 5s infinite alternate;
+    }
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.04; }
+      60% { opacity: 0.14; }
+      80% { opacity: 0.09; }
+    }
+    .animated-bg {
+      position: fixed;
+      top: -20%;
+      left: -20%;
+      width: 140vw;
+      height: 140vh;
+      background: radial-gradient(circle at 55% 30%, #0c152275 0%, transparent 80%),
+                  radial-gradient(circle at 80% 85%, #003347a0 0%, transparent 70%);
+      z-index: 0;
+      animation: bgMove 8s ease-in-out infinite alternate;
+      pointer-events: none;
+    }
+    @keyframes bgMove {
+      0% { background-position: 55% 30%, 80% 85%; }
+      100% { background-position: 45% 35%, 78% 82%; }
+    }
+    .poseidon-hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 1;
+      margin-top: 36px;
+    }
+    .robot-float-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 18px;
+      position: relative;
+      width: 180px;
+      height: 180px;
+    }
+    .sentient-glow {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 190px;
+      height: 190px;
+      z-index: 1;
+      border-radius: 50%;
+      pointer-events: none;
+      background: conic-gradient(
+        #13d3ce, #5c4cff, #1e245c, #186763, #004d5d, #13d3ce
+      );
+      filter: blur(36px) brightness(0.84) saturate(1.4);
+      opacity: 0.58;
+      animation: colorShift 7s linear infinite;
+    }
+    @keyframes colorShift {
+      0% { filter: blur(36px) brightness(0.84) saturate(1.4); opacity: 0.62;}
+      30% { filter: blur(46px) brightness(1.01) saturate(1.9); opacity: 0.76;}
+      60% { filter: blur(34px) brightness(0.9) saturate(1.2); opacity: 0.66;}
+      100% { filter: blur(36px) brightness(0.84) saturate(1.4); opacity: 0.58;}
+    }
+    .sparkle1 { width: 18px; height: 18px; background: #fffde4; left: 68%; top: 16%; animation-delay: 0.5s; opacity: 0.65; }
+    .sparkle2 { width: 8px; height: 8px; background: #7af9ff; left: 80%; top: 60%; animation-delay: 1.1s; opacity: 0.67; }
+    .sparkle3 { width: 12px; height: 12px; background: #ffb6ff; left: 18%; top: 68%; animation-delay: 0.8s; opacity: 0.61; }
+    .sparkle4 { width: 7px; height: 7px; background: #ecff57; left: 28%; top: 18%; animation-delay: 1.5s; opacity: 0.49; }
+    .poseidon-bot {
+      width: 150px;
+      height: 150px;
+      filter: drop-shadow(0 8px 50px #0ad3ffca);
+      animation: floatbot 2.7s ease-in-out infinite alternate;
+      position: absolute;
+      left: 50%;
+      top: 18px;
+      transform: translateX(-50%);
+      z-index: 3;
+      will-change: transform;
+    }
+    .bot-eyes {
+      position: absolute;
+      left: 50%; top: 52%;
+      width: 56px; height: 22px;
+      transform: translate(-50%, -50%);
+      display: flex; justify-content: space-between;
+      z-index: 6;
+      pointer-events: none;
+    }
+    .bot-eye {
+      width: 18px; height: 18px;
+      background: radial-gradient(circle, #00fffa 60%, #1ec3ff 90%, transparent 100%);
+      border-radius: 50%;
+      box-shadow: 0 0 35px #0ef6ffb9, 0 0 16px #00fff9cc;
+      animation: eyePulse 2.1s infinite alternate, eyeBlink 6s infinite;
+      opacity: 1;
+      transition: filter 0.12s;
+    }
+    .bot-eye.right { animation-delay: 0.2s, 3.2s; }
+    .bot-eye.left  { animation-delay: 0s, 0s; }
+    @keyframes eyePulse {
+      0% { filter: brightness(1.1) blur(0px);}
+      80% { filter: brightness(1.7) blur(3px);}
+      100% { filter: brightness(1.2) blur(0px);}
+    }
+    @keyframes eyeBlink {
+      0%, 92%, 100% { transform: scaleY(1);}
+      94%, 96% { transform: scaleY(0.16);}
+    }
+    .poseidon-bot-shadow {
+      position: absolute;
+      left: 50%;
+      bottom: 24px;
+      width: 84px;
+      height: 20px;
+      background: radial-gradient(ellipse at center, #0acbe4aa 70%, transparent 100%);
+      transform: translateX(-50%);
+      filter: blur(2.4px);
+      opacity: 0.67;
+      animation: shadowPulse 2.7s ease-in-out infinite alternate;
+      z-index: 1;
+    }
+    @keyframes floatbot {
+      0% { transform: translateX(-50%) translateY(0);}
+      50% { transform: translateX(-50%) translateY(-18px) scale(1.02);}
+      100% { transform: translateX(-50%) translateY(0);}
+    }
+    @keyframes shadowPulse {
+      0% { opacity: 0.44; width: 84px;}
+      50% { opacity: 0.81; width: 99px;}
+      100% { opacity: 0.44; width: 84px;}
+    }
+    @keyframes sparkleMove {
+      0% { opacity: 0.7; transform: scale(0.9);}
+      25% { opacity: 0.94; transform: scale(1.1);}
+      50% { opacity: 0.78; transform: scale(0.95);}
+      70% { opacity: 1; transform: scale(1.07);}
+      100% { opacity: 0.6; transform: scale(0.9);}
+    }
+    h1 {
+      font-size: 2.6rem;
+      color: #19e4ff;
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+      text-shadow: 0 2px 16px #0fe7ff44;
+      opacity: 0;
+      animation: headlineIn 1.2s 0.2s cubic-bezier(0.45,1.7,0.6,1) forwards;
+    }
+    @keyframes headlineIn {
+      from { opacity: 0; transform: translateY(24px) scale(0.97);}
+      to   { opacity: 1; transform: translateY(0) scale(1);}
+    }
+    .sub-tagline {
+      font-size: 1.18em;
+      color: #e3f6fbcc;
+      margin-bottom: 42px;
+      font-weight: 500;
+      opacity: 0;
+      animation: fadeIn 1.1s 1s forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0;}
+      to   { opacity: 1;}
+    }
+    .auth-btns {
+      display: flex;
+      gap: 18px;
+      margin-bottom: 32px;
+      opacity: 0;
+      animation: fadeIn 0.7s 1.8s forwards;
+    }
+    .auth-btns a {
+      display: inline-block;
+      background: linear-gradient(90deg, #086e88, #09a885 90%);
+      color: #e0fffa;
+      font-weight: bold;
+      text-decoration: none;
+      font-size: 1.05em;
+      letter-spacing: 1px;
+      border-radius: 24px;
+      padding: 13px 38px;
+      box-shadow: 0 2px 14px #18fff788;
+      transition: background 0.14s, color 0.14s, transform 0.13s;
+      border: none;
+      animation: pulseBtn 2.6s infinite alternate;
+    }
+    .auth-btns a:hover {
+      background: linear-gradient(90deg, #045853, #27e1e4 90%);
+      color: #d9fcff;
+      transform: translateY(-2px) scale(1.06);
+      box-shadow: 0 8px 28px #00f7ff33;
+      animation-play-state: paused;
+    }
+    @keyframes pulseBtn {
+      0% { box-shadow: 0 2px 14px #18fff788; }
+      100% { box-shadow: 0 6px 28px #17fffc66, 0 0 12px #26f3e940; }
+    }
+    .wave-animate {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100vw;
+      height: 110px;
+      z-index: 8;
+      pointer-events: none;
+    }
+    .wave-animate svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+      opacity: 0.85;
+    }
+    @media (max-width: 650px) {
+      .robot-float-container { width: 110px; height: 110px;}
+      .poseidon-bot { width: 85px; height: 85px; }
+      .poseidon-bot-shadow { width: 52px; height: 13px;}
+      h1 { font-size: 1.44rem;}
+      .auth-btns { flex-direction: column; gap: 14px;}
+      .sentient-glow { width: 110px; height: 110px;}
+      .wave-animate { height: 52px;}
+    }
+  </style>
 </head>
 <body>
-    <header class="header">
-        <h1>Welcome to Poseidon AI</h1>
-        <p class="ninja-banner">Unleashing the Internet Ninja Within</p>
-
-        <nav class="nav">
-            <ul>
-                <li><a href="dashboard.html">Dashboard</a></li>
-                <li><a href="wallet-tracker.html">Wallet Tracker</a></li>
-                <li><a href="sniper-watch.html">Sniper Watch</a></li>
-            </ul>
-        </nav>
-
-        <div class="dashboard-cards">
-            <div class="card">
-                <h3>Real-Time Analysis</h3>
-                <p>Continuously monitor market data and trends</p>
-            </div>
-            <div class="card">
-                <h3>Behavioral Insights</h3>
-                <p>Detect behaviors of insider traders and developer wallets</p>
-            </div>
-            <div class="card">
-                <h3>Automated Execution</h3>
-                <p>Execute trades automatically based on market conditions</p>
-            </div>
-        </div>
-    </header>
-
-    <!-- Animated Poseidon Bot -->
-    <section class="bot-section">
-        <img id="poseidonBot" class="robot-animated" src="../assets/robot.png" alt="Poseidon Bot" />
-        <div class="bot-shadow"></div>
-    </section>
-
-    <!-- System Stats -->
-    <section class="stats-panel">
-        <div class="stats-card">
-            <h3>📊 System Stats</h3>
-            <ul>
-                <li><strong>Sniper Wallets:</strong> <span id="walletCount">0</span></li>
-                <li><strong>Smart Signals:</strong> <span id="signalCount">0</span></li>
-                <li><strong>Execution Rate:</strong> <span id="executionRate">0</span>%</li>
-            </ul>
-        </div>
-    </section>
-<!-- Place this just before your <script> line in body -->
-  <section id="poseidon-awareness-panel">
-    <h2>🧠 Poseidon's Awareness Panel</h2>
-    <div id="strategy-summary">Loading strategy...</div>
-    <div id="trade-summary">Loading trade stats...</div>
-    <div id="recent-triggers">Loading triggers...</div>
-  </section>
-    <script src="../scripts/script.js"></script>
+  <div class="starfield"></div>
+  <div class="animated-bg"></div>
+  <div class="poseidon-hero">
+    <div class="robot-float-container">
+      <div class="sentient-glow"></div>
+      <div class="sparkle sparkle1"></div>
+      <div class="sparkle sparkle2"></div>
+      <div class="sparkle sparkle3"></div>
+      <div class="sparkle sparkle4"></div>
+      <img src="assets/robot.png" alt="Poseidon AI Bot" class="poseidon-bot" />
+      <div class="bot-eyes">
+        <div class="bot-eye left"></div>
+        <div class="bot-eye right"></div>
+      </div>
+      <div class="poseidon-bot-shadow"></div>
+    </div>
+    <h1>Welcome to Poseidon AI</h1>
+    <div class="sub-tagline">
+      Smartest AI for traders, by traders.
+    </div>
+    <div class="auth-btns">
+      <a href="login.html">Log In</a>
+      <a href="signup.html">Sign Up</a>
+    </div>
+  </div>
+  <div class="wave-animate">
+    <svg viewBox="0 0 1440 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path id="animatedWave"
+        d="M0 55 Q 360 90 720 55 T 1440 55 V 110 H 0 Z"
+        fill="url(#poseidonWaveGradient)">
+        <animate attributeName="d"
+          values="
+            M0 55 Q 360 90 720 55 T 1440 55 V 110 H 0 Z;
+            M0 65 Q 360 30 720 65 T 1440 55 V 110 H 0 Z;
+            M0 55 Q 360 90 720 55 T 1440 55 V 110 H 0 Z"
+          dur="5s"
+          repeatCount="indefinite" />
+      </path>
+      <defs>
+        <linearGradient id="poseidonWaveGradient" x1="0" y1="55" x2="1440" y2="110" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#00ffe6" />
+          <stop offset="0.6" stop-color="#2af0ff" />
+          <stop offset="1" stop-color="#274b6e" />
+        </linearGradient>
+      </defs>
+    </svg>
+  </div>
+  <script>
+    // Starfield generator
+    const starfield = document.querySelector('.starfield');
+    function createStar() {
+      const star = document.createElement('div');
+      star.className = 'star';
+      const size = Math.random() * 1.8 + 0.6;
+      star.style.width = star.style.height = size + "px";
+      star.style.left = (Math.random() * 100) + "%";
+      star.style.top = (Math.random() * 100) + "%";
+      star.style.animationDuration = (3 + Math.random() * 7) + "s";
+      starfield.appendChild(star);
+    }
+    for (let i = 0; i < 80; i++) createStar();
+  </script>
 </body>
-
-<footer class="footer">
-    <p>&copy; 2025 Poseidon AI — Built for Degen Mastery ⚡</p>
-</footer>
 </html>

@@ -6,14 +6,6 @@
   <title>Dashboard – Poseidon AI</title>
   <link rel="stylesheet" href="styles/dashboard.css">
   <link rel="icon" href="/favicon.ico" type="image/x-icon">
-
-<script src="scripts/state.js"></script>
-<script src="scripts/utils.js"></script>
-<script src="scripts/api.js"></script>
-<script src="scripts/ui-render.js"></script>
-<script src="scripts/events.js"></script>
-<script src="scripts/dashboard.js"></script>
-
   <style>
     body {
       background: linear-gradient(120deg, #0a0f1d 0%, #10131a 100%);
@@ -91,7 +83,6 @@
     <a href="dashboard.html" class="active">Dashboard</a>
     <a href="sniper.html">Sniper</a>
     <a href="futures.html">Futures</a>
-    <a href="trade-monitor.html">Trade Monitor</a>
     <a href="accounts.html">Accounts</a>
     <a href="settings.html">Settings</a>
     <a href="index.html" style="color:#aaa;">Log Out</a>
@@ -125,52 +116,7 @@
       <div style="background:#11202b9b;border-radius:12px;padding:26px 18px;margin-bottom:18px;min-height:80px;">
         <em>Your trades and signals will show here after live integration.</em>
       </div>
-      <section id="wallet-activity-feed" class="reactive-events" style="margin-top:38px;">
-        <h2>⚡ Smart Wallet Activity</h2>
-        <div class="log-feed" id="wallet-log-feed">
-          <div class="log-entry">Awaiting activity from Poseidon’s core...</div>
-        </div>
-      </section>
-    
+    </section>
   </main>
-  <script>
-    const walletFeed = document.getElementById('wallet-log-feed');
-    
-    // Connect to your real WebSocket (update URL as needed)
-    const ws = new WebSocket('wss://YOUR-LIVE-WALLET-API-URL');
-    ws.onopen = () => {
-      walletFeed.innerHTML = '<div class="log-entry" style="color:#23ffd9;">Connected to Poseidon live wallet tracker.</div>';
-    };
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        // Example: { wallet: 'Cupsey', token: '$DOGE', action: 'Bought', time: '18:04:12', amount: '0.5 SOL' }
-        const entry = document.createElement('div');
-        entry.className = 'log-entry';
-        entry.innerHTML =
-          `[${data.time}] 🟢 <strong>${data.wallet}</strong> ${data.action} <strong>${data.token}</strong> (${data.amount})`;
-        walletFeed.prepend(entry);
-        // Limit to 20 latest events
-        while (walletFeed.children.length > 20) walletFeed.removeChild(walletFeed.lastChild);
-      } catch (e) {
-        // If event is not JSON, log raw
-        const entry = document.createElement('div');
-        entry.className = 'log-entry';
-        entry.textContent = '[Event] ' + event.data;
-        walletFeed.prepend(entry);
-        while (walletFeed.children.length > 20) walletFeed.removeChild(walletFeed.lastChild);
-      }
-    };
-    ws.onerror = () => {
-      walletFeed.innerHTML = '<div class="log-entry" style="color:#ff7676;">Connection error. Try again later.</div>';
-    };
-    ws.onclose = () => {
-      const entry = document.createElement('div');
-      entry.className = 'log-entry';
-      entry.style.color = "#e4e7fa";
-      entry.textContent = 'Live wallet connection closed.';
-      walletFeed.prepend(entry);
-    };
-    </script>
 </body>
 </html>

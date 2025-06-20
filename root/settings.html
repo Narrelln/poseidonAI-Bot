@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Settings | Poseidon AI</title>
+  <link rel="stylesheet" href="styles/dashboard.css">
+  <link rel="icon" href="../favicon.ico" type="image/x-icon">
+</head>
+<script src="scripts/state.js"></script>
+<script src="scripts/utils.js"></script>
+<script src="scripts/api.js"></script>
+<script src="scripts/ui-render.js"></script>
+<script src="scripts/events.js"></script>
+<script src="scripts/dashboard.js"></script>
+
+<body>
+  <nav class="nav-bar">
+    <a href="dashboard.html">Dashboard</a>
+    <a href="sniper.html">Sniper</a>
+    <a href="futures.html">Futures</a>
+    <a href="trade-monitor.html">Trade Monitor</a>
+    <a href="accounts.html">Accounts</a>
+    <a href="settings.html" class="active">Settings</a>
+    <a href="login.html" style="float:right;">Log Out</a>
+  </nav>
+
+  <main>
+    <section class="panel settings-panel">
+      <h2>⚙️ Settings</h2>
+      
+      <form id="settings-form">
+        <div class="settings-group">
+          <label for="theme">Theme:</label>
+          <select id="theme" name="theme">
+            <option value="default">Robotic Dark (Default)</option>
+            <option value="light">Light Mode</option>
+            <option value="midnight">Midnight Blue</option>
+          </select>
+        </div>
+        
+        <div class="settings-group">
+          <label for="notif">Notifications:</label>
+          <input type="checkbox" id="notif" name="notif" checked>
+          <span>Enable trade alerts & wallet signals</span>
+        </div>
+        
+        <div class="settings-group">
+          <label for="api-key">API Key:</label>
+          <input type="text" id="api-key" value="••••-xxxx-xxxx-xxxx" readonly>
+          <button type="button" onclick="copyApiKey()">Copy</button>
+        </div>
+
+        <div class="settings-group">
+          <label for="referral">Referral/Activation Code:</label>
+          <input type="text" id="referral" placeholder="Paste code to activate advanced features...">
+          <button type="submit">Apply</button>
+        </div>
+
+        <div class="settings-actions">
+          <button type="submit" class="save-btn">💾 Save Settings</button>
+        </div>
+      </form>
+
+      <div class="danger-zone">
+        <h3>Danger Zone</h3>
+        <button class="logout-btn" onclick="location.href='login.html'">Log Out</button>
+        <button class="delete-btn" style="margin-left:16px;">Delete Account</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Add scripts for theme switching or save actions below -->
+  <script>
+    function copyApiKey() {
+      const apiKey = document.getElementById('api-key');
+      apiKey.select();
+      apiKey.setSelectionRange(0, 99999);
+      document.execCommand('copy');
+      alert('API Key copied!');
+    }
+    document.getElementById('settings-form').onsubmit = function(e) {
+      e.preventDefault();
+      alert("Settings saved! (Implement save logic here)");
+    }
+  </script>
+</body>
+</html>

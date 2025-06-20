@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Futures – Poseidon AI</title>
+  <link rel="stylesheet" href="styles/dashboard.css">
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+</head>
+<body>
+  <!-- Floating Bot Avatar -->
+  <div id="poseidon-bot">
+    <img src="assets/robot.png" alt="Poseidon Bot">
+    <div class="bot-glow"></div>
+  </div>
+  <nav class="nav-bar">
+    <a href="dashboard.html">Dashboard</a>
+    <a href="sniper.html">Sniper</a>
+    <a href="futures.html" class="active">Futures</a>
+    <a href="trade-monitor.html">Trade Monitor</a>
+    <a href="accounts.html">Accounts</a>
+    <a href="settings.html">Settings</a>
+    <a href="index.html" style="color:#aaa;">Log Out</a>
+  </nav>
+  <main>
+    <div class="futures-grid">
+      <!-- Left Column -->
+      <div class="futures-col">
+        <section class="panel">
+          <h2>📈 Live Futures Feed</h2>
+          <div class="log-feed" id="futures-log-feed">
+            <div class="log-entry">Awaiting futures trades...</div>
+          </div>
+        </section>
+        <section class="panel">
+          <h2>📊 Strategy Stats</h2>
+          <div class="log-entry" id="futures-stats">Loading PnL, win rate, coins...</div>
+        </section>
+      </div>
+      <!-- Right Column -->
+      <div class="futures-col">
+        <section class="panel">
+          <h2>🧠 Trade Signal Panel</h2>
+          <div class="log-feed" id="futures-signal-feed">
+            <div class="log-entry">No signals yet...</div>
+          </div>
+        </section>
+        <section class="panel">
+          <h2>⚙️ Manual Controls</h2>
+          <button class="login-btn">Open Trade</button>
+          <button class="login-btn">Close Trade</button>
+          <button class="login-btn">Set TP/SL</button>
+        </section>
+      </div>
+    </div>
+  </main>
+  <script>
+    setInterval(() => {
+      const logFeed = document.getElementById('futures-log-feed');
+      if (logFeed) {
+        const entry = document.createElement('div');
+        entry.className = 'log-entry';
+        entry.textContent = `[${new Date().toLocaleTimeString()}] $ETHUSDT: SHORT +7.2%`;
+        logFeed.prepend(entry);
+        while (logFeed.children.length > 20) logFeed.removeChild(logFeed.lastChild);
+      }
+    }, 10000);
+  </script>
+</body>
+</html>

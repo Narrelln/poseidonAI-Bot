@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sign Up – Poseidon AI</title>
+  <link rel="stylesheet" href="styles/dashboard.css">
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+  <style>
+    body {
+      background: linear-gradient(120deg, #060b13 0%, #10131a 100%);
+      min-height: 100vh;
+      margin: 0;
+      color: #e3f6fb;
+      font-family: 'Orbitron', 'Segoe UI', Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+    .signup-hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 1;
+      margin-top: 36px;
+      width: 100%;
+    }
+    .robot-float-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+      position: relative;
+      width: 110px;
+      height: 110px;
+    }
+    .sentient-glow {
+      position: absolute;
+      left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      width: 115px; height: 115px;
+      border-radius: 50%;
+      background: conic-gradient(#00ffe6, #5c4cff, #ff0fe6, #2aff00, #ffd700, #00ffe6);
+      filter: blur(18px) brightness(1.0) saturate(1.4);
+      opacity: 0.55;
+      z-index: 1;
+      animation: colorShift 6s linear infinite;
+      pointer-events: none;
+    }
+    .poseidon-bot {
+      width: 90px; height: 90px;
+      filter: drop-shadow(0 4px 24px #13e6ffb2);
+      animation: floatbot 2.7s ease-in-out infinite alternate;
+      position: absolute;
+      left: 50%; top: 15px;
+      transform: translateX(-50%);
+      z-index: 3;
+    }
+    .bot-eyes {
+      position: absolute;
+      left: 50%; top: 51%;
+      width: 36px; height: 13px;
+      transform: translate(-50%, -50%);
+      display: flex; justify-content: space-between;
+      z-index: 6;
+      pointer-events: none;
+    }
+    .bot-eye {
+      width: 11px; height: 11px;
+      background: radial-gradient(circle, #00fffa 60%, #1ec3ff 90%, transparent 100%);
+      border-radius: 50%;
+      box-shadow: 0 0 18px #0ef6ffb9, 0 0 7px #00fff9cc;
+      animation: eyePulse 2.1s infinite alternate, eyeBlink 8s infinite;
+      opacity: 1;
+      transition: filter 0.12s;
+    }
+    .bot-eye.right { animation-delay: 0.2s, 4.2s; }
+    .bot-eye.left  { animation-delay: 0s, 0s; }
+    @keyframes floatbot {
+      0% { transform: translateX(-50%) translateY(0);}
+      50% { transform: translateX(-50%) translateY(-7px) scale(1.01);}
+      100% { transform: translateX(-50%) translateY(0);}
+    }
+    @keyframes colorShift {
+      0% { filter: blur(18px) brightness(1.0) saturate(1.4); opacity: 0.55;}
+      30% { filter: blur(22px) brightness(1.1) saturate(1.7); opacity: 0.7;}
+      60% { filter: blur(14px) brightness(0.95) saturate(1.1); opacity: 0.63;}
+      100% { filter: blur(18px) brightness(1.0) saturate(1.4); opacity: 0.55;}
+    }
+    @keyframes eyePulse {
+      0% { filter: brightness(1.1) blur(0px);}
+      80% { filter: brightness(1.7) blur(2px);}
+      100% { filter: brightness(1.2) blur(0px);}
+    }
+    @keyframes eyeBlink {
+      0%, 92%, 100% { transform: scaleY(1);}
+      94%, 96% { transform: scaleY(0.17);}
+    }
+    h1 {
+      font-size: 2.1rem;
+      color: #19e4ff;
+      letter-spacing: 1.5px;
+      margin-bottom: 12px;
+      margin-top: 12px;
+      text-shadow: 0 2px 16px #0fe7ff44;
+      text-align: center;
+    }
+    .signup-panel {
+      background: linear-gradient(120deg, #111a28ee 30%, #192b34e6 100%);
+      border-radius: 20px;
+      box-shadow: 0 0 24px #00dbe23c;
+      padding: 36px 30px 28px 30px;
+      margin-top: 12px;
+      max-width: 340px;
+      width: 94vw;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 2;
+    }
+    label {
+      color: #a2eaff;
+      font-weight: 500;
+      margin-bottom: 5px;
+      font-size: 1.02em;
+      display: block;
+      letter-spacing: 0.01em;
+    }
+    .signup-input {
+      width: 100%;
+      padding: 12px 15px;
+      border-radius: 8px;
+      border: 1.4px solid #12e2ff46;
+      background: #0d1b2a;
+      color: #e7feff;
+      font-size: 1.08em;
+      margin-bottom: 18px;
+      outline: none;
+      transition: border-color 0.18s;
+      box-shadow: 0 1.5px 12px #1ae3fc14 inset;
+    }
+    .signup-input:focus {
+      border-color: #12eaff;
+      background: #102029;
+    }
+    .signup-btn {
+      background: linear-gradient(90deg, #18b1f6, #29ffcb 90%);
+      color: #082228;
+      font-weight: bold;
+      border: none;
+      border-radius: 28px;
+      padding: 13px 54px;
+      font-size: 1.1em;
+      letter-spacing: 0.9px;
+      margin-top: 8px;
+      margin-bottom: 11px;
+      box-shadow: 0 2px 12px #00e7ff3a;
+      cursor: pointer;
+      transition: background 0.18s, color 0.13s, transform 0.11s;
+      animation: pulseBtn 2.3s infinite alternate;
+    }
+    .signup-btn:hover {
+      background: linear-gradient(90deg, #29ffcb, #18b1f6 90%);
+      color: #031c24;
+      transform: scale(1.04);
+      animation-play-state: paused;
+    }
+    .signup-links {
+      width: 100%;
+      margin-top: 6px;
+      text-align: right;
+      font-size: 0.99em;
+    }
+    .signup-links a {
+      color: #25e6ff;
+      text-decoration: none;
+      margin-left: 8px;
+      transition: color 0.13s;
+    }
+    .signup-links a:hover { color: #aefeff; }
+    @media (max-width: 650px) {
+      .signup-panel { padding: 24px 6vw 22px 6vw; }
+      .robot-float-container { width: 80px; height: 80px;}
+      .poseidon-bot { width: 62px; height: 62px;}
+      .bot-eyes { width: 20px; height: 7px;}
+    }
+  </style>
+</head>
+<body>
+  <div class="signup-hero">
+    <div class="robot-float-container">
+      <div class="sentient-glow"></div>
+      <img src="assets/robot.png" alt="Poseidon AI Bot" class="poseidon-bot" />
+      <div class="bot-eyes">
+        <div class="bot-eye left"></div>
+        <div class="bot-eye right"></div>
+      </div>
+    </div>
+    <h1>Activate Your Poseidon Access</h1>
+    <form class="signup-panel" autocomplete="off">
+      <label for="code">Activation / Referral Code</label>
+      <input type="text" id="code" class="signup-input" autocomplete="off" required>
+      <button type="submit" class="signup-btn">Activate Account</button>
+      <div class="signup-links">
+        <a href="login.html">Already have an account?</a>
+      </div>
+    </form>
+  </div>
+</body>
+</html>

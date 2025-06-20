@@ -1,0 +1,154 @@
+/* === Poseidon Dashboard Cleaned CSS === */
+
+/* Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Base Styles */
+body {
+  font-family: 'Orbitron', sans-serif;
+  background-color: #0a0f1d;
+  color: #ffffff;
+  padding: 20px;
+}
+
+header h1 {
+  font-size: 28px;
+  margin-bottom: 20px;
+  color: #00bcd4;
+}
+
+/* Sidebar */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  background-color: #1e2a38;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.sidebar-title {
+  margin-left: 10px;
+  font-weight: bold;
+}
+
+.sidebar-content {
+  background-color: #14202c;
+  padding: 10px;
+  border-radius: 6px;
+  height: 150px;
+  overflow-y: auto;
+  font-size: 14px;
+}
+
+/* Toggle Button */
+.toggle-button {
+  position: fixed;
+  left: 10px;
+  top: 80px;
+  z-index: 1000;
+  background-color: #00bcd4;
+  color: #000;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
+}
+
+/* Cards */
+.sniper-cards {
+  display: flex;
+  gap: 15px;
+  margin: 20px 0;
+  flex-wrap: wrap;
+}
+
+.card {
+  background-color: #14202c;
+  border-radius: 8px;
+  padding: 15px;
+  flex: 1 1 200px;
+  text-align: center;
+}
+
+.card h3 {
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+
+/* Control Panel */
+.control-panel {
+  background-color: #1e2a38;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.control-panel button,
+.control-panel input[type="range"] {
+  margin: 5px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  background-color: #00bcd4;
+  border: none;
+  color: #000;
+}
+
+/* Reactive Event Panels */
+.reactive-events {
+  background-color: #14202c;
+  padding: 15px;
+  margin: 15px 0;
+  border-radius: 8px;
+}
+
+.reactive-events h2 {
+  font-size: 18px;
+  color: #00bcd4;
+  margin-bottom: 10px;
+}
+
+.log-entry {
+  background-color: #1e2a38;
+  padding: 8px;
+  border-radius: 4px;
+  margin-bottom: 5px;
+  font-size: 14px;
+}
+
+/* Floating Poseidon Avatar */
+#poseidon-avatar {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 60px;
+  height: 60px;
+  background-color: #00bcd4;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 10px #00bcd4;
+  animation: floatPulse 1.8s ease-in-out infinite;
+  z-index: 1000;
+}
+
+@keyframes floatPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.8;
+  }
+}
+
+.poseidon-eyes {
+  font-size: 22px;
+}

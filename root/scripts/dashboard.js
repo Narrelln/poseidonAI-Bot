@@ -1609,3 +1609,114 @@ if (avatar && eyes) {
     eyes.textContent = poseidonAwake ? "🧠" : "⚪";
   });
 }
+
+
+// 🧠 Long-Term Trailing Strategy Module
+const longTermTrackers = {};
+
+function trackLongTermToken(ca, basePrice, targetMultipliers = [2, 5, 10, 50, 100]) {
+  if (!longTermTrackers[ca]) {
+    longTermTrackers[ca] = {
+      basePrice,
+      targets: targetMultipliers.map(mult => basePrice * mult),
+      currentTargetIndex: 0,
+      active: true
+    };
+    console.log(`📡 Tracking ${ca} for long-term growth targets: ${targetMultipliers.join("x ")}`);
+  }
+}
+
+function evaluateLongTermTargets(ca, currentPrice) {
+  const tracker = longTermTrackers[ca];
+  if (!tracker || !tracker.active) return;
+
+  const targetPrice = tracker.targets[tracker.currentTargetIndex];
+  if (currentPrice >= targetPrice) {
+    console.log(`🎯 ${ca} has reached ${tracker.targets[tracker.currentTargetIndex] / tracker.basePrice}x target: $${targetPrice.toFixed(2)}`);
+    tracker.currentTargetIndex++;
+
+    if (tracker.currentTargetIndex >= tracker.targets.length) {
+      tracker.active = false;
+      console.log(`🏁 ${ca} has completed all long-term targets!`);
+    }
+  }
+}
+
+// === Manual Trade Control Buttons ===
+document.getElementById('pause-btn').addEventListener('click', () => {
+  localStorage.setItem('poseidonPaused', 'true');
+  document.getElementById('pause-btn').style.display = 'none';
+  document.getElementById('resume-btn').style.display = 'inline-block';
+});
+
+document.getElementById('resume-btn').addEventListener('click', () => {
+  localStorage.setItem('poseidonPaused', 'false');
+  document.getElementById('resume-btn').style.display = 'none';
+  document.getElementById('pause-btn').style.display = 'inline-block';
+});
+
+// === Add Wallet Activity Log Feed ===
+function addWalletActivity(msg) {
+  const container = document.getElementById('wallet-activity-feed');
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+  container.appendChild(entry);
+}
+
+// === Confidence Score Output ===
+function updateConfidenceLog(score) {
+  const log = document.getElementById('confidence-log');
+  log.textContent = `📊 Current Score: ${score}%`;
+}
+
+// === Dummy Example Integration ===
+updateConfidenceLog(72.5);
+addWalletActivity("Smart wallet Groovy entered $WATER");
+
+// === Solana WebSocket (Helius) ===
+const SOLANA_WS = "wss://api.helius.xyz/v0/YOUR-API-KEY/stream";
+const solanaFeed = document.getElementById('solana-log-feed');
+const wsSolana = new WebSocket(SOLANA_WS);
+wsSolana.onopen = () => {
+  solanaFeed.innerHTML = '<div class="log-entry" style="color:#23ffd9;">Connected to Solana live feed.</div>';
+};
+wsSolana.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.innerHTML = `[${data.timestamp || '--:--:--'}] <strong>${data.wallet || data.owner || 'Wallet'}</strong> ${data.type || 'Action'} ${data.token || ''}`;
+  solanaFeed.prepend(entry);
+  while (solanaFeed.children.length > 20) solanaFeed.removeChild(solanaFeed.lastChild);
+};
+
+// === Ethereum WebSocket (Alchemy placeholder) ===
+const ETH_WS = "wss://eth-mainnet.g.alchemy.com/v2/YOUR-API-KEY";
+const ethFeed = document.getElementById('eth-log-feed');
+const wsEth = new WebSocket(ETH_WS);
+wsEth.onopen = () => {
+  ethFeed.innerHTML = '<div class="log-entry" style="color:#23ffd9;">Connected to Ethereum mainnet.</div>';
+};
+wsEth.onmessage = (event) => {
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.innerHTML = `[Event] ${event.data}`; // You can parse Ethereum data further as needed
+  ethFeed.prepend(entry);
+  while (ethFeed.children.length > 20) ethFeed.removeChild(ethFeed.lastChild);
+};
+
+// === BSC WebSocket (Ankr or Blast placeholder) ===
+const BSC_WS = "wss://bsc.publicnode.com";
+const bscFeed = document.getElementById('bsc-log-feed');
+const wsBsc = new WebSocket(BSC_WS);
+wsBsc.onopen = () => {
+  bscFeed.innerHTML = '<div class="log-entry" style="color:#23ffd9;">Connected to BSC mainnet.</div>';
+};
+wsBsc.onmessage = (event) => {
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.innerHTML = `[Event] ${event.data}`; // You can parse BSC data further as needed
+  bscFeed.prepend(entry);
+  while (bscFeed.children.length > 20) bscFeed.removeChild(bscFeed.lastChild);
+};
+

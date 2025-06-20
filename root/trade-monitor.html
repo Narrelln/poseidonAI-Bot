@@ -1,75 +1,206 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Poseidon Sniper Reactive Dashboard</title>
-  <link rel="stylesheet" href="../styles/dashboard.css" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Trade Monitor – Poseidon AI</title>
+  <link rel="stylesheet" href="styles/dashboard.css">
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
 
+<script src="scripts/state.js"></script>
+<script src="scripts/utils.js"></script>
+<script src="scripts/api.js"></script>
+<script src="scripts/ui-render.js"></script>
+<script src="scripts/events.js"></script>
+<script src="scripts/dashboard.js"></script>
+
+  <body>
+    <nav class="nav-bar">
+      <a href="dashboard.html">Dashboard</a>
+      <a href="sniper.html">Sniper</a>
+      <a href="futures.html">Futures</a>
+      <a href="trade-monitor.html">Trade Monitor</a>
+      <a href="accounts.html">Accounts</a>
+      <a href="settings.html">Settings</a>
+      <a href="index.html" style="color:#aaa;">Log Out</a>
+    </nav>
+    <!-- Dashboard content... -->
+  </body>
+  
   <style>
-    header {
-      text-align: center;
-      margin-top: 30px;
-      margin-bottom: 10px;
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 36px 12px;
+    }
+    .panel {
+      background: linear-gradient(120deg, #111c2a 30%, #182833e6 100%);
+      border-radius: 16px;
+      box-shadow: 0 2px 16px #00e0ff23;
+      min-width: 280px;
+      padding: 38px 32px 18px 32px;
+      margin-bottom: 36px;
+      text-align: left;
+      border: 1.5px solid #0ee8ff29;
+      transition: box-shadow 0.18s, background 0.16s;
+    }
+    .panel:hover {
+      box-shadow: 0 8px 40px #24ffe646;
+      background: linear-gradient(120deg, #112b41 50%, #163354 100%);
+    }
+    .panel h2 {
+      color: #30f6ff;
+      margin-bottom: 20px;
+      font-size: 1.25em;
+      letter-spacing: 1.2px;
+      text-shadow: 0 0 6px #20fff330;
+    }
+    .log-feed {
+      font-size: 1.05em;
+      max-height: 340px;
+      overflow-y: auto;
+      margin-top: 10px;
+    }
+    .log-entry {
+      padding: 11px 9px 8px 12px;
+      margin-bottom: 7px;
+      border-left: 3.5px solid #00ffe6;
+      background: rgba(32,41,54,0.32);
+      border-radius: 7px;
+      box-shadow: 0 1.5px 8px #24ffe61a;
+      font-family: 'Share Tech Mono', 'Consolas', monospace;
+      transition: background 0.13s, border-color 0.14s;
+    }
+    .log-entry:hover {
+      background: #153654de;
+      border-left: 3.5px solid #3bffd9;
+    }
+    #allocation-decision {
+      color: #35ffc9;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    #allocation-reason {
+      color: #99ffe8;
+      font-size: 0.98em;
+      margin-bottom: 0;
     }
   </style>
-</head>
 
-<body>
-  <header>
-    <h1>Poseidon Sniper Reactive Dashboard</h1>
-  </header>
+  <main>
 
-  <section class="sniper-cards">
-    <div class="card">
-      <h3>Wallets Scanned</h3>
-      <p id="wallets">1234</p>
-    </div>
-    <div class="card">
-      <h3>Market Sentiment</h3>
-      <p id="sentiment">Bullish</p>
-    </div>
-    <div class="card">
-      <h3>Open Trades</h3>
-      <p id="trades">3</p>
-    </div>
-    <div class="card">
-      <h3>Today’s PnL</h3>
-      <p id="pnl">+5.2 SOL</p>
-    </div>
-  </section>
+    <!-- 1. SMART WALLET ACTIVITY FEED -->
+    <section class="panel">
+      <h2>⚡ Smart Wallet Activity Feed</h2>
+      <div class="log-feed" id="wallet-log-feed">
+        <div class="log-entry">Awaiting activity from Poseidon’s core...</div>
+      </div>
+    </section>
 
-  <section class="reactive-events">
-    <h2>Reactive Sniper Events</h2>
-    <div class="log-feed" id="log-feed">
-      <!-- Example Logs (Replace dynamically via JS) -->
-      <div class="log-entry">[10:31:02] 🟢 Sniper <strong>Cupsey</strong> entered <strong>$APEKING</strong> at 18K MC</div>
-      <div class="log-entry">[10:32:15] 🚀 Exited at +312%</div>
-      <div class="log-entry">[10:33:44] 🟡 Sniper <strong>Groovy</strong> opened new trade: <strong>$BRAIN</strong></div>
-    </div>
-  </section>
+    <!-- 2. CAPITAL ALLOCATOR PANEL -->
+    <section class="panel">
+      <h2>💰 Capital Allocator Panel</h2>
+      <div id="allocation-decision" class="log-entry">Evaluating best capital split...</div>
+      <div id="allocation-reason" class="log-entry">Reasoning will appear here.</div>
+    </section>
 
-  <!-- Smart Wallet Activity Feed -->
-  <section id="wallet-activity-feed" class="reactive-events">
-    <h2>🔍 Smart Wallet Activity Feed</h2>
-    <div class="log-entry">Awaiting wallet activity...</div>
-  </section>
+    <!-- 3. LIVE TRADE MONITOR -->
+    <section class="panel">
+      <h2>📡 Live Trade Monitor</h2>
+      <div class="log-feed" id="trade-log-feed">
+        <div class="log-entry">Waiting for live trade events...</div>
+      </div>
+    </section>
 
-  <!-- Capital Allocator Panel -->
-  <section id="capital-allocator-panel" class="reactive-events">
-    <h2>💰 Capital Allocation Decision</h2>
-    <div id="allocation-decision" class="log-entry">Evaluating...</div>
-    <div id="allocation-reason" class="log-entry">Reasoning will appear here.</div>
-  </section>
-
-  
-<!-- Live Trade Monitor -->
-<section id="live-trade-monitor" class="reactive-events">
-  <h2>📡 Live Trade Monitor</h2>
-  <div class="log-entry">Scanning for smart wallet activity...</div>
+    <!-- Solana Smart Wallet Activity Feed -->
+<section class="panel">
+  <h2>⚡ Solana Smart Wallet Activity Feed</h2>
+  <div class="log-feed" id="solana-log-feed">
+    <div class="log-entry">Awaiting Solana activity...</div>
+  </div>
 </section>
 
-  <script src="../scripts/dashboard.js"></script>
+<!-- Ethereum Smart Wallet Activity Feed -->
+<section class="panel">
+  <h2>⚡ Ethereum Smart Wallet Activity Feed</h2>
+  <div class="log-feed" id="eth-log-feed">
+    <div class="log-entry">Awaiting Ethereum activity...</div>
+  </div>
+</section>
+
+<!-- BSC Smart Wallet Activity Feed -->
+<section class="panel">
+  <h2>⚡ BSC Smart Wallet Activity Feed</h2>
+  <div class="log-feed" id="bsc-log-feed">
+    <div class="log-entry">Awaiting BSC activity...</div>
+  </div>
+</section>
+
+  </main>
+  <script>
+    // Use your actual live WebSocket for all activity
+    const HELIUS_WS = "wss://api.helius.xyz/v0/0c8ef52c-b2a4-42e1-bc4c-663e2268182e/stream";
+
+    // 1. Smart Wallet Activity Feed
+    
+
+    const wsWallet = new WebSocket(HELIUS_WS);
+    wsWallet.onopen = () => {
+      walletFeed.innerHTML = '<div class="log-entry" style="color:#23ffd9;">Connected to Poseidon live wallet tracker.</div>';
+    };
+    wsWallet.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        // You'll want to customize the message depending on your Helius data structure!
+        // Example parse (edit for your own fields):
+        const entry = document.createElement('div');
+        entry.className = 'log-entry';
+        entry.innerHTML =
+          `[${data.timestamp || '--:--:--'}] 🟢 <strong>${data.wallet || data.owner || 'Unknown'}</strong> ${data.action || data.type || 'Activity'} <strong>${data.token || '-'}</strong> ${data.amount ? '(' + data.amount + ')' : ''}`;
+        walletFeed.prepend(entry);
+        while (walletFeed.children.length > 20) walletFeed.removeChild(walletFeed.lastChild);
+      } catch (e) {
+        const entry = document.createElement('div');
+        entry.className = 'log-entry';
+        entry.textContent = '[Event] ' + event.data;
+        walletFeed.prepend(entry);
+        while (walletFeed.children.length > 20) walletFeed.removeChild(walletFeed.lastChild);
+      }
+    };
+
+    // 2. Capital Allocator Panel
+    // Example only: Call updateCapitalAllocator(...) from your backend or main JS file.
+    function updateCapitalAllocator(decision, reason) {
+      document.getElementById('allocation-decision').textContent = decision;
+      document.getElementById('allocation-reason').textContent = reason;
+    }
+    // Example call:
+    // updateCapitalAllocator('Allocating 0.34 SOL to $DOGE', '3 smart wallet signals, bonding low, momentum high');
+
+    // 3. Live Trade Monitor (using the same HELIUS feed here; split if you have a different URL)
+    const tradeFeed = document.getElementById('trade-log-feed');
+    const wsTrade = new WebSocket(HELIUS_WS);
+    wsTrade.onopen = () => {
+      tradeFeed.innerHTML = '<div class="log-entry" style="color:#23ffd9;">Connected to Poseidon live trade feed.</div>';
+    };
+    wsTrade.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        // Example parse (edit for your own fields):
+        const entry = document.createElement('div');
+        entry.className = 'log-entry';
+        entry.innerHTML =
+          `[${data.timestamp || '--:--:--'}] ${data.type === 'buy' ? "🟢" : data.type === 'sell' ? "🔴" : "🟡"} <strong>${data.wallet || data.owner || 'Unknown'}</strong> ${data.type ? data.type.toUpperCase() : 'TRADE'} <strong>${data.token || '-'}</strong> ${data.amount ? '(' + data.amount + ')' : ''}${data.price ? ' @ ' + data.price : ''}`;
+        tradeFeed.prepend(entry);
+        while (tradeFeed.children.length > 50) tradeFeed.removeChild(tradeFeed.lastChild);
+      } catch (e) {
+        const entry = document.createElement('div');
+        entry.className = 'log-entry';
+        entry.textContent = '[Trade] ' + event.data;
+        tradeFeed.prepend(entry);
+        while (tradeFeed.children.length > 50) tradeFeed.removeChild(tradeFeed.lastChild);
+      }
+    };
+  </script>
 </body>
 </html>

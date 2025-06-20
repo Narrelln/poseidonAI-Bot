@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sniper Tracker – Poseidon AI</title>
+  <link rel="stylesheet" href="styles/dashboard.css">
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+</head>
+
+<script src="scripts/state.js"></script>
+<script src="scripts/utils.js"></script>
+<script src="scripts/api.js"></script>
+<script src="scripts/ui-render.js"></script>
+<script src="scripts/events.js"></script>
+<script src="scripts/dashboard.js"></script>
+
+<body>
+  <div id="poseidon-bot">
+    <img src="assets/robot.png" alt="Poseidon Bot">
+    <div class="bot-glow"></div>
+  </div>
+  
+  <nav class="nav-bar">
+    <a href="dashboard.html">Dashboard</a>
+    <a href="sniper.html" class="active">Sniper</a>
+    <a href="futures.html">Futures</a>
+    <a href="trade-monitor.html">Trade Monitor</a>
+    <a href="accounts.html">Accounts</a>
+    <a href="settings.html">Settings</a>
+    <a href="index.html" style="color:#aaa;">Log Out</a>
+  </nav>
+  <main>
+    <section class="panel">
+      <h2>🎯 Sniper/CA Tracker</h2>
+      <form id="sniper-form" style="margin-bottom: 24px;">
+        <input type="text" id="ca-input" placeholder="Enter Contract Address (CA)" class="signup-input" style="width:260px;"/>
+        <button type="submit" class="login-btn">Track Token</button>
+      </form>
+      <div id="sniper-status" class="log-entry">Idle. Enter a CA to begin tracking.</div>
+      <div id="sniper-log-feed" class="log-feed"></div>
+    </section>
+  </main>
+  <script>
+    // Minimal CA tracker logic; swap in your real WebSocket/API code as needed!
+    document.getElementById('sniper-form').onsubmit = function(e) {
+      e.preventDefault();
+      const ca = document.getElementById('ca-input').value.trim();
+      if (!ca) return;
+      document.getElementById('sniper-status').textContent = `Tracking: ${ca}`;
+      // Place your real CA tracking code here!
+      // Example: log demo entry to feed
+      const logFeed = document.getElementById('sniper-log-feed');
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      entry.textContent = `[${new Date().toLocaleTimeString()}] Tracking CA: ${ca}`;
+      logFeed.prepend(entry);
+      while (logFeed.children.length > 30) logFeed.removeChild(logFeed.lastChild);
+    }
+  </script>
+</body>
+</html>
