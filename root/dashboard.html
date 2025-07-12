@@ -1,0 +1,108 @@
+<!-- dashboard.html — Central Interface for Poseidon AI -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Poseidon Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link href="../styles/dashboard.css" rel="stylesheet" />
+  
+  <link rel="icon" href="/favicon.ico" />
+</head>
+<body>
+  <!-- 🤖 Poseidon Bot -->
+  <div id="poseidon-bot">
+    <img src="assets/robot.png" alt="Poseidon Bot" />
+    <div class="bot-glow"></div>
+    <div class="panel" id="memory-panel">
+      I'm Poseidon. Strategy loaded ✅<br />
+      Click me to toggle mode.
+    </div>
+  </div>
+  <div id="scanning-feed" class="panel scanning-panel">
+    <div class="panel-title">🔎 Live Scanning</div>
+    <div id="scanning-list"></div>
+  </div>
+
+  <!-- 🔗 Nav Bar -->
+  <nav class="nav-bar">
+    <a class="active" href="dashboard.html">Dashboard</a>
+    <a href="sniper.html">Sniper</a>
+    <a href="futures.html">Futures</a>
+    <a href="trade-monitor.html">Trade Monitor</a>
+    <a href="accounts.html">Accounts</a>
+    <a href="settings.html">Settings</a>
+    <a href="index.html" style="color:#aaa;">Log Out</a>
+  </nav>
+
+  <!-- 💻 Central Grid Layout -->
+  <main class="dashboard-grid">
+    <!-- Left Column -->
+    <div class="dashboard-col">
+      <section class="panel">
+        <h2>📡 Live Signals</h2>
+        <div class="log-feed" id="signal-log">
+          <div class="log-entry">Waiting for signal activity...</div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>📊 Performance Overview</h2>
+        <div id="performance-panel">
+          <p>📈 Win Rate: <span id="dash-winrate">--</span></p>
+          <p>💹 ROI: <span id="dash-roi">--</span></p>
+          <p>🔥 Best Coin: <span id="dash-topcoin">--</span></p>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>📁 Session Overview</h2>
+        <p>🔍 Wallets Tracked: <span id="wallets-tracked">0</span></p>
+        <p>📦 Tokens Monitored: <span id="tokens-monitored">0</span></p>
+        <p>🚀 Active Trades: <span id="active-trades">0</span></p>
+        <p>💰 PNL: <span id="session-pnl">+0.00%</span></p>
+      </section>
+    </div>
+
+    <!-- Right Column -->
+    <div class="dashboard-col">
+      <section class="panel">
+        <h2>🧠 AI Memory Panel</h2>
+        <div id="memory-panel-feed" class="log-feed">
+          <div class="log-entry">Poseidon memory initializing...</div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>⚙️ Manual Controls</h2>
+        <div class="manual-controls">
+          <label for="manual-symbol" style="font-size:14px;">Symbol:</label>
+          <input type="text" id="manual-symbol" placeholder="e.g., DOGEUSDT" style="width: 120px; margin-bottom: 6px;" />
+      
+          <label for="manual-tp" style="font-size:14px;">TP (%)</label>
+          <input type="number" id="manual-tp" value="35" style="width: 60px; margin-bottom: 6px;" />
+      
+          <label for="manual-sl" style="font-size:14px;">SL (%)</label>
+          <input type="number" id="manual-sl" value="20" style="width: 60px; margin-bottom: 6px;" />
+      
+          <div style="margin-top:12px;">
+            <button id="manual-long">Manual Long</button>
+            <button id="manual-short">Manual Short</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>🔀 Strategy Mode</h2>
+        <div class="strategy-toggle">
+          <button id="mode-supreme">Supreme</button>
+          <button id="mode-conservative">Conservative</button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- 🔌 Script Modules -->
+  <script type="module" src="./scripts/dashboard.js"></script>
+</body>
+</html>

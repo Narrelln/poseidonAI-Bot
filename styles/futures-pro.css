@@ -1,0 +1,107 @@
+body {
+    background: #101522;
+    color: #b6eaff;
+    font-family: 'Share Tech Mono', monospace;
+  }
+  .poseidon-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #101a2e;
+    padding: 16px 38px 12px 38px;
+    border-bottom: 2px solid #13f1fc55;
+    box-shadow: 0 1px 14px #08fbff19;
+  }
+  .header-meta { display: flex; align-items: center; gap: 18px; }
+  .mini-panels { display: flex; gap: 10px; }
+  .pill-card {
+    background: linear-gradient(90deg, #102637 80%, #13f1fc44 100%);
+    color: #29ffe7;
+    border-radius: 22px;
+    box-shadow: 0 2px 10px #13f1fc2a;
+    padding: 6px 16px;
+    font-size: 1em;
+    font-weight: bold;
+    min-width: 110px;
+    letter-spacing: 0.03em;
+  }
+  .wallet-pill { background: linear-gradient(90deg, #112e3b 80%, #25fff1 100%); }
+  .capital-pill { background: linear-gradient(90deg, #112b38 80%, #fffb33 100%); color: #ffe877; }
+  .settings-link, .logout-link {
+    color: #18ffff;
+    font-size: 1.15em;
+    text-decoration: none;
+    margin-left: 10px;
+    font-family: 'Orbitron', sans-serif;
+  }
+  .settings-link:hover, .logout-link:hover { color: #ffed4b; text-shadow: 0 0 7px #fff159bb; }
+  .poseidon-pro-grid {
+    display: flex;
+    gap: 38px;
+    width: 96vw;
+    max-width: 1500px;
+    margin: 32px auto 0 auto;
+    align-items: flex-start;
+  }
+  .dashboard-col {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .dashboard-col.right { min-width: 460px; max-width: 570px; }
+  .panel {
+    background: #101a29;
+    border-radius: 13px;
+    box-shadow: 0 0 24px #00fff22b, 0 1px 8px #00365280 inset;
+    border: 1.5px solid #09f7e7cc;
+    padding: 19px 18px 16px 18px;
+    min-width: 0;
+  }
+  .panel h2 {
+    color: #1efff6;
+    font-size: 1.1em;
+    margin-bottom: 11px;
+    border-bottom: 1.5px solid #00fff22b;
+    padding-bottom: 5px;
+    letter-spacing: 0.03em;
+  }
+  .table-container {
+    width: 100%;
+    overflow-x: auto;
+    background: none;
+    border-radius: 10px;
+    margin-bottom: 0;
+  }
+  .pro-table {
+    width: 100%;
+    min-width: 900px;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+  .pro-table th, .pro-table td {
+    padding: 6px 13px;
+    text-align: center;
+    background: rgba(8,26,35,0.86);
+    border-bottom: 1.2px solid #0ae4ff2a;
+    font-size: 15px;
+    white-space: nowrap;
+  }
+  .pro-table th {
+    color: #00ffe7;
+    background: #07202e;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1em;
+    letter-spacing: 0.07em;
+    border-bottom: 2px solid #00ffe766;
+  }
+  .pro-table tr:last-child td { border-bottom: none; }
+  @media (max-width: 1100px) {
+    .poseidon-pro-grid { flex-direction: column; gap: 0; }
+    .dashboard-col.right { max-width: unset; }
+  }
+  @media (max-width: 800px) {
+    .poseidon-header { flex-direction: column; gap: 12px; }
+    .poseidon-pro-grid { width: 99vw; padding: 0 2vw; }
+  }

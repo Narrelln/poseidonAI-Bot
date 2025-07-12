@@ -1,0 +1,191 @@
+/* === Tables.css (Patched for Alignment and Column Stability) === */
+
+.table-container, .trade-history-container, .open-positions-panel {
+  width: 100%;
+  overflow-x: auto;
+  background: none;
+  border-radius: 12px;
+}
+
+.trade-history-table, .open-positions-table, .table {
+  width: 100%;
+  min-width: 820px;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: #0a1424e6;
+  box-shadow: 0 0 14px #09f8fd11;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 15px;
+  margin: 0;
+  border-radius: 8px;
+  overflow: hidden;
+
+  /* ✅ Enforce consistent column widths */
+  table-layout: fixed;
+}
+
+th, td {
+  padding: 10px 8px;
+  border-bottom: 1px solid #11c6e633;
+  text-align: center;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 1.05em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+th {
+  background: linear-gradient(90deg, #142746 60%, #1be1fb30 100%);
+  color: #13f1fc;
+  font-weight: bold;
+  letter-spacing: 0.07em;
+  text-shadow: 0 0 6px #00ffffaa;
+  border-bottom: 2px solid #00f7ff33;
+}
+
+tr:nth-child(even) { background: #11243b; }
+tr:nth-child(odd)  { background: #0b1830; }
+
+td {
+  color: #eafaff;
+}
+
+tr:hover td {
+  background: #0cd8ff21;
+  transition: background 0.13s;
+}
+
+td.positive { color: #13ffb2; font-weight: bold; }
+td.negative { color: #ff4d6d; font-weight: bold; }
+td.neutral  { color: #d1e9ff; }
+
+.close-btn {
+  background: #ff3c6a;
+  color: #fff;
+  font-weight: bold;
+  border: none;
+  padding: 6px 15px;
+  border-radius: 6px;
+  box-shadow: 0 0 6px #ff3c6a55;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.close-btn:hover { background: #d6143b; }
+
+/* ====== Open Positions Enhancer Styling ====== */
+.open-positions-table input.position-note-input {
+  width: 100%;
+  padding: 4px 6px;
+  background-color: #0f1f2f;
+  border: 1px solid #1c3b4d;
+  color: #00ffff;
+  font-size: 13px;
+  border-radius: 3px;
+  outline: none;
+  transition: border 0.2s ease-in-out;
+}
+
+.open-positions-table input.position-note-input:focus {
+  border-color: #00ffff;
+  box-shadow: 0 0 5px #00ffff88;
+}
+
+.position-age {
+  color: #00ffaa;
+  font-weight: bold;
+  text-shadow: 0 0 3px #00ffaa55;
+}
+
+.notes-col, .age-col {
+  text-align: center;
+  color: #00f6ff;
+  text-shadow: 0 0 5px #00f6ff88;
+}
+/* === Compact Grid Panel for Account Overview === */
+
+.compact-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  justify-content: space-between;
+}
+
+.mini-block {
+  flex: 1 1 160px;
+  min-width: 140px;
+  background: #0b1f33;
+  padding: 10px 14px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px #01e6fb22;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 14px;
+  color: #eafaff;
+  border: 1px solid #112a44;
+  transition: transform 0.2s;
+}
+
+.mini-block:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 16px #00f2ff33;
+}
+
+.mini-block h4 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.95rem;
+  margin-bottom: 6px;
+  color: #00f7ff;
+  text-shadow: 0 0 5px #00f6ff33;
+  border-bottom: 1px solid #0ff3;
+  padding-bottom: 2px;
+}
+
+.mini-block p {
+  margin: 4px 0;
+  font-size: 13px;
+  color: #d9f8ff;
+}
+
+/* === Enhanced Live Scanning Styles === */
+#scanning-feed .log-entry {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  margin: 3px 0;
+  padding-left: 6px;
+  white-space: nowrap;
+  transition: all 0.3s ease-in-out;
+}
+
+/* Gainer Entry */
+#scanning-feed .log-entry.gainer {
+  color: #00ffb3;
+  font-weight: bold;
+  text-shadow: 0 0 6px #00ffb377;
+}
+
+#scanning-feed .log-entry.gainer::before {
+  content: '🔼 ';
+  color: #00ffb3;
+}
+
+/* Loser Entry */
+#scanning-feed .log-entry.loser {
+  color: #ff4d6d;
+  font-weight: bold;
+  text-shadow: 0 0 6px #ff4d6d77;
+}
+
+#scanning-feed .log-entry.loser::before {
+  content: '🔽 ';
+  color: #ff4d6d;
+}
+
+/* Fade-in animation on entry */
+@keyframes scanFade {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+#scanning-feed .log-entry {
+  animation: scanFade 0.4s ease-out;
+}

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Bot Test</title>
+  <link rel="stylesheet" href="../styles/futures.css" />
+</head>
+<body>
+  <!-- Bot Avatar -->
+  <div id="poseidon-bot">
+    <img src="assets/robot.png" alt="Poseidon Bot" />
+    <div class="bot-glow"></div>
+    <div class="panel" id="memory-panel">
+      I'm Poseidon. Strategy loaded ✅<br>
+      Click me to toggle mode.
+    </div>
+  </div>
+
+  <!-- Script -->
+  <script type="module">
+    const bot = document.getElementById('poseidon-bot');
+    const panel = document.getElementById('memory-panel');
+
+    bot.addEventListener('click', () => {
+      bot.classList.toggle('active');
+      panel.textContent = bot.classList.contains('active')
+        ? 'Autonomous Mode Activated 🔥'
+        : "I'm Poseidon. Strategy loaded ✅";
+    });
+  </script>
+</body>
+</html>

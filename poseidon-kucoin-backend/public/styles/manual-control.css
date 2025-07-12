@@ -1,0 +1,124 @@
+.manual-panel form, #manual-controls form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.manual-input, #manual-symbol {
+  background: #152e3e;
+  color: #19ffe6;
+  border: 1.2px solid #18f1fd55;
+  font-family: 'Share Tech Mono', monospace;
+  padding: 7px 14px;
+  border-radius: 7px;
+  font-size: 1.08em;
+  outline: none;
+  margin-bottom: 7px;
+  transition: border 0.14s;
+}
+.manual-input:focus, #manual-symbol:focus { border: 1.3px solid #1afffa; }
+
+.row.sliders label, .form-row label {
+  color: #affffe;
+  font-size: 0.98em;
+  margin-right: 12px;
+  font-family: 'Orbitron', sans-serif;
+}
+
+input[type="range"] {
+  width: 150px;
+  accent-color: #0ff;
+  margin-left: 8px;
+}
+.dir-btn.long { background: #02ffae11; color: #19ffe7; border: 1px solid #19ffe7;}
+.dir-btn.short { background: #ff4d6d11; color: #ff4d6d; border: 1px solid #ff4d6d;}
+.dir-btn { border-radius: 7px; font-size: 1.05em; padding: 6px 16px; font-family: 'Share Tech Mono'; margin-right: 7px; cursor: pointer; transition: background 0.16s; }
+.dir-btn:hover { background: #13f1fc22; }
+.trade-btn.open { background: #19ffe7; color: #0c1333; border: none; border-radius: 7px; font-size: 1.08em; font-weight: bold; padding: 8px 24px; box-shadow: 0 0 9px #13f1fc22; margin-top: 8px; cursor: pointer; }
+.trade-btn.open:hover { background: #13f1fc; color: #082131; }
+.bubble {
+  background: #17f3e666;
+  color: #013b36;
+  font-weight: bold;
+  font-size: 0.96em;
+  padding: 2px 9px;
+  border-radius: 6px;
+  margin-left: 6px;
+}
+.preview-row { color: #affffe; font-size: 0.97em; margin-top: 5px; }
+
+.manual-preview-tooltip {
+  position: absolute;
+  background: #021b33f2;
+  color: #00f6ff;
+  border: 1px solid #00ffff33;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-family: 'Share Tech Mono', monospace;
+  border-radius: 5px;
+  box-shadow: 0 0 6px #00f6ff55;
+  z-index: 9999;
+  pointer-events: none;
+  display: none;
+  white-space: nowrap;
+}
+/* === Manual Trade Enhancements === */
+.manual-panel input.manual-input {
+  background: #0a1e2a;
+  border: 1px solid #1b6a8e;
+  color: #00f6ff;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  box-shadow: inset 0 0 6px #00f6ff33;
+}
+
+.manual-panel input.manual-input::placeholder {
+  color: #66c2e4aa;
+}
+
+/* Long/Short Buttons */
+.dir-btn {
+  padding: 6px 14px;
+  margin-right: 8px;
+  font-weight: bold;
+  border-radius: 6px;
+  border: 1px solid #00f6ff88;
+  background: #072638;
+  color: #00f6ff;
+  text-shadow: 0 0 4px #00f6ff55;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.dir-btn.long {
+  border-color: #13ffb2;
+  color: #13ffb2;
+}
+.dir-btn.short {
+  border-color: #ff4d6d;
+  color: #ff4d6d;
+}
+
+.dir-btn:hover {
+  background: #03131f;
+  transform: scale(1.05);
+}
+
+/* Open Trade Button */
+.trade-btn.open {
+  background: linear-gradient(145deg, #0d332a, #005c42);
+  color: #00ffcc;
+  border: 1px solid #00ffaa99;
+  border-radius: 8px;
+  font-weight: bold;
+  box-shadow: 0 0 8px #00ffaa55;
+  padding: 8px 16px;
+  margin-top: 10px;
+  transition: transform 0.2s ease;
+}
+
+.trade-btn.open:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 12px #00ffccaa;
+}

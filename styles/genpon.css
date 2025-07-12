@@ -1,0 +1,322 @@
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #0d0d1a;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #e0f7fa;
+  }
+  
+  nav.nav-bar {
+    background-color: #101020;
+    padding: 12px;
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    border-bottom: 1px solid #1e1e3f;
+  }
+  
+  nav.nav-bar a {
+    color: #80d8ff;
+    text-decoration: none;
+    padding: 8px 16px;
+    transition: all 0.3s ease;
+  }
+  
+  nav.nav-bar a:hover,
+  nav.nav-bar a.active {
+    background-color: #1a1a3d;
+    border-radius: 5px;
+    color: #00e5ff;
+  }
+  
+  main.futures-grid {
+    display: flex;
+    padding: 20px;
+    gap: 24px;
+    justify-content: center;
+    align-items: flex-start;
+  }
+  
+  .futures-col {
+    width: 48%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .panel {
+    background-color: #14142b;
+    border-radius: 10px;
+    padding: 16px 20px;
+    box-shadow: 0 0 10px #00e5ff22;
+    border: 1px solid #1a1a3d;
+  }
+  
+  .panel h2 {
+    margin-top: 0;
+    font-size: 1.2rem;
+    color: #00e5ff;
+    border-bottom: 1px solid #00e5ff33;
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+  }
+  
+  .panel p,
+  .panel label {
+    font-size: 0.95rem;
+    margin-bottom: 6px;
+  }
+  
+  .log-feed {
+    height: 150px;
+    overflow-y: auto;
+    background: #0e0e1c;
+    padding: 10px;
+    border: 1px solid #2c2c4d;
+    border-radius: 6px;
+    font-size: 0.9rem;
+  }
+  
+  .log-entry {
+    padding: 4px 0;
+  }
+  
+  .stats-grid p {
+    margin: 6px 0;
+  }
+  
+  .manual-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .manual-controls input[type="text"] {
+    padding: 6px;
+    background: #1c1c3c;
+    border: 1px solid #2c2c4d;
+    color: #e0f7fa;
+    border-radius: 4px;
+  }
+  
+  .manual-controls input[type="range"] {
+    width: 100%;
+  }
+  
+  .manual-buttons button {
+    margin: 4px;
+    padding: 8px 12px;
+    background-color: #002b36;
+    color: #00e5ff;
+    border: 1px solid #00796b;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: 0.3s ease;
+  }
+  
+  .manual-buttons button:hover {
+    background-color: #003c4f;
+  }
+  
+  #capital-score-display {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #00ffc3;
+  }
+  
+  .status-dot {
+    margin: 12px auto;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1rem;
+    color: #ffa726;
+  }
+  
+  #open-positions {
+    background: #0e0e1c;
+    border: 1px dashed #00bcd4;
+    padding: 10px;
+    border-radius: 6px;
+    min-height: 60px;
+  }
+  
+  #no-positions-msg {
+    color: #888;
+    font-style: italic;
+  }
+  
+  .trade-history-table {
+    overflow-x: auto;
+  }
+  
+  .trade-history-table table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #e0f7fa;
+  }
+  
+  .trade-history-table th,
+  .trade-history-table td {
+    padding: 8px;
+    text-align: center;
+    border-bottom: 1px solid #2e2e3e;
+  }
+  
+  .trade-history-table th {
+    background-color: #112233;
+    color: #00e5ff;
+  }
+  
+  .trade-history-table tr:hover {
+    background-color: #1b1b33;
+  }
+  
+  #poseidon-bot {
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 999;
+  }
+  
+  .bot-glow {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #00e5ff44, #001a1a00);
+    position: absolute;
+    top: 0;
+    left: 0;
+    animation: pulse 2s infinite ease-in-out;
+  }
+  
+  @keyframes pulse {
+    0% { transform: scale(0.9); opacity: 0.6; }
+    50% { transform: scale(1.1); opacity: 1; }
+    100% { transform: scale(0.9); opacity: 0.6; }
+  }
+  /* === GENERAL PANEL GLOW === */
+.panel {
+  background-color: #111;
+  border: 1px solid #00ffaa22;
+  box-shadow: 0 0 8px #00ffaa22;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  transition: box-shadow 0.3s ease;
+}
+
+.panel:hover {
+  box-shadow: 0 0 12px #00ffaa55;
+}
+
+/* === BUTTONS === */
+button {
+  background-color: #0d0d0d;
+  color: #00ffee;
+  border: 1px solid #00ffee99;
+  border-radius: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+button:hover {
+  background-color: #111;
+  box-shadow: 0 0 6px #00ffeeaa;
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+/* === ACTIVE DIRECTION BUTTON === */
+.active-direction {
+  border: 2px solid #00ffcc;
+  background: #111;
+  box-shadow: 0 0 10px #00ffcc66;
+}
+
+/* === RANGE SLIDERS === */
+input[type="range"] {
+  width: 100%;
+  background: linear-gradient(to right, #00ffaa, #0044ff);
+  height: 6px;
+  border-radius: 4px;
+  appearance: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: #00ffee;
+  border: 2px solid #0044ff;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 6px #00ffeeaa;
+}
+
+/* === OPEN POSITIONS PANEL === */
+.open-positions-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Highlight active open trades */
+.position-card.active-trade {
+  border: 2px solid #00ffcc;
+  box-shadow: 0 0 10px #00ffcc99;
+  background-color: #101010;
+  padding: 10px;
+  border-radius: 6px;
+}
+
+/* === TRADE HISTORY === */
+.trade-history-table table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #ccc;
+}
+
+.trade-history-table th,
+.trade-history-table td {
+  border: 1px solid #333;
+  padding: 6px 10px;
+  text-align: center;
+}
+
+.trade-history-table .pnl-positive {
+  color: #00ff99;
+  font-weight: bold;
+}
+
+.trade-history-table .pnl-negative {
+  color: #ff4444;
+  font-weight: bold;
+}
+
+/* === STATUS DOT === */
+.status-dot {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  font-size: 12px;
+  background: #222;
+  border-radius: 50%;
+  padding: 4px;
+  color: #fff;
+}
+
+/* === NAVIGATION BAR === */
+.nav-bar a {
+  color: #ccc;
+  margin-right: 20px;
+  text-decoration: none;
+}
+
+.nav-bar a.active {
+  color: #00ffee;
+  font-weight: bold;
+  text-shadow: 0 0 6px #00ffeeaa;
+}

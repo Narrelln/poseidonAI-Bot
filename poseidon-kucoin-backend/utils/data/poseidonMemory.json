@@ -1,0 +1,944 @@
+{
+  "MERLUSDTM": {
+    "LONG": {
+      "wins": 0,
+      "losses": 1,
+      "trades": 1,
+      "currentStreak": -1,
+      "bestStreak": 0,
+      "worstStreak": -1,
+      "roiHistory": [
+        -8.303886925795045
+      ],
+      "confidenceHistory": [
+        68.9
+      ],
+      "contextHistory": [
+        {
+          "result": "loss",
+          "delta": -8.303886925795045,
+          "confidence": 68.9,
+          "dcaCount": 1,
+          "volume": null,
+          "volatility": null,
+          "time": 1751867760403,
+          "tradeType": "long"
+        }
+      ],
+      "bestContext": null,
+      "lastResult": "loss",
+      "lastTimestamp": 1751867760403
+    },
+    "SHORT": {
+      "wins": 0,
+      "losses": 0,
+      "trades": 0,
+      "currentStreak": 0,
+      "bestStreak": 0,
+      "worstStreak": 0,
+      "roiHistory": [],
+      "confidenceHistory": [],
+      "contextHistory": [],
+      "bestContext": null,
+      "lastResult": null,
+      "lastTimestamp": null
+    }
+  },
+  "REDSTONEUSDTM": {
+    "LONG": {
+      "wins": 1,
+      "losses": 1,
+      "trades": 2,
+      "currentStreak": -1,
+      "bestStreak": 1,
+      "worstStreak": -1,
+      "roiHistory": [
+        10.687762350661938,
+        -7.645939086294402
+      ],
+      "confidenceHistory": [
+        69.8,
+        79.6
+      ],
+      "contextHistory": [
+        {
+          "result": "win",
+          "delta": 10.687762350661938,
+          "confidence": 69.8,
+          "dcaCount": 0,
+          "volume": null,
+          "volatility": null,
+          "time": 1751873006233,
+          "tradeType": "long"
+        },
+        {
+          "result": "loss",
+          "delta": -7.645939086294402,
+          "confidence": 79.6,
+          "dcaCount": 1,
+          "volume": null,
+          "volatility": null,
+          "time": 1751882378390,
+          "tradeType": "long"
+        }
+      ],
+      "bestContext": {
+        "delta": 10.687762350661938,
+        "confidence": 69.8,
+        "dcaCount": 0,
+        "tradeType": "long",
+        "time": 1751873006233
+      },
+      "lastResult": "loss",
+      "lastTimestamp": 1751882378390
+    },
+    "SHORT": {
+      "wins": 0,
+      "losses": 1,
+      "trades": 1,
+      "currentStreak": -1,
+      "bestStreak": 0,
+      "worstStreak": -1,
+      "roiHistory": [
+        -10.687762350661938
+      ],
+      "confidenceHistory": [
+        69.8
+      ],
+      "contextHistory": [
+        {
+          "result": "loss",
+          "delta": -10.687762350661938,
+          "confidence": 69.8,
+          "dcaCount": 1,
+          "volume": null,
+          "volatility": null,
+          "time": 1751873006234,
+          "tradeType": "short"
+        }
+      ],
+      "bestContext": null,
+      "lastResult": "loss",
+      "lastTimestamp": 1751873006234
+    }
+  },
+  "PORTALUSDTM": {
+    "LONG": {
+      "wins": 0,
+      "losses": 1,
+      "trades": 1,
+      "currentStreak": -1,
+      "bestStreak": 0,
+      "worstStreak": -1,
+      "roiHistory": [
+        -7.623318385650224
+      ],
+      "confidenceHistory": [
+        64.2
+      ],
+      "contextHistory": [
+        {
+          "result": "loss",
+          "delta": -7.623318385650224,
+          "confidence": 64.2,
+          "dcaCount": 1,
+          "volume": null,
+          "volatility": null,
+          "time": 1751882502927,
+          "tradeType": "long"
+        }
+      ],
+      "bestContext": null,
+      "lastResult": "loss",
+      "lastTimestamp": 1751882502927
+    },
+    "SHORT": {
+      "wins": 0,
+      "losses": 0,
+      "trades": 0,
+      "currentStreak": 0,
+      "bestStreak": 0,
+      "worstStreak": 0,
+      "roiHistory": [],
+      "confidenceHistory": [],
+      "contextHistory": [],
+      "bestContext": null,
+      "lastResult": null,
+      "lastTimestamp": null
+    }
+  },
+  "SUPRAUSDTM": {
+    "LONG": {
+      "wins": 0,
+      "losses": 0,
+      "trades": 0,
+      "currentStreak": 0,
+      "bestStreak": 0,
+      "worstStreak": 0,
+      "roiHistory": [],
+      "confidenceHistory": [],
+      "contextHistory": [],
+      "bestContext": null,
+      "lastResult": null,
+      "lastTimestamp": null
+    },
+    "SHORT": {
+      "wins": 0,
+      "losses": 1,
+      "trades": 1,
+      "currentStreak": -1,
+      "bestStreak": 0,
+      "worstStreak": -1,
+      "roiHistory": [
+        -7.226562499999993
+      ],
+      "confidenceHistory": [
+        79.9
+      ],
+      "contextHistory": [
+        {
+          "result": "loss",
+          "delta": -7.226562499999993,
+          "confidence": 79.9,
+          "dcaCount": 1,
+          "volume": null,
+          "volatility": null,
+          "time": 1751882840186,
+          "tradeType": "short"
+        }
+      ],
+      "bestContext": null,
+      "lastResult": "loss",
+      "lastTimestamp": 1751882840186
+    }
+  },
+  "ALPINEUSDTM": {
+    "LONG": {
+      "wins": 0,
+      "losses": 2,
+      "trades": 2,
+      "currentStreak": -2,
+      "bestStreak": 0,
+      "worstStreak": -2,
+      "roiHistory": [
+        -7.009857612267256,
+        -7.087486157253606
+      ],
+      "confidenceHistory": [
+        69.9,
+        75.6
+      ],
+      "contextHistory": [
+        {
+          "result": "loss",
+          "delta": -7.009857612267256,
+          "confidence": 69.9,
+          "dcaCount": 1,
+          "volume": null,
+          "volatility": null,
+          "time": 1751884599303,
+          "tradeType": "long"
+        },
+        {
+          "result": "loss",
+          "delta": -7.087486157253606,
+          "confidence": 75.6,
+          "dcaCount": 1,
+          "volume": null,
+          "volatility": null,
+          "time": 1751892754593,
+          "tradeType": "long"
+        }
+      ],
+      "bestContext": null,
+      "lastResult": "loss",
+      "lastTimestamp": 1751892754594
+    },
+    "SHORT": {
+      "wins": 0,
+      "losses": 0,
+      "trades": 0,
+      "currentStreak": 0,
+      "bestStreak": 0,
+      "worstStreak": 0,
+      "roiHistory": [],
+      "confidenceHistory": [],
+      "contextHistory": [],
+      "bestContext": null,
+      "lastResult": null,
+      "lastTimestamp": null
+    }
+  },
+  "SOONUSDTM": {
+    "LONG": {
+      "wins": 0,
+      "losses": 0,
+      "trades": 0,
+      "currentStreak": 0,
+      "bestStreak": 0,
+      "worstStreak": 0,
+      "roiHistory": [],
+      "confidenceHistory": [],
+      "contextHistory": [],
+      "bestContext": null,
+      "lastResult": null,
+      "lastTimestamp": null
+    },
+    "SHORT": {
+      "wins": 0,
+      "losses": 1,
+      "trades": 1,
+      "currentStreak": -1,
+      "bestStreak": 0,
+      "worstStreak": -1,
+      "roiHistory": [
+        -7.447485677912169
+      ],
+      "confidenceHistory": [
+        64.3
+      ],
+      "contextHistory": [
+        {
+          "result": "loss",
+          "delta": -7.447485677912169,
+          "confidence": 64.3,
+          "dcaCount": 1,
+          "volume": null,
+          "volatility": null,
+          "time": 1751897357381,
+          "tradeType": "short"
+        }
+      ],
+      "bestContext": null,
+      "lastResult": "loss",
+      "lastTimestamp": 1751897357382
+    }
+  },
+  "PERPUSDTM": {
+    "LONG": {
+      "wins": 0,
+      "losses": 0,
+      "trades": 0,
+      "currentStreak": 0,
+      "bestStreak": 0,
+      "worstStreak": 0,
+      "roiHistory": [],
+      "confidenceHistory": [],
+      "contextHistory": [],
+      "bestContext": null,
+      "lastResult": null,
+      "lastTimestamp": null
+    },
+    "SHORT": {
+      "wins": 0,
+      "losses": 1,
+      "trades": 1,
+      "currentStreak": -1,
+      "bestStreak": 0,
+      "worstStreak": -1,
+      "roiHistory": [
+        -7.0484581497797265
+      ],
+      "confidenceHistory": [
+        78.7
+      ],
+      "contextHistory": [
+        {
+          "result": "loss",
+          "delta": -7.0484581497797265,
+          "confidence": 78.7,
+          "dcaCount": 1,
+          "volume": null,
+          "volatility": null,
+          "time": 1751899974150,
+          "tradeType": "short"
+        }
+      ],
+      "bestContext": null,
+      "lastResult": "loss",
+      "lastTimestamp": 1751899974150
+    }
+  },
+  "DUSDTM": {
+    "LONG": {
+      "wins": 0,
+      "losses": 0,
+      "trades": 0,
+      "currentStreak": 0,
+      "bestStreak": 0,
+      "worstStreak": 0,
+      "roiHistory": [],
+      "confidenceHistory": [],
+      "contextHistory": [],
+      "bestContext": null,
+      "lastResult": null,
+      "lastTimestamp": null
+    },
+    "SHORT": {
+      "wins": 0,
+      "losses": 1,
+      "trades": 1,
+      "currentStreak": -1,
+      "bestStreak": 0,
+      "worstStreak": -1,
+      "roiHistory": [
+        -9.55278369333738
+      ],
+      "confidenceHistory": [
+        72.9
+      ],
+      "contextHistory": [
+        {
+          "result": "loss",
+          "delta": -9.55278369333738,
+          "confidence": 72.9,
+          "dcaCount": 1,
+          "volume": null,
+          "volatility": null,
+          "time": 1751909733270,
+          "tradeType": "short"
+        }
+      ],
+      "bestContext": null,
+      "lastResult": "loss",
+      "lastTimestamp": 1751909733270
+    }
+  },
+  "MAGICUSDTM": {
+    "LONG": {
+      "wins": 1,
+      "losses": 0,
+      "trades": 1,
+      "currentStreak": 1,
+      "bestStreak": 1,
+      "worstStreak": 0,
+      "roiHistory": [
+        10.541110330288113
+      ],
+      "confidenceHistory": [
+        67.4
+      ],
+      "contextHistory": [
+        {
+          "result": "win",
+          "delta": 10.541110330288113,
+          "confidence": 67.4,
+          "dcaCount": 0,
+          "volume": null,
+          "volatility": null,
+          "time": 1751996434783,
+          "tradeType": "long"
+        }
+      ],
+      "bestContext": {
+        "delta": 10.541110330288113,
+        "confidence": 67.4,
+        "dcaCount": 0,
+        "tradeType": "long",
+        "time": 1751996434783
+      },
+      "lastResult": "win",
+      "lastTimestamp": 1751996434783
+    },
+    "SHORT": {
+      "wins": 0,
+      "losses": 2,
+      "trades": 2,
+      "currentStreak": -2,
+      "bestStreak": 0,
+      "worstStreak": -2,
+      "roiHistory": [
+        -10.541110330288113,
+        -7.610146862483326
+      ],
+      "confidenceHistory": [
+        67.4,
+        72.8
+      ],
+      "contextHistory": [
+        {
+          "result": "loss",
+          "delta": -10.541110330288113,
+          "confidence": 67.4,
+          "dcaCount": 1,
+          "volume": null,
+          "volatility": null,
+          "time": 1751996434784,
+          "tradeType": "short"
+        },
+        {
+          "result": "loss",
+          "delta": -7.610146862483326,
+          "confidence": 72.8,
+          "dcaCount": 2,
+          "volume": null,
+          "volatility": null,
+          "time": 1751997166850,
+          "tradeType": "short"
+        }
+      ],
+      "bestContext": null,
+      "lastResult": "loss",
+      "lastTimestamp": 1751997166850
+    }
+  },
+  "XEMUSDTM": {
+    "LONG": {
+      "wins": 0,
+      "losses": 1,
+      "trades": 1,
+      "currentStreak": -1,
+      "bestStreak": 0,
+      "worstStreak": -1,
+      "roiHistory": [
+        -8.518518518518526
+      ],
+      "confidenceHistory": [],
+      "contextHistory": [
+        {
+          "result": "loss",
+          "delta": -8.518518518518526,
+          "confidence": null,
+          "dcaCount": 1,
+          "volume": null,
+          "volatility": null,
+          "time": 1751996454642,
+          "tradeType": "long"
+        }
+      ],
+      "bestContext": null,
+      "lastResult": "loss",
+      "lastTimestamp": 1751996454642
+    },
+    "SHORT": {
+      "wins": 0,
+      "losses": 0,
+      "trades": 0,
+      "currentStreak": 0,
+      "bestStreak": 0,
+      "worstStreak": 0,
+      "roiHistory": [],
+      "confidenceHistory": [],
+      "contextHistory": [],
+      "bestContext": null,
+      "lastResult": null,
+      "lastTimestamp": null
+    }
+  },
+  "MEMEFIUSDTM": {
+    "LONG": {
+      "wins": 0,
+      "losses": 0,
+      "trades": 0,
+      "currentStreak": 0,
+      "bestStreak": 0,
+      "worstStreak": 0,
+      "roiHistory": [],
+      "confidenceHistory": [],
+      "contextHistory": [],
+      "bestContext": null,
+      "lastResult": null,
+      "lastTimestamp": null
+    },
+    "SHORT": {
+      "wins": 0,
+      "losses": 1,
+      "trades": 1,
+      "currentStreak": -1,
+      "bestStreak": 0,
+      "worstStreak": -1,
+      "roiHistory": [
+        -7.563025210084034
+      ],
+      "confidenceHistory": [],
+      "contextHistory": [
+        {
+          "result": "loss",
+          "delta": -7.563025210084034,
+          "confidence": null,
+          "dcaCount": 1,
+          "volume": null,
+          "volatility": null,
+          "time": 1752047250257,
+          "tradeType": "short"
+        }
+      ],
+      "bestContext": null,
+      "lastResult": "loss",
+      "lastTimestamp": 1752047250258
+    }
+  },
+  "BRUSDTM": {
+    "LONG": {
+      "wins": 2,
+      "losses": 0,
+      "trades": 2,
+      "currentStreak": 2,
+      "bestStreak": 2,
+      "worstStreak": 0,
+      "roiHistory": [
+        10.61643835616439,
+        13.08411214953272
+      ],
+      "confidenceHistory": [
+        60.8,
+        79.1
+      ],
+      "contextHistory": [
+        {
+          "result": "win",
+          "delta": 10.61643835616439,
+          "confidence": 60.8,
+          "dcaCount": 0,
+          "volume": null,
+          "volatility": null,
+          "time": 1752057979836,
+          "tradeType": "long"
+        },
+        {
+          "result": "win",
+          "delta": 13.08411214953272,
+          "confidence": 79.1,
+          "dcaCount": 0,
+          "volume": null,
+          "volatility": null,
+          "time": 1752057991135,
+          "tradeType": "long"
+        }
+      ],
+      "bestContext": {
+        "delta": 13.08411214953272,
+        "confidence": 79.1,
+        "dcaCount": 0,
+        "tradeType": "long",
+        "time": 1752057991135
+      },
+      "lastResult": "win",
+      "lastTimestamp": 1752057991135
+    },
+    "SHORT": {
+      "wins": 0,
+      "losses": 4,
+      "trades": 4,
+      "currentStreak": -4,
+      "bestStreak": 0,
+      "worstStreak": -4,
+      "roiHistory": [
+        -7.191780821917812,
+        -20,
+        -12.654958677685954,
+        -8.296943231441043
+      ],
+      "confidenceHistory": [
+        60.8,
+        79.1,
+        66,
+        67.7
+      ],
+      "contextHistory": [
+        {
+          "result": "loss",
+          "delta": -7.191780821917812,
+          "confidence": 60.8,
+          "dcaCount": 1,
+          "volume": null,
+          "volatility": null,
+          "time": 1752057950896,
+          "tradeType": "short"
+        },
+        {
+          "result": "loss",
+          "delta": -20,
+          "confidence": 79.1,
+          "dcaCount": 2,
+          "volume": null,
+          "volatility": null,
+          "time": 1752057991136,
+          "tradeType": "short"
+        },
+        {
+          "result": "loss",
+          "delta": -12.654958677685954,
+          "confidence": 66,
+          "dcaCount": 2,
+          "volume": null,
+          "volatility": null,
+          "time": 1752058004935,
+          "tradeType": "short"
+        },
+        {
+          "result": "loss",
+          "delta": -8.296943231441043,
+          "confidence": 67.7,
+          "dcaCount": 1,
+          "volume": null,
+          "volatility": null,
+          "time": 1752059696640,
+          "tradeType": "short"
+        }
+      ],
+      "bestContext": null,
+      "lastResult": "loss",
+      "lastTimestamp": 1752059696641
+    }
+  },
+  "ZEREBROUSDTM": {
+    "LONG": {
+      "wins": 0,
+      "losses": 2,
+      "trades": 2,
+      "currentStreak": -2,
+      "bestStreak": 0,
+      "worstStreak": -2,
+      "roiHistory": [
+        -11.0236220472441,
+        -13.055555555555562
+      ],
+      "confidenceHistory": [],
+      "contextHistory": [
+        {
+          "result": "loss",
+          "delta": -11.0236220472441,
+          "confidence": null,
+          "dcaCount": 1,
+          "volume": null,
+          "volatility": null,
+          "time": 1752115833123,
+          "tradeType": "long"
+        },
+        {
+          "result": "loss",
+          "delta": -13.055555555555562,
+          "confidence": null,
+          "dcaCount": 2,
+          "volume": null,
+          "volatility": null,
+          "time": 1752124258850,
+          "tradeType": "long"
+        }
+      ],
+      "bestContext": null,
+      "lastResult": "loss",
+      "lastTimestamp": 1752124258851
+    },
+    "SHORT": {
+      "wins": 1,
+      "losses": 0,
+      "trades": 1,
+      "currentStreak": 1,
+      "bestStreak": 1,
+      "worstStreak": 0,
+      "roiHistory": [
+        11.0236220472441
+      ],
+      "confidenceHistory": [],
+      "contextHistory": [
+        {
+          "result": "win",
+          "delta": 11.0236220472441,
+          "confidence": null,
+          "dcaCount": 0,
+          "volume": null,
+          "volatility": null,
+          "time": 1752115833125,
+          "tradeType": "short"
+        }
+      ],
+      "bestContext": {
+        "delta": 11.0236220472441,
+        "confidence": null,
+        "dcaCount": 0,
+        "tradeType": "short",
+        "time": 1752115833125
+      },
+      "lastResult": "win",
+      "lastTimestamp": 1752115833125
+    }
+  },
+  "HYPERUSDTM": {
+    "LONG": {
+      "wins": 1,
+      "losses": 0,
+      "trades": 1,
+      "currentStreak": 1,
+      "bestStreak": 1,
+      "worstStreak": 0,
+      "roiHistory": [
+        10.193599367838795
+      ],
+      "confidenceHistory": [
+        76.4
+      ],
+      "contextHistory": [
+        {
+          "result": "win",
+          "delta": 10.193599367838795,
+          "confidence": 76.4,
+          "dcaCount": 0,
+          "volume": null,
+          "volatility": null,
+          "time": 1752142156844,
+          "tradeType": "long"
+        }
+      ],
+      "bestContext": {
+        "delta": 10.193599367838795,
+        "confidence": 76.4,
+        "dcaCount": 0,
+        "tradeType": "long",
+        "time": 1752142156845
+      },
+      "lastResult": "win",
+      "lastTimestamp": 1752142156845
+    },
+    "SHORT": {
+      "wins": 0,
+      "losses": 4,
+      "trades": 4,
+      "currentStreak": -4,
+      "bestStreak": 0,
+      "worstStreak": -4,
+      "roiHistory": [
+        -8.336625839589098,
+        -7.035842973639299,
+        -13.106856084002489,
+        -7.450224791265253
+      ],
+      "confidenceHistory": [
+        73.6,
+        76.4,
+        70.7,
+        74.2
+      ],
+      "contextHistory": [
+        {
+          "result": "loss",
+          "delta": -8.336625839589098,
+          "confidence": 73.6,
+          "dcaCount": 1,
+          "volume": null,
+          "volatility": null,
+          "time": 1752142062850,
+          "tradeType": "short"
+        },
+        {
+          "result": "loss",
+          "delta": -7.035842973639299,
+          "confidence": 76.4,
+          "dcaCount": 2,
+          "volume": null,
+          "volatility": null,
+          "time": 1752142158813,
+          "tradeType": "short"
+        },
+        {
+          "result": "loss",
+          "delta": -13.106856084002489,
+          "confidence": 70.7,
+          "dcaCount": 2,
+          "volume": null,
+          "volatility": null,
+          "time": 1752142291910,
+          "tradeType": "short"
+        },
+        {
+          "result": "loss",
+          "delta": -7.450224791265253,
+          "confidence": 74.2,
+          "dcaCount": 1,
+          "volume": null,
+          "volatility": null,
+          "time": 1752143401020,
+          "tradeType": "short"
+        }
+      ],
+      "bestContext": null,
+      "lastResult": "loss",
+      "lastTimestamp": 1752143401020
+    }
+  },
+  "AINUSDTM": {
+    "LONG": {
+      "wins": 1,
+      "losses": 1,
+      "trades": 2,
+      "currentStreak": -1,
+      "bestStreak": 1,
+      "worstStreak": -1,
+      "roiHistory": [
+        11.73921006043587,
+        -8.841528881254032
+      ],
+      "confidenceHistory": [],
+      "contextHistory": [
+        {
+          "result": "win",
+          "delta": 11.73921006043587,
+          "confidence": null,
+          "dcaCount": 0,
+          "volume": null,
+          "volatility": null,
+          "time": 1752184830354,
+          "tradeType": "long"
+        },
+        {
+          "result": "loss",
+          "delta": -8.841528881254032,
+          "confidence": null,
+          "dcaCount": 1,
+          "volume": null,
+          "volatility": null,
+          "time": 1752185010396,
+          "tradeType": "long"
+        }
+      ],
+      "bestContext": {
+        "delta": 11.73921006043587,
+        "confidence": null,
+        "dcaCount": 0,
+        "tradeType": "long",
+        "time": 1752184830354
+      },
+      "lastResult": "loss",
+      "lastTimestamp": 1752185010397
+    },
+    "SHORT": {
+      "wins": 0,
+      "losses": 2,
+      "trades": 2,
+      "currentStreak": -2,
+      "bestStreak": 0,
+      "worstStreak": -2,
+      "roiHistory": [
+        -8.119162444295206,
+        -7.380030505690489
+      ],
+      "confidenceHistory": [],
+      "contextHistory": [
+        {
+          "result": "loss",
+          "delta": -8.119162444295206,
+          "confidence": null,
+          "dcaCount": 1,
+          "volume": null,
+          "volatility": null,
+          "time": 1752184769266,
+          "tradeType": "short"
+        },
+        {
+          "result": "loss",
+          "delta": -7.380030505690489,
+          "confidence": null,
+          "dcaCount": 2,
+          "volume": null,
+          "volatility": null,
+          "time": 1752184830356,
+          "tradeType": "short"
+        }
+      ],
+      "bestContext": null,
+      "lastResult": "loss",
+      "lastTimestamp": 1752184830356
+    }
+  }
+}

@@ -1,0 +1,65 @@
+/* === POSEIDON THEME & GLOBAL COLORS === */
+
+/* Google Fonts import, only if not done in HTML */
+@import url('https://fonts.googleapis.com/css?family=Orbitron:400,700|Share+Tech+Mono:400,700&display=swap');
+
+:root {
+  --font-main: 'Orbitron', 'Share Tech Mono', Arial, sans-serif;
+
+  --color-bg: #0a0f1d;
+  --color-panel: #111b2d;
+  --color-heading: #00f7ff;
+  --color-text: #b9ecfa;
+
+  --color-nav: #091524;
+  --color-nav-active: #00f7ff;
+
+  --color-btn: #0e253a;
+  --color-btn-hover: #00ffe2;
+  --color-btn-text: #00e5ff;
+
+  --glow-panel: 0 0 18px #00f7ff22;
+  --glow-main: 0 0 24px #00f7ff66, 0 1px 8px #00eaff44 inset;
+}
+
+/* Global body styles */
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-main);
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  letter-spacing: 0.02em;
+}
+
+/* Scrollbar for modern browsers */
+body, .panel, .log-feed, .table {
+  scrollbar-color: #00e5ff22 #0a0f1d;
+  scrollbar-width: thin;
+}
+body::-webkit-scrollbar, .panel::-webkit-scrollbar {
+  width: 10px;
+  background: #0a0f1d;
+}
+body::-webkit-scrollbar-thumb, .panel::-webkit-scrollbar-thumb {
+  background: #00e5ff33;
+  border-radius: 8px;
+}
+
+/* Link styles (default) */
+a {
+  color: var(--color-nav-active);
+  text-decoration: none;
+  transition: color 0.18s;
+}
+a:hover {
+  color: var(--color-heading);
+  text-shadow: 0 0 8px #00f7ff77;
+}
+
+/* Selection */
+::selection {
+  background: #00f7ff33;
+  color: #fff;
+}
