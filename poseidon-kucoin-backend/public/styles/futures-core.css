@@ -236,3 +236,91 @@
   text-shadow: 0 0 2px #00ffcc66;
   margin: 5px 0;
 }
+#scanner-toggle button {
+  background: #111;
+  border: 1px solid #444;
+  color: #ccc;
+  padding: 6px 12px;
+  margin-right: 6px;
+  cursor: pointer;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+#scanner-toggle button.active-tab {
+  background: #00ff99;
+  color: #000;
+}
+
+#scanning-list {
+  font-family: 'JetBrains Mono', 'Roboto Mono', 'Courier Prime', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 8px;
+}
+
+.scan-entry {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 4px 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.scan-entry .symbol {
+  min-width: 100px;
+  font-weight: 600;
+}
+
+.scan-entry .price {
+  min-width: 90px;
+  color: #ccc;
+}
+
+.scan-entry .change {
+  min-width: 70px;
+}
+
+.scan-entry .volume {
+  min-width: 130px;
+  color: #bbb;
+}
+/* /public/scannerPanel.css */
+
+#scanning-list {
+  padding: 12px;
+  font-family: 'Roboto Mono', 'Courier New', monospace;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.log-entry {
+  background: #0f1114;
+  color: #ddd;
+  border-left: 4px solid #444;
+  padding: 10px;
+  margin-bottom: 6px;
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.log-entry span {
+  font-family: 'Roboto Mono', monospace;
+}
+
+.change-positive {
+  color: #00ff99;
+}
+
+.change-negative {
+  color: #ff6666;
+}
+
+.active-tab {
+  border-bottom: 2px solid #00f2ff;
+  font-weight: bold;
+}
+

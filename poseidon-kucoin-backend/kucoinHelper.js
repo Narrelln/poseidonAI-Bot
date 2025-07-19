@@ -116,9 +116,12 @@ async function getOpenFuturesPositions() {
 
       const roi = margin > 0 ? ((pnl / margin) * 100).toFixed(2) + '%' : '-';
 
+      // ✅ PATCHED: Normalized symbol
+      const normalizedSymbol = pos.symbol.replace('-USDTM', 'USDT');
+
       return {
         contract: pos.symbol,
-        symbol: pos.symbol,
+        symbol: normalizedSymbol,
         side: isLong ? 'buy' : 'sell',
         entryPrice: entryPrice.toFixed(4),
         quantity,
@@ -166,7 +169,7 @@ async function getKucoinFuturesSymbols() {
     const res = await axios.get(`${BASE_URL}${endpoint}`);
     return res.data.data
       .filter(c => /USDTM$/i.test(c.symbol) && /Open/i.test(c.status))
-      .map(c => c.symbol)
+      .map(c => c.symbol.replace('-USDTM', 'USDT')) // ✅ PATCHED: Normalized symbol list
       .sort();
   } catch (err) {
     console.error('❌ Fetching symbols failed:', err?.response?.data || err);

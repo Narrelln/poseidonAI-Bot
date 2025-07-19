@@ -1,10 +1,8 @@
-// taHandler.js — Real Technical Analysis for KuCoin Futures
-
 const axios = require('axios');
 const { MACD, BollingerBands, RSI } = require('technicalindicators');
-const { parseToKucoinContractSymbol } = require('../kucoinHelper'); // <--- PATCHED
+const { parseToKucoinContractSymbol } = require('../kucoinHelper'); // ⬅️ Make sure this helper is present
 
-// Utility: Fetch historical closes from KuCoin
+// Fetch KuCoin closes
 async function fetchKucoinCloses(symbol, limit = 100) {
   symbol = parseToKucoinContractSymbol(symbol);
   const now = Math.floor(Date.now() / 1000);
@@ -13,10 +11,10 @@ async function fetchKucoinCloses(symbol, limit = 100) {
     `https://api-futures.kucoin.com/api/v1/kline/query?symbol=${symbol}&granularity=1&from=${from}&to=${now}`
   );
   if (res.data.code !== "200000" || !Array.isArray(res.data.data)) throw new Error('No data from KuCoin');
-  return res.data.data.map(row => parseFloat(row[2])); // close price
+  return res.data.data.map(row => parseFloat(row[2])); // close prices
 }
 
-// Utility: Fetch full Klines (needed for volume fade detection)
+// Fetch full candles for volume fade detection
 async function fetchKucoinKlines(symbol, limit = 60) {
   symbol = parseToKucoinContractSymbol(symbol);
   const now = Math.floor(Date.now() / 1000);
@@ -25,7 +23,7 @@ async function fetchKucoinKlines(symbol, limit = 60) {
     `https://api-futures.kucoin.com/api/v1/kline/query?symbol=${symbol}&granularity=1&from=${from}&to=${now}`
   );
   if (res.data.code !== "200000" || !Array.isArray(res.data.data)) throw new Error('No klines');
-  return res.data.data; // full rows: [timestamp, open, close, high, low, volume, turnover]
+  return res.data.data;
 }
 
 // MACD
@@ -49,7 +47,7 @@ async function getMACD(symbol) {
   };
 }
 
-// BB
+// Bollinger Bands
 async function getBB(symbol) {
   const closes = await fetchKucoinCloses(symbol, 40);
   const bb = BollingerBands.calculate({
@@ -70,10 +68,7 @@ async function getBB(symbol) {
 // RSI
 async function getRSI(symbol) {
   const closes = await fetchKucoinCloses(symbol, 50);
-  const rsi = RSI.calculate({
-    values: closes,
-    period: 14
-  });
+  const rsi = RSI.calculate({ values: closes, period: 14 });
   const last = rsi[rsi.length - 1];
   return parseFloat(last?.toFixed(2)) || null;
 }
@@ -92,7 +87,7 @@ async function detectVolumeFade(symbol) {
   return avgRecent < avgEarlier * 0.7;
 }
 
-// Main TA Aggregator for frontend
+// Combined TA fetcher
 async function getTA(symbol) {
   try {
     const [macd, bb, rsi, volumeFade] = await Promise.all([

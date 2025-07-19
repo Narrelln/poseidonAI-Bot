@@ -1,5 +1,37 @@
 [
   {
+    "symbol": "CUSDTM",
+    "side": "sell",
+    "entry": "0.3091",
+    "exit": "0.3091",
+    "pnl": "0.0006",
+    "pnlPercent": "0.06%",
+    "roi": "0.06%",
+    "size": 32.331,
+    "leverage": 10,
+    "orderId": "335859178788708353",
+    "status": "CLOSED",
+    "timestamp": "2025-07-19T01:24:44.352Z",
+    "date": "2025-07-19 02:27",
+    "closedAt": "2025-07-19T01:27:18.633Z"
+  },
+  {
+    "symbol": "CUSDTM",
+    "side": "sell",
+    "entry": "0.3322",
+    "exit": "0.3288",
+    "pnl": "0.1020",
+    "pnlPercent": "10.23%",
+    "roi": "10.23%",
+    "size": 30.006,
+    "leverage": 10,
+    "orderId": "335840267133276160",
+    "status": "CLOSED",
+    "timestamp": "2025-07-19T00:09:35.666Z",
+    "date": "2025-07-19 01:25",
+    "closedAt": "2025-07-19T00:25:54.860Z"
+  },
+  {
     "symbol": "KNCUSDTM",
     "side": "sell",
     "entry": "0.5425",
@@ -1533,33 +1565,5 @@
     "status": "OPEN",
     "timestamp": "2025-07-05T19:03:07.771Z",
     "date": "2025-07-05 20:03"
-  },
-  {
-    "symbol": "HBARUSDTM",
-    "side": "sell",
-    "entry": "0.1500",
-    "exit": "",
-    "pnl": "0.00",
-    "pnlPercent": "0.00%",
-    "size": 1,
-    "leverage": 5,
-    "orderId": "331051734581403650",
-    "status": "OPEN",
-    "timestamp": "2025-07-05T19:01:26.186Z",
-    "date": "2025-07-05 20:01"
-  },
-  {
-    "symbol": "RESOLVUSDTM",
-    "side": "sell",
-    "entry": "0.1400",
-    "exit": "",
-    "pnl": "0.00",
-    "pnlPercent": "0.00%",
-    "size": 1,
-    "leverage": 5,
-    "orderId": "331042360836317184",
-    "status": "OPEN",
-    "timestamp": "2025-07-05T18:24:14.282Z",
-    "date": "2025-07-05 19:24"
   }
 ]

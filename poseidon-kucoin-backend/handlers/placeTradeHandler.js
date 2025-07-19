@@ -40,7 +40,7 @@ async function placeFuturesOrder({
   side,
   leverage = 5,
   size = 1,
-  notionalUsd = null, // ✅ Accept margin-based input
+  notionalUsd = null,
   type = 'market',
   reduceOnly = false,
   tp = null,
@@ -67,12 +67,28 @@ async function placeFuturesOrder({
   }
 
   let contractQty = 1;
-  if (!isNaN(notionalUsd) && price > 0) {
-    contractQty = +(Number(notionalUsd) * safeLeverage / price).toFixed(3);
-    console.log(`[MARGIN INPUT] notionalUsd=${notionalUsd}, leverage=${safeLeverage}, price=${price} → size=${contractQty}`);
-  } else if (!isNaN(size)) {
-    contractQty = Number(size);
+
+  // === Dynamic Capital Scaling ===
+  let allocationUsd = 1;
+  try {
+    const accountEndpoint = '/api/v1/account-overview';
+    const accountHeaders = signKucoinV3Request('GET', accountEndpoint, '', '', API_KEY, API_SECRET, API_PASSPHRASE);
+    const balanceRes = await axios.get(BASE_URL + accountEndpoint, { headers: accountHeaders });
+    const balance = parseFloat(balanceRes?.data?.data?.availableBalance || 0);
+
+    if (!isNaN(balance) && balance > 0) {
+      const walletFraction = (typeof contract === 'object' && contract.confidence > 90) ? 0.25 : 0.10;
+      allocationUsd = +(balance * walletFraction).toFixed(2);
+      if (allocationUsd < 1) allocationUsd = 1;
+
+      console.log(`[ALLOC] Wallet=$${balance} â Allocated=${allocationUsd} USDT`);
+    }
+  } catch (e) {
+    console.warn('â ï¸ Wallet fetch failed:', e.message);
   }
+
+  // ✅ Always use 10% wallet allocation by default
+contractQty = +(allocationUsd * safeLeverage / price).toFixed(3);
 
   const safeTp = tp && !isNaN(tp) ? parseFloat(tp) : null;
   const safeSl = sl && !isNaN(sl) ? parseFloat(sl) : null;
@@ -80,7 +96,7 @@ async function placeFuturesOrder({
   try {
     const validSymbols = await getKucoinFuturesSymbols();
     const isValid = validSymbols.includes(normSymbol);
-    if (!isValid) console.warn(`[KUCOIN WARN] ${normSymbol} not found — continuing anyway.`);
+    if (!isValid) console.warn(`[KUCOIN WARN] ${normSymbol} not found â continuing anyway.`);
   } catch {}
 
   const openPositions = await getOpenFuturesPositions();
@@ -146,7 +162,7 @@ async function placeFuturesOrder({
       throw new Error(res.data?.msg || 'Order rejected');
     }
   } catch (err) {
-    console.error('❌ Order Error:', err?.response?.data || err.message);
+    console.error('â Order Error:', err?.response?.data || err.message);
     return { code: 'ERROR', msg: err?.response?.data?.msg || err.message || 'Order failed' };
   }
 }

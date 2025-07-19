@@ -1,7 +1,5 @@
-// trendPhaseDetector.js — Detects pump, peak, reversal zones for sniper trades
-
 import { fetchFuturesPrice } from './futuresApi.js';
-import { getMACD, getBB } from '../api/taHandler.js';
+
 
 export async function detectTrendPhase(symbol) {
   try {

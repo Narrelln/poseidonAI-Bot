@@ -1,34 +1,52 @@
-// === futuresExecutionModule.js — KuCoin-Compatible Manual + Auto Execution
+// === futuresExecutionModule.js — KuCoin-Compatible Manual + Auto Execution (with PPDA flip logic)
 
 import { updateCapitalScore } from './capitalRiskEngine.js';
 import { logToFeed } from './futuresUtils.js';
-import { fetchTradableSymbols, mapSymbolToContract } from './futuresApi.js';
+import { fetchTradableSymbols, getOpenPositions } from './futuresApi.js';
 import { triggerAutoShutdownWithCooldown } from './poseidonBotModule.js';
 
 let validSymbols = [];
 let symbolContractMap = {};
 
-// --- Helper: Map "DOGEUSDT" to "DOGE-USDTM"
+// --- Normalize "DOGEUSDT" → "DOGE-USDTM"
 function toKucoinContract(symbol) {
   if (symbolContractMap[symbol]) return symbolContractMap[symbol];
-  // crude but works for most: DOGEUSDT => DOGE-USDTM
   return symbol.replace("USDT", "-USDTM");
 }
 
 export async function initFuturesExecutionModule() {
   console.log("⚙️ Futures Trade Execution Module Loaded");
   validSymbols = await fetchTradableSymbols();
-  // Build a map for contract conversion
   symbolContractMap = {};
   validSymbols.forEach(sym => {
     symbolContractMap[sym] = toKucoinContract(sym);
   });
 }
 
-// === Main Trade Execution Handler ===
+// === Flip logic: close opposite first, then place new ===
+export async function placeAndFlip(symbol, side, size = 100, leverage = 5, isManual = false) {
+  symbol = symbol.toUpperCase();
+  const contract = toKucoinContract(symbol);
+  const oppositeSide = side === 'buy' ? 'sell' : 'buy';
+
+  try {
+    const open = await getOpenPositions(symbol);
+    const oppositePosition = open?.[oppositeSide.toUpperCase()];
+    if (oppositePosition && parseFloat(oppositePosition?.size || 0) > 0) {
+      logToFeed(`♻️ Closing ${oppositeSide.toUpperCase()} before flipping to ${side.toUpperCase()}`);
+      await closeTrade(symbol, oppositeSide);
+    }
+  } catch (err) {
+    console.warn(`⚠️ Could not check open positions before flip:`, err.message);
+  }
+
+  await executeTrade(symbol, side, size, isManual, leverage);
+}
+
+// === Main execution — for manual & auto trades ===
 export async function executeTrade(symbol, direction, size = 100, isManual = false, leverage = 5, tp = null, sl = null) {
   symbol = symbol.toUpperCase();
-  direction = direction.toLowerCase(); // "buy"/"sell" for KuCoin
+  direction = direction.toLowerCase();
 
   if (!validSymbols.includes(symbol)) {
     logToFeed(`⚠️ Symbol ${symbol} is not tradable.`);
@@ -37,21 +55,13 @@ export async function executeTrade(symbol, direction, size = 100, isManual = fal
 
   const contract = toKucoinContract(symbol);
   const tradeType = isManual ? 'Manual' : 'Auto';
-  const logMsg = `🟢 ${tradeType} ${direction.toUpperCase()} ${symbol} @ ${size} USDT ${tp ? `(TP: ${tp}%, SL: ${sl}%)` : ''}`;
-  logToFeed(logMsg);
+  logToFeed(`🟢 ${tradeType} ${direction.toUpperCase()} ${symbol} @ ${size} USDT`);
 
   try {
     const response = await fetch('/api/order', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contract,          // KuCoin expects contract key!
-        side: direction,   // must be "buy" or "sell"
-        size,
-        leverage,
-        tp,
-        sl
-      })
+      body: JSON.stringify({ contract, side: direction, size, leverage, tp, sl })
     });
 
     const result = await response.json();
@@ -60,7 +70,7 @@ export async function executeTrade(symbol, direction, size = 100, isManual = fal
     if (result?.code === "200000" || result?.success) {
       logToFeed(`✅ Trade executed: ${symbol} (${direction.toUpperCase()})`);
       updateCapitalScore(1);
-    } else if (result?.msg && result.msg.toLowerCase().includes("already open")) {
+    } else if (result?.msg?.toLowerCase?.().includes("already open")) {
       logToFeed(`⚠️ Trade already open for ${symbol} (${direction})`);
     } else {
       throw new Error(result?.msg || result?.error || "Unknown error");
@@ -73,14 +83,13 @@ export async function executeTrade(symbol, direction, size = 100, isManual = fal
   }
 }
 
-// === Close Trade Handler ===
+// === Close handler (used during flips) ===
 export async function closeTrade(symbol, side = null) {
   symbol = symbol.toUpperCase();
   const contract = toKucoinContract(symbol);
   logToFeed(`🔴 Closing position for ${symbol}...`);
 
   try {
-    // Now always send both contract and side for KuCoin backend logic
     const payload = { contract };
     if (side) payload.side = side.toLowerCase();
     const response = await fetch('/api/close-trade', {
@@ -100,4 +109,9 @@ export async function closeTrade(symbol, side = null) {
     console.error("❌ Close failed", err);
     logToFeed(`❌ Close failed: ${err.message}`);
   }
+}
+
+// === PPDA Entry (dual-side support) ===
+export async function ppdaExecute(symbol, side, usdtAmount = 5, leverage = 5) {
+  await placeAndFlip(symbol, side, usdtAmount, leverage, false);
 }

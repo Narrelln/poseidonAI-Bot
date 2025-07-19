@@ -6,11 +6,12 @@
   <title>Poseidon AI — Futures Dashboard</title>
   <link rel="icon" href="/favicon.ico" type="image/x-icon"/>
   <link href="/styles/futures.css" rel="stylesheet"/>
-  <link href="/styles/futures-core.css"rel="stylesheet"/>
-  <link href="/styles/manual-controls.css"rel="stylesheet"/> 
+  <link href="/styles/futures-core.css" rel="stylesheet"/>
+  <link href="/styles/manual-controls.css" rel="stylesheet"/> 
   <link rel="stylesheet" href="/styles/tables.css"/>
   <link rel="stylesheet" href="/styles/bot.css"/>
   <link rel="stylesheet" href="/styles/theme.css"/>
+  <link rel="stylesheet" href="/styles/scannerPanel.css" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Orbitron:400,700|Share+Tech+Mono:400,700&display=swap">
 </head>
 <body>
@@ -39,7 +40,6 @@
     <!-- LEFT COLUMN -->
     <div class="futures-col" style="flex: 1 1 0; min-width: 330px; padding-right: 16px; border-right: 2px solid #112b3a;">
 
-      <!-- 👇 Wallet + Capital moved to top-left -->
       <section class="account-glance">
         <div class="mini-block wallet-block">
           <h4>💰 Wallet</h4>
@@ -54,6 +54,15 @@
 
       <section class="panel" id="scanning-feed">
         <h2>🔎 Live Scanning</h2>
+        
+        <!-- Toggle Buttons -->
+        <div id="scanner-toggle" style="margin-bottom: 12px;">
+          <button id="toggle-gainers" class="active-tab">📈 Gainers</button>
+          <button id="toggle-losers">📉 Losers</button>
+          <button id="toggle-hot">🔥 Hot</button>
+        </div>
+      
+        <!-- Display Container -->
         <div id="scanning-list" class="log-feed">
           <div class="log-entry">Scanning for top gainers and losers...</div>
         </div>
@@ -199,28 +208,87 @@
           </table>
         </div>
       </section>
+
+      <section class="panel" id="ppda-monitor-panel">
+        <h2>📌 PPDA Monitor</h2>
+        <div id="ppda-monitor-feed" class="log-feed">
+          <div class="log-entry">Awaiting dual-entry events...</div>
+        </div>
+      </section>
+
+      <section class="panel" id="ppda-session-summary-panel">
+        <h2>📊 PPDA Session Summary</h2>
+        <div id="ppda-session-summary-body">
+          <div class="log-entry">Tracking dual-resolution performance...</div>
+        </div>
+      </section>
+
+      <!-- ✅ Poseidon Status Board -->
+      <section class="panel" id="poseidon-status-board">
+        <h2>📊 Poseidon Status Board</h2>
+        <div id="status-board">
+          <div id="status-entries"></div>
+        </div>
+      </section>
     </div>
   </main>
 
-  <script src="/socket.io/socket.io.js"></script>
-<script type="module" src="/scripts/futuresModule.js"></script>
-<script type="module" src="/scripts/futuresSignalModule.js"></script>
-<script type="module" src="/scripts/futuresStatsModule.js"></script>
-<script type="module" src="/scripts/positionEnhancer.js"></script>
-<script type="module" src="/scripts/futuresDecisionEngine.js"></script>
-
-<!-- ✅ Confirm Bullish Recovery Loader (Browser-Compatible) -->
-<script>
-  window.confirmBullishRecovery = async function(symbol) {
-    try {
-      const res = await fetch(`/api/confirm-recovery?symbol=${encodeURIComponent(symbol)}`);
-      const data = await res.json();
-      return data.bullishRecovery || false;
-    } catch (err) {
-      console.error('Confirm recovery error:', err.message);
-      return false;
+  <style>
+    #status-board {
+      background: #0b0b1a;
+      border: 1px solid #444;
+      padding: 10px;
+      max-height: 500px;
+      overflow-y: auto;
+      font-family: monospace;
+      color: #fff;
     }
-  };
-</script>
+    .status-entry {
+      border-bottom: 1px solid #222;
+      padding: 6px 0;
+    }
+    .status-entry strong {
+      color: #0ff;
+    }
+    .status-entry .tag {
+      display: inline-block;
+      margin-left: 6px;
+      font-size: 12px;
+      padding: 2px 4px;
+      border-radius: 4px;
+    }
+    .tag.buy { background: #0f04; color: #0f0; }
+    .tag.sell { background: #4004; color: #f44; }
+    .tag.pump { background: #040; color: #0f0; }
+    .tag.drop { background: #400; color: #f44; }
+  </style>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="module" src="/scripts/futuresModule.js"></script>
+  <script type="module" src="/scripts/futuresSignalModule.js"></script>
+  <script type="module" src="/scripts/futuresStatsModule.js"></script>
+  <script type="module" src="/scripts/positionEnhancer.js"></script>
+  <script type="module" src="/scripts/futuresDecisionEngine.js"></script>
+  <script type="module" src="/scripts/walletModule.js"></script>
+  <script src="/scripts/tradeHistoryPanel.js"></script>
+  <script type="module" src="/scripts/scannerPanel.js"></script>
+
+  <script>
+    window.confirmBullishRecovery = async function(symbol) {
+      try {
+        const res = await fetch(`/api/confirm-recovery?symbol=${encodeURIComponent(symbol)}`);
+        const data = await res.json();
+        return data.bullishRecovery || false;
+      } catch (err) {
+        console.error('Confirm recovery error:', err.message);
+        return false;
+      }
+    };
+  </script>
+  <script type="module">
+    import { startSignalEngine } from '/scripts/futuresSignalModule.js';
+    startSignalEngine();
+    console.log('🚀 Signal Engine Started');
+  </script>
 </body>
 </html>

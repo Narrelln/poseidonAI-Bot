@@ -1,6 +1,10 @@
 import { fetchFuturesPrice, fetchVolumeAndOI, getOpenPositions } from './futuresApi.js';
 import { getLastClosedTrade } from './futuresPositionTracker.js';
 
+void fetchFuturesPrice;
+void fetchVolumeAndOI
+
+
 export async function updateFuturesSummary(symbol = 'DOGEUSDT') {
   const summaryPanel = document.getElementById('futures-connection');
   const lastTradeEl = document.getElementById('futures-last-trade');

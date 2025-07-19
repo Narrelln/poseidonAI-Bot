@@ -2,7 +2,7 @@
 
 import { setFuturesConnectionStatus } from './futuresModule.js';
 import { makeTradeDecision, initFuturesDecisionEngine } from './futuresDecisionEngine.js';
-import { getActiveSymbols } from './futuresSignalModule.js';
+import { getActiveSymbols } from './poseidonScanner.js';
 
 let autoShutdownTimer = null;
 let autoResumeTimer = null;
@@ -20,7 +20,11 @@ function startPoseidonAutonomousLoop() {
     const symbols = getActiveSymbols();
     if (Array.isArray(symbols) && symbols.length) {
       for (const symbol of symbols) {
-        await makeTradeDecision(symbol);
+        try {
+          await makeTradeDecision(symbol);
+        } catch (err) {
+          console.warn(`[Poseidon] Failed to evaluate ${symbol}:`, err.message);
+        }
       }
     }
   }, 30000);
@@ -43,7 +47,6 @@ export function initBot() {
   }
 
   bot.addEventListener("click", () => {
-    // Debounce rapid toggling
     const now = Date.now();
     if (now - lastToggleTime < 600) return;
     lastToggleTime = now;
@@ -68,10 +71,8 @@ export function initBot() {
     }
   });
 
-  // Init timeout after DOM ready
   resetBotTimeout();
 
-  // If already active on load, start loop and set UI
   if (bot.classList.contains("active")) {
     setFuturesConnectionStatus("connected");
     startPoseidonAutonomousLoop();
@@ -88,7 +89,7 @@ export function initBot() {
 
 // -- Timeout after inactivity (10 min)
 function resetBotTimeout() {
-  clearTimeout(autoShutdownTimer);
+  if (autoShutdownTimer) clearTimeout(autoShutdownTimer);
   autoShutdownTimer = setTimeout(() => {
     const bot = document.getElementById("poseidon-bot");
     const glow = bot?.querySelector(".bot-glow");
@@ -104,7 +105,7 @@ function resetBotTimeout() {
       stopPoseidonAutonomousLoop();
       console.log("[Poseidon] Auto-disabled after inactivity.");
     }
-  }, 10 * 60 * 1000); // 10 min
+  }, 10 * 60 * 1000);
 }
 
 // -- Called externally (e.g. after 3 failed trades)
@@ -136,10 +137,13 @@ export function triggerAutoShutdownWithCooldown() {
     resetBotTimeout();
     startPoseidonAutonomousLoop();
     console.log("[Poseidon] Bot resumed after cooldown.");
-  }, 30 * 60 * 1000); // 30 min
+  }, 30 * 60 * 1000);
 }
 
 export function isBotActive() {
   const bot = document.getElementById("poseidon-bot");
   return !!bot?.classList.contains("active");
 }
+
+// Optional: expose timeout reset externally
+window.resetPoseidonBotTimeout = resetBotTimeout;

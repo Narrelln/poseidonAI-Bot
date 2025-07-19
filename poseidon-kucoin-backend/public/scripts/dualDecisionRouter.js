@@ -5,6 +5,8 @@ import { evaluatePPDA } from './ppdaDecisionEngine.js';
 import { executeTrade } from './futuresExecutionModule.js';
 import { getActiveSymbols } from './futuresSignalModule.js';
 
+void getActiveSymbols;
+
 let lastExecuted = {};
 
 export async function routeTradeDecision(symbol) {

@@ -1,16 +1,17 @@
-// === futuresSignalModule.js — Scanning + Signal Engine (Pump/Drop Detection, TA Analysis, Confidence) ===
+// === futuresSignalModule.js — Signal Engine with Scanner Loop ===
 
 import { fetchFuturesPrice, fetchVolumeAndOI } from './futuresApi.js';
 import { evaluatePoseidonDecision } from './futuresDecisionEngine.js';
 import { isBotActive } from './poseidonBotModule.js';
-import { setActiveSymbols } from './sessionStatsModule.js';
-import { initFuturesPositionTracker } from './futuresPositionTracker.js';
 import { detectTrendPhase } from './trendPhaseDetector.js';
+import { getActiveSymbols, refreshSymbols } from './poseidonScanner.js';
 
-let activeSymbols = [];
 const MAX_VOLUME_CAP = 20_000_000;
 const taCache = new Map();
 const lastSignalLogTimestamps = new Map();
+
+let scanIndex = 0;
+let scanInterval; // 🆕 Added scan loop tracker
 
 async function fetchTA(symbol) {
   if (taCache.has(symbol)) return taCache.get(symbol);
@@ -29,16 +30,14 @@ async function fetchTA(symbol) {
 
 export async function analyzeAndTrigger(symbol, options = {}) {
   if (!isBotActive() && !options.manual) return;
-  taCache.clear();
 
   try {
     const { volume } = await fetchVolumeAndOI(symbol);
     const vol = parseFloat(volume) || 0;
     if (vol > MAX_VOLUME_CAP) return;
 
-    // 1️⃣ Check trend phase for sniper short
     const trendPhase = await detectTrendPhase(symbol);
-    if (trendPhase.phase === 'peak' || trendPhase.phase === 'reversal') {
+    if (['peak', 'reversal'].includes(trendPhase.phase)) {
       const analysis = {
         macdSignal: "Sell",
         bbSignal: "Breakdown",
@@ -46,52 +45,54 @@ export async function analyzeAndTrigger(symbol, options = {}) {
         confidence: 98,
         bigDrop: true,
         bigPump: false,
-        manual: options.manual || false
-      };
-      logSignalToFeed(symbol, {
-        ...analysis,
+        manual: options.manual || false,
         trendPhase: trendPhase.phase,
         reasons: trendPhase.reasons.join(', ')
-      }, true);
+      };
+      logSignalToFeed(symbol, analysis, true);
       await evaluatePoseidonDecision(symbol, analysis);
       return;
     }
 
-    // 2️⃣ Check big drop
     const bigDrop = await detectBigDrop(symbol);
     if (bigDrop) {
       const analysis = {
-        macdSignal: "Sell", bbSignal: "Breakdown", volumeSpike: true,
-        confidence: 99, bigDrop: true, bigPump: false, manual: options.manual || false
+        macdSignal: "Sell",
+        bbSignal: "Breakdown",
+        volumeSpike: true,
+        confidence: 99,
+        bigDrop: true,
+        bigPump: false,
+        manual: options.manual || false
       };
       logSignalToFeed(symbol, analysis, true);
       await evaluatePoseidonDecision(symbol, analysis);
       return;
     }
 
-    // 3️⃣ Check big pump
     const bigPump = await detectBigPump(symbol);
     if (bigPump) {
       const analysis = {
-        macdSignal: "Buy", bbSignal: "Breakout", volumeSpike: true,
-        confidence: 99, bigDrop: false, bigPump: true, manual: options.manual || false
+        macdSignal: "Buy",
+        bbSignal: "Breakout",
+        volumeSpike: true,
+        confidence: 99,
+        bigDrop: false,
+        bigPump: true,
+        manual: options.manual || false
       };
       logSignalToFeed(symbol, analysis, true);
       await evaluatePoseidonDecision(symbol, analysis);
       return;
     }
 
-    // 4️⃣ Standard TA Analysis
     const ta = await fetchTA(symbol);
     let macdSignal = 'Sell', bbSignal = 'None', volumeSpike = false;
+
     if (ta) {
       if (ta.macd?.signal) macdSignal = ta.macd.signal === 'bullish' ? 'Buy' : 'Sell';
       if (ta.bb?.breakout !== undefined) bbSignal = ta.bb.breakout ? 'Breakout' : 'None';
       volumeSpike = !!ta.volumeSpike;
-    } else {
-      macdSignal = Math.random() > 0.5 ? 'Buy' : 'Sell';
-      bbSignal = Math.random() > 0.7 ? 'Breakout' : 'None';
-      volumeSpike = Math.random() > 0.6;
     }
 
     const confidence = parseFloat(calculateConfidence(macdSignal, bbSignal, volumeSpike));
@@ -124,9 +125,7 @@ export async function detectBigDrop(symbol) {
   try {
     const { price, history } = await fetchFuturesPrice(symbol);
     if (!history || history.length < 2) return false;
-    const oldest = history[0];
-    const latest = price;
-    const percentDrop = ((oldest - latest) / oldest) * 100;
+    const percentDrop = ((history[0] - price) / history[0]) * 100;
     return percentDrop > 12;
   } catch (err) {
     console.warn(`⚡ Big drop check failed for ${symbol}:`, err.message);
@@ -138,9 +137,7 @@ export async function detectBigPump(symbol) {
   try {
     const { price, history } = await fetchFuturesPrice(symbol);
     if (!history || history.length < 2) return false;
-    const oldest = history[0];
-    const latest = price;
-    const percentPump = ((latest - oldest) / oldest) * 100;
+    const percentPump = ((price - history[0]) / history[0]) * 100;
     return percentPump > 12;
   } catch (err) {
     console.warn(`⚡ Big pump check failed for ${symbol}:`, err.message);
@@ -150,8 +147,7 @@ export async function detectBigPump(symbol) {
 
 function logSignalToFeed(symbol, analysis, highlight = false) {
   const now = Date.now();
-  const last = lastSignalLogTimestamps.get(symbol) || 0;
-  if (now - last < 30000) return;
+  if (now - (lastSignalLogTimestamps.get(symbol) || 0) < 30000) return;
   lastSignalLogTimestamps.set(symbol, now);
 
   const feed = document.getElementById("futures-signal-feed");
@@ -177,59 +173,21 @@ function logSignalToFeed(symbol, analysis, highlight = false) {
   }
 }
 
-export async function refreshSymbols() {
-  try {
-    const gainersRes = await fetch('/api/top-gainers');
-    const losersRes = await fetch('/api/top-losers');
-    const gainers = await gainersRes.json();
-    const losers = await losersRes.json();
-
-    const combined = [...gainers.slice(0, 21), ...losers.slice(0, 9)];
-    const uniqueSymbols = [...new Map(combined.map(item => [item.symbol, item])).values()];
-    activeSymbols = uniqueSymbols.map(e => e.symbol);
-    setActiveSymbols(activeSymbols);
-    updateScanningList(uniqueSymbols);
-    console.log("🧠 Active Futures Symbols:", activeSymbols);
-    activeSymbols.forEach(symbol => initFuturesPositionTracker(symbol));
-  } catch (err) {
-    console.error("❌ Symbol refresh failed:", err);
-  }
+// === 🆕 Start signal engine loop ===
+export function startSignalEngine() {
+  if (scanInterval) return;
+  refreshSymbols();
+  setInterval(refreshSymbols, 15 * 60 * 1000);
+  scanInterval = setInterval(() => {
+    const symbols = getActiveSymbols();
+    if (!symbols.length) return;
+    const symbol = symbols[scanIndex % symbols.length];
+    analyzeAndTrigger(symbol);
+    scanIndex++;
+  }, 5000);
 }
 
-export function updateScanningList(entries) {
-  const el = document.getElementById('scanning-list');
-  if (!el) return;
-  el.innerHTML = '';
-  entries.forEach(({ symbol, change }) => {
-    const entry = document.createElement('div');
-    entry.classList.add('log-entry');
-    if (change > 0) entry.classList.add('gainer');
-    else if (change < 0) entry.classList.add('loser');
-    entry.textContent = `${symbol} (${change.toFixed(2)}%)`;
-    el.appendChild(entry);
-  });
-}
-
-export function getActiveSymbols() {
-  return activeSymbols;
-}
-
-// === Intervals ===
-setInterval(refreshSymbols, 15 * 60 * 1000);
-refreshSymbols();
-
-setInterval(() => {
-  if (!activeSymbols.length) {
-    console.warn("🚫 No symbols to analyze. Waiting for refresh.");
-    return;
-  }
-  taCache.clear();
-  activeSymbols.forEach(symbol => analyzeAndTrigger(symbol));
-}, 12000);
-
-updateScanningList([]);
-
+// === Dev Window Bindings ===
 window.analyzeAndTrigger = analyzeAndTrigger;
-window.refreshSymbols = refreshSymbols;
 window.detectBigPump = detectBigPump;
 window.evaluatePoseidonDecision = evaluatePoseidonDecision;

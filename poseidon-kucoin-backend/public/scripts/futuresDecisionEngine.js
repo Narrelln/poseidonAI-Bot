@@ -1,19 +1,37 @@
-// === futuresDecisionEngine.js — Poseidon Deep Learning Trade Engine (Synced with FSM, Manual Trade Enabled) ===
+// === futuresDecisionEngine.js — Poseidon Deep Learning Trade Engine (With Capital Health) ===
 
 import { fetchFuturesPrice, fetchVolumeAndOI } from './futuresApi.js';
 import { updateMemoryFromResult, getMemory } from './updateMemoryFromResult.js';
 import { triggerAutoShutdownWithCooldown } from './poseidonBotModule.js';
-import { getActiveSymbols } from './futuresSignalModule.js';
+// import { getActiveSymbols } from './futuresSignalModule.js';
+// Symbol logic is now handled entirely by Poseidon scanner
+import { getActiveSymbols, refreshSymbols } from './poseidonScanner.js';
 import { detectTrendPhase } from './trendPhaseDetector.js';
+import { openDualEntry } from './ppdaEngine.js';
+import { getWalletBalance } from './walletModule.js';
 
 let memory = {};
 let failureStreak = 0;
 let lossRecoveryMode = false;
 let intervalStarted = false;
+let tradeCooldown = {}; // ⏳ Symbol-based cooldown
 
 const MAX_VOLUME_CAP = 20_000_000;
+const MIN_VOLUME_CAP = 100_000;
+const TRADE_COOLDOWN_MS = 60_000; // 1 minute between trades per symbol
 
-// === Utility: Get trade state ===
+// 💰 Capital Health Tracker
+const capitalState = {
+  total: 0,
+  allocated: 0,
+  free: 0,
+  update(wallet, allocations = []) {
+    this.total = wallet.available;
+    this.allocated = allocations.reduce((sum, a) => sum + a, 0);
+    this.free = Math.max(this.total - this.allocated, 0);
+  }
+};
+
 function getState(symbol, side) {
   if (!memory[symbol]) memory[symbol] = {};
   if (!memory[symbol][side]) {
@@ -30,28 +48,39 @@ function getState(symbol, side) {
   return memory[symbol][side];
 }
 
-// === MAIN LOGIC ===
+function isInCooldown(symbol) {
+  return Date.now() - (tradeCooldown[symbol] || 0) < TRADE_COOLDOWN_MS;
+}
+
+function updateCooldown(symbol) {
+  tradeCooldown[symbol] = Date.now();
+}
+
 export async function evaluatePoseidonDecision(symbol, signal = null) {
-  console.log(`[POSEIDON] Received decision request for ${symbol}:`, signal);
-  logDecision(symbol, `🧪 Starting analysis for ${symbol} — Manual: ${signal?.manual}`);
+  console.log(`[POSEIDON] Evaluating ${symbol}:`, signal);
+  logDecision(symbol, `🧪 Analyzing ${symbol} (Manual: ${signal?.manual})`);
+
+  if (isInCooldown(symbol)) {
+    logDecision(symbol, `⏳ Cooldown active — skipping ${symbol}`);
+    return;
+  }
+
   try {
     const priceData = await fetchFuturesPrice(symbol);
     const price = parseFloat(priceData?.price || 0);
     if (!price || isNaN(price) || price === 0) {
-      logDecision(symbol, `⚠️ Skipping ${symbol} — invalid price`);
+      logDecision(symbol, `⚠️ Invalid price for ${symbol}`);
       return;
     }
 
     const mem = getMemory(symbol);
-    let skipDueToMemory = false;
-    ["LONG", "SHORT"].forEach(side => {
+    for (const side of ["LONG", "SHORT"]) {
       const m = mem[side];
-      if (m.trades >= 8 && m.wins / m.trades < 0.30 && Math.abs(m.currentStreak) > 2) {
-        skipDueToMemory = true;
-        logDecision(symbol, `⛔ Skipping ${side} — COLD (Winrate: ${(m.wins / m.trades * 100).toFixed(1)}%, Streak: ${m.currentStreak})`);
+      if (m.trades >= 8 && m.wins / m.trades < 0.3 && Math.abs(m.currentStreak) > 2) {
+        logDecision(symbol, `❌ Skipping ${side} — cold memory (W:${m.wins}/${m.trades}, Streak:${m.currentStreak})`);
+        return;
       }
-    });
-    if (skipDueToMemory) return;
+    }
 
     let volume = 0;
     try {
@@ -62,147 +91,156 @@ export async function evaluatePoseidonDecision(symbol, signal = null) {
       return;
     }
 
-    let sides = ["short"];
+    if (volume > MAX_VOLUME_CAP && !signal?.override) {
+      logDecision(symbol, `❌ Skipping — too much volume (${(volume / 1e6).toFixed(1)}M)`);
+      return;
+    }
+    if (volume < MIN_VOLUME_CAP) {
+      logDecision(symbol, `❌ Skipping — volume too low (${(volume / 1e3).toFixed(0)}K)`);
+      return;
+    }
 
+    // === ✅ PPDA Auto Entry
+    if (!signal?.manual && signal?.confidence >= 75) {
+      const phase = await detectTrendPhase(symbol);
+      if (["peak", "reversal"].includes(phase?.phase)) {
+        logDecision(symbol, `🔀 PPDA Trigger — ${symbol} (${phase.phase}, C:${signal.confidence})`);
+        openDualEntry({ symbol, highConfidenceSide: "SHORT", lowConfidenceSide: "LONG", baseAmount: 1 });
+        updateCooldown(symbol);
+        return;
+      }
+    }
+
+    // === Sides Preference ===
+    let sides = signal?.forceLong ? ["long"] : ["short"];
     for (const side of sides) {
-      let allowTrade = signal?.manual;
+      if (side === "long" && !signal?.forceLong && !signal?.ppda && !signal?.manual) {
+        logDecision(symbol, `🚫 Skipping LONG — not high conviction`);
+        continue;
+      }
 
+      let allowTrade = signal?.manual;
       if (!signal?.manual) {
         const phase = await detectTrendPhase(symbol);
-        if (phase?.phase === 'reversal' || phase?.phase === 'peak') {
-          logDecision(symbol, `📉 Phase Detected: ${phase.phase} (${phase.reasons?.join(', ')})`);
+        if (["reversal", "peak"].includes(phase?.phase)) {
+          logDecision(symbol, `📉 Phase: ${phase.phase} (${phase.reasons?.join(', ')})`);
           allowTrade = true;
         } else {
-          logDecision(symbol, `⛔ Trend not ripe (${phase?.phase || 'unknown'})`);
+          logDecision(symbol, `⛔ Trend not aligned (${phase?.phase || 'unknown'})`);
         }
       }
 
-      if (!allowTrade) {
-        logDecision(symbol, `⛔ Skipping SHORT — no valid trend phase`);
-        continue;
-      }
-
-      if (volume > MAX_VOLUME_CAP && !signal?.override) {
-        logDecision(symbol, `⛔ Skipping — volume too high (${(volume / 1e6).toFixed(1)}M)`);
-        continue;
-      }
+      if (!allowTrade) continue;
 
       const state = getState(symbol, side);
       if (signal?.confidence) state.lastConfidence = signal.confidence;
 
       if (!state.entryPrice) {
+        // === Initial Entry ===
         state.entryPrice = price;
         state.lastPrice = price;
         state.lastEval = Date.now();
         state.dcaCount = 0;
         state.size = 1;
         state.lastAction = "ENTRY";
-        logDecision(symbol, `🚀 Watching ${side.toUpperCase()} from ${price}`);
 
-        if (signal?.manual) {
-          try {
-            console.log(`[MANUAL] Sending order for ${symbol} — side: ${side}`);
-            const res = await fetch('/api/order', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                contract: symbol,
-                side,
-                leverage: 5,
-                size: 1,
-                type: 'market'
-              })
-            });
+        // === Capital Allocation Logic ===
+        let wallet = await getWalletBalance();
+        let basePercent = 0.10;
+        if (signal?.confidence >= 85) basePercent = 0.25;
 
-            const json = await res.json();
-            console.log(`[MANUAL] Response from /api/order:`, json);
+        let capital = wallet.available * basePercent;
+        capital = Math.min(capital, 250); // cap at $250
+        const size = +(capital / price).toFixed(3);
 
-            if (json.code !== 'SUCCESS') {
-              logDecision(symbol, `❌ Trade rejected: ${json.msg || 'Unknown error'}`);
-              return;
-            } else {
-              logDecision(symbol, `📥 Trade placed at ${json.data.entry}`);
-            }
-          } catch (err) {
-            console.error(`[MANUAL] Order error for ${symbol}:`, err.message);
-            logDecision(symbol, `❌ Order error: ${err.message}`);
-            return;
+        // 💰 Update Capital Health
+        capitalState.update(wallet, [capital]);
+        logDecision(symbol, `💰 Capital Health: Total $${capitalState.total.toFixed(2)}, Allocated $${capitalState.allocated.toFixed(2)}, Free $${capitalState.free.toFixed(2)}`);
+
+        updateCooldown(symbol);
+        logDecision(symbol, `🚀 ${side.toUpperCase()} entry at ${price} (size: ${size})`);
+
+        try {
+          const res = await fetch("/api/order", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contract: symbol,
+              side,
+              leverage: 5,
+              size,
+              type: "market"
+            })
+          });
+          const json = await res.json();
+          if (json.code === "SUCCESS") {
+            logDecision(symbol, `✅ Order placed at ${json.data.entry}`);
+          } else {
+            logDecision(symbol, `❌ Trade rejected: ${json.msg || 'Unknown'}`);
           }
+        } catch (err) {
+          logDecision(symbol, `❌ Order error: ${err.message}`);
         }
 
         continue;
       }
 
+      // === Existing Position ===
       state.lastPrice = price;
       state.lastEval = Date.now();
-      let delta = ((state.entryPrice - price) / state.entryPrice) * 100;
+      const delta = ((state.entryPrice - price) / state.entryPrice) * 100;
 
-      const TP = 10, DCA = -7, SL = -12;
+      const TP = 10, DCA = -7, SL = -1000;
       const maxDCA = lossRecoveryMode ? 1 : 2;
 
       try {
         const confirmed = await window.confirmBullishRecovery?.(symbol);
         if (confirmed) {
-          updateMemoryFromResult(symbol, side.toUpperCase(), "loss", delta, state.lastConfidence || signal?.confidence || null, {
+          updateMemoryFromResult(symbol, side.toUpperCase(), "loss", delta, state.lastConfidence, {
             dcaCount: state.dcaCount,
             tradeType: side,
             time: Date.now()
           });
+          logDecision(symbol, `🟢 [${side.toUpperCase()}] EXIT — recovery confirmed`);
           state.entryPrice = null;
           state.dcaCount = 0;
           state.size = 1;
           failureStreak++;
           checkFailureStreak();
-          logDecision(symbol, `🟢 [${side.toUpperCase()}] EXIT — Recovery confirmed (RSI+MACD+BB)`);
           continue;
         }
       } catch {}
 
       if (delta >= TP) {
-        updateMemoryFromResult(symbol, side.toUpperCase(), "win", delta, state.lastConfidence || signal?.confidence || null, {
+        updateMemoryFromResult(symbol, side.toUpperCase(), "win", delta, state.lastConfidence, {
           dcaCount: state.dcaCount,
           tradeType: side,
           time: Date.now()
         });
+        logDecision(symbol, `✅ [${side.toUpperCase()}] TAKE PROFIT at +${delta.toFixed(2)}%`);
         state.entryPrice = null;
         state.dcaCount = 0;
         state.size = 1;
         failureStreak = 0;
         if (lossRecoveryMode) {
           lossRecoveryMode = false;
-          logDecision(symbol, "✅ Recovery complete. Returning to normal mode.");
+          logDecision(symbol, "🟢 Exiting recovery mode.");
         }
-        logDecision(symbol, `✅ [${side.toUpperCase()}] TAKE PROFIT at +${delta.toFixed(2)}%`);
         continue;
       }
 
       if (delta <= DCA && state.dcaCount < maxDCA) {
         state.entryPrice = (state.entryPrice * state.size + price) / (state.size + 1);
-        state.dcaCount += 1;
-        state.size += 1;
-        updateMemoryFromResult(symbol, side.toUpperCase(), "loss", delta, state.lastConfidence || signal?.confidence || null, {
+        state.dcaCount++;
+        state.size++;
+        updateMemoryFromResult(symbol, side.toUpperCase(), "loss", delta, state.lastConfidence, {
           dcaCount: state.dcaCount,
           tradeType: side,
           time: Date.now()
         });
+        logDecision(symbol, `📉 [${side.toUpperCase()}] DCA at ${delta.toFixed(2)}%`);
         failureStreak++;
         checkFailureStreak();
-        logDecision(symbol, `📉 [${side.toUpperCase()}] DCA triggered at ${delta.toFixed(2)}%`);
-        continue;
-      }
-
-      if (delta <= SL) {
-        updateMemoryFromResult(symbol, side.toUpperCase(), "loss", delta, state.lastConfidence || signal?.confidence || null, {
-          dcaCount: state.dcaCount,
-          tradeType: side,
-          time: Date.now()
-        });
-        state.entryPrice = null;
-        state.dcaCount = 0;
-        state.size = 1;
-        failureStreak++;
-        checkFailureStreak();
-        logDecision(symbol, `🛑 [${side.toUpperCase()}] STOP LOSS at ${delta.toFixed(2)}%`);
         continue;
       }
 
@@ -210,18 +248,15 @@ export async function evaluatePoseidonDecision(symbol, signal = null) {
     }
 
     const mm = getMemory(symbol);
-    logDecision(
-      symbol,
-      `📊 Memory: LONG W/L: ${mm.LONG.wins}/${mm.LONG.trades} | SHORT W/L: ${mm.SHORT.wins}/${mm.SHORT.trades} — [Streak L: ${mm.LONG.currentStreak}, S: ${mm.SHORT.currentStreak}]`
-    );
+    logDecision(symbol, `📊 W/L: LONG ${mm.LONG.wins}/${mm.LONG.trades}, SHORT ${mm.SHORT.wins}/${mm.SHORT.trades}`);
   } catch (err) {
-    console.error(`❌ Fatal error during decision for ${symbol}:`, err.message);
+    console.error(`❌ Fatal error: ${symbol}:`, err.message);
   }
 }
 
 function checkFailureStreak() {
   if (failureStreak >= 3) {
-    logDecision('SYSTEM', "🔴 Triggering Auto Shutdown — 3 failed trades");
+    logDecision("SYSTEM", "🔴 Auto Shutdown — 3 consecutive failures");
     triggerAutoShutdownWithCooldown();
     lossRecoveryMode = true;
     failureStreak = 0;
@@ -235,7 +270,7 @@ export async function makeTradeDecision(symbol, analysis) {
 export function initFuturesDecisionEngine() {
   if (intervalStarted) return;
   intervalStarted = true;
-  console.log("✅ Poseidon Decision Engine synced to FSM symbols");
+  console.log("✅ Poseidon Engine Initialized");
 }
 
 function logDecision(symbol, message) {
@@ -246,9 +281,7 @@ function logDecision(symbol, message) {
       div.className = "log-entry";
       div.innerText = `[${new Date().toLocaleTimeString()}] ${symbol} → ${message}`;
       feed.prepend(div);
-      if (feed.children.length > 20) {
-        feed.removeChild(feed.lastChild);
-      }
+      if (feed.children.length > 20) feed.removeChild(feed.lastChild);
     }
   }
   console.log(`[${new Date().toLocaleTimeString()}] ${symbol} → ${message}`);

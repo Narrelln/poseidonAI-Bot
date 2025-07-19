@@ -1,13 +1,9 @@
-// index.js — Poseidon KuCoin Backend (Patched+Modular Market Routes)
-
 const express = require('express');
 const http = require('http');
 const cors = require('cors');
 const { Server } = require('socket.io');
 const path = require('path');
-const axios = require('axios');
 const fs = require('fs');
-const MEMORY_PATH = path.join(__dirname, 'utils', 'data', 'poseidonMemory.json');
 
 const app = express();
 const server = http.createServer(app);
@@ -16,97 +12,52 @@ const io = new Server(server, {
 });
 const PORT = process.env.PORT || 3000;
 
-// Static & Middleware
+// === Middleware & Static ===
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/scripts', express.static(path.join(__dirname, 'public', 'scripts')));
 app.use('/styles', express.static(path.join(__dirname, 'styles')));
 app.use(cors());
 app.use(express.json());
 
-// === Modular Market Routes ===
-const marketRoutes = require('./routes/marketRoutes');
-app.use('/api', marketRoutes);
+// === Route Modules ===
+const marketroutes = require('./routes/marketroutes');
+const walletRoutes = require('./routes/walletRoutes');
+const taRoutes = require('./routes/taRoutes');
+const memoryRoutes = require('./routes/memoryRoutes');
+const poseidonScannerRoutes = require('./routes/poseidonScannerRoutes');
+const futuresSymbolsRoute = require('./routes/futuresSymbolsRoute');
 
 
-// === Technical Indicators ===
-const ti = require('technicalindicators');
-app.get('/api/ta/:symbol', async (req, res) => {
-  let symbol = req.params.symbol;
-  if (!symbol.endsWith('USDTM')) symbol = symbol.replace('USDT', 'USDTM');
-  const now = Math.floor(Date.now() / 1000);
-  const from = req.query.from ? Number(req.query.from) : now - (2 * 60 * 60);
-  const to = req.query.to ? Number(req.query.to) : now;
-  const candlesUrl = `https://api-futures.kucoin.com/api/v1/kline/query?symbol=${symbol}&granularity=1&from=${from}&to=${to}`;
-  console.log('TA QUERY:', candlesUrl);
+const { registerOrderRoute } = require('./handlers/orderHandler');
+const { registerCloseTradeRoute } = require('./handlers/closeTradeRoute');
+const { registerConfirmRecoveryRoute } = require('./routes/confirmRecoveryRoute');
+const { registerRSIReversalRoute } = require('./routes/rsiReversalRoute');
 
-  try {
-    const candleRes = await axios.get(candlesUrl);
-    const raw = candleRes.data.data || [];
-    if (!Array.isArray(raw) || !raw.length) {
-      return res.json({ nodata: true, msg: 'No candles found for symbol', symbol });
-    }
+// === Register Routes ===
+app.use('/api', marketroutes);
+app.use('/api', walletRoutes);
+app.use('/api', taRoutes);
+app.use('/api', memoryRoutes);
+app.use('/api', poseidonScannerRoutes);
+app.use('/api', futuresSymbolsRoute);
 
-    const candles = raw.map(r => ({
-      open: parseFloat(r[1]),
-      close: parseFloat(r[2]),
-      high: parseFloat(r[3]),
-      low: parseFloat(r[4]),
-      volume: parseFloat(r[5])
-    })).reverse();
 
-    const closes = candles.map(c => c.close);
-    const macd = ti.MACD.calculate({ values: closes, fastPeriod: 12, slowPeriod: 26, signalPeriod: 9, SimpleMAOscillator: false, SimpleMASignal: false });
-    const bb = ti.BollingerBands.calculate({ period: 20, stdDev: 2, values: closes });
+registerOrderRoute(app, io);
+registerCloseTradeRoute(app, io);
+registerConfirmRecoveryRoute(app);
+registerRSIReversalRoute(app);
 
-    const recentVol = candles.slice(-5).map(c => c.volume);
-    const avgVol = recentVol.reduce((a, b) => a + b, 0) / recentVol.length;
-    const latestVol = candles[candles.length - 1].volume;
-    const volumeSpike = latestVol > avgVol * 1.8;
+// === KuCoin Utils ===
+const {
+  getKucoinFuturesSymbols,
+  getOpenFuturesPositions
+} = require('./kucoinHelper');
+const { getRecentTrades } = require('./utils/tradeHistory');
 
-    res.json({
-      macd: macd[macd.length - 1] || {},
-      bb: bb[bb.length - 1] || {},
-      volumeSpike,
-      latestVol,
-      avgVol: avgVol ? avgVol.toFixed(2) : "0"
-    });
-  } catch (err) {
-    res.json({ nodata: true, error: err.message, symbol });
-  }
-});
-
-// === Memory APIs ===
-function loadMemory() {
-  try {
-    if (!fs.existsSync(MEMORY_PATH)) return {};
-    return JSON.parse(fs.readFileSync(MEMORY_PATH, 'utf8'));
-  } catch (e) {
-    console.error('[MEMORY] Load failed:', e.message);
-    return {};
-  }
-}
-function saveMemory(mem) {
-  try {
-    fs.writeFileSync(MEMORY_PATH, JSON.stringify(mem, null, 2));
-    return true;
-  } catch (e) {
-    console.error('[MEMORY] Save failed:', e.message);
-    return false;
-  }
-}
-app.get('/api/memory', (req, res) => res.json(loadMemory()));
-app.post('/api/memory', (req, res) => {
-  const update = req.body || {};
-  if (!update || typeof update !== 'object') return res.status(400).json({ error: "Bad memory update" });
-  const mem = Object.assign({}, loadMemory(), update);
-  saveMemory(mem);
-  res.json({ success: true, memory: mem });
-});
-app.put('/api/memory', (req, res) => {
-  const update = req.body || {};
-  if (!update || typeof update !== 'object') return res.status(400).json({ error: "Bad memory update" });
-  saveMemory(update);
-  res.json({ success: true, memory: update });
+// === WebSocket Events ===
+io.on('connection', (socket) => {
+  console.log('ð Client connected');
+  socket.on('disconnect', () => console.log('â Client disconnected'));
 });
 
 // === Static Homepage ===
@@ -114,42 +65,7 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'futures.html'));
 });
 
-// === KuCoin Handlers and Trade APIs ===
-const {
-  getKucoinWalletBalance,
-  getKucoinFuturesSymbols,
-  getOpenFuturesPositions
-} = require('./kucoinHelper');
-
-const { getRecentTrades } = require('./utils/tradeHistory');
-const { registerOrderRoute } = require('./handlers/orderHandler');
-const { registerCloseTradeRoute } = require('./handlers/closeTradeRoute');
-const { registerConfirmRecoveryRoute } = require('./routes/confirmRecoveryRoute'); // ✅ line 85
-const { registerRSIReversalRoute } = require('./routes/rsiReversalRoute');
-
-
-
-// === Register Routes ===
-registerOrderRoute(app, io);
-registerCloseTradeRoute(app, io);
-registerConfirmRecoveryRoute(app); // ✅ Newly added
-registerRSIReversalRoute(app);
-
-// === WebSocket Events ===
-io.on('connection', (socket) => {
-  console.log('🔌 Client connected');
-  socket.on('disconnect', () => console.log('❌ Client disconnected'));
-});
-
-// === Trading Routes ===
-app.get('/api/balance', async (req, res) => {
-  try {
-    const balance = await getKucoinWalletBalance();
-    res.json({ success: true, balance });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
+// === Trading Data Routes ===
 app.get('/api/futures-symbols', async (req, res) => {
   try {
     const symbols = await getKucoinFuturesSymbols();
@@ -202,11 +118,12 @@ app.get('/api/trade-history', (req, res) => {
 });
 
 // === Catch-All ===
-app.get('*', (req, res) => {
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api/')) return next(); // skip API calls
   res.sendFile(path.join(__dirname, 'public', 'futures.html'));
 });
 
 // === Launch Server ===
 server.listen(PORT, () => {
-  console.log(`🚀 Poseidon backend live at http://localhost:${PORT}`);
+  console.log(`ð Poseidon backend live at http://localhost:${PORT}`);
 });

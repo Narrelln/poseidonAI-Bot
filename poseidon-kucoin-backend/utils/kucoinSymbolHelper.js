@@ -29,7 +29,7 @@ function getAllKucoinContractSymbols(apiContracts = []) {
   return apiContracts.map(c => c.symbol);
 }
 
-module.exports = {
+export {
   parseToKucoinContractSymbol,
   isValidKucoinContractSymbol,
   getAllKucoinContractSymbols

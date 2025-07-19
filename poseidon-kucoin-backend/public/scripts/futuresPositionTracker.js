@@ -5,7 +5,6 @@ import { updateMemoryFromResult } from './updateMemoryFromResult.js';
 const trackers = new Map();
 const POSITIONS_STORAGE_KEY = 'poseidonFuturesPositions';
 
-// === NEW: Store last trade info globally
 let lastClosedTrade = {
   symbol: null,
   side: null,
@@ -16,8 +15,7 @@ let lastClosedTrade = {
   date: null,
 };
 
-// === GLOBAL POLLING INTERVAL ===
-const GLOBAL_REFRESH_INTERVAL = 10000; // 10 seconds
+const GLOBAL_REFRESH_INTERVAL = 10000;
 
 function savePositionsToStorage(positions) {
   localStorage.setItem(POSITIONS_STORAGE_KEY, JSON.stringify(positions));
@@ -74,7 +72,7 @@ export function updateTracker(symbol, data) {
 
     if (panel) {
       panel.innerHTML = `
-        <div><strong>${symbol}</strong> — ${cleanSide} (${leverage}x)</div>
+        <div><strong>${symbol}</strong> â ${cleanSide} (${leverage}x)</div>
         <div>Entry: $${entryPrice.toFixed(4)}</div>
         <div>Unreal. PNL: <span style="color:${pnlColor}">${pnlPercent} (${pnlValue} USDT)</span></div>
         <hr style="border-color:#00f7ff33;">
@@ -134,8 +132,7 @@ export async function fetchAllPositions() {
       data.positions.forEach(pos => {
         const cleanSymbol = (pos.symbol || '').toUpperCase().replace(/[^A-Z0-9\-]/g, '');
 
-        // === ⬇️ NEW DEBUG LOG
-        console.log(`[TRACKER] Symbol: ${pos.symbol} → ${cleanSymbol} | Side: ${pos.side} | Entry: ${pos.entryPrice} | PNL: ${pos.pnlPercent}`);
+        console.log(`[TRACKER] Symbol: ${pos.symbol} â ${cleanSymbol} | Side: ${pos.side} | Entry: ${pos.entryPrice} | PNL: ${pos.pnlPercent}`);
 
         if (!trackers.has(cleanSymbol)) {
           initFuturesPositionTracker(cleanSymbol);
@@ -143,12 +140,12 @@ export async function fetchAllPositions() {
         updateTracker(cleanSymbol, pos);
       });
     } else {
-      console.warn('❌ Invalid positions data from backend', data);
+      console.warn('â Invalid positions data from backend', data);
     }
   } catch (err) {
     if (!fetchAllPositions.lastErrorTime || Date.now() - fetchAllPositions.lastErrorTime > 60000) {
       fetchAllPositions.lastErrorTime = Date.now();
-      console.error('❌ Failed to fetch all positions:', err);
+      console.error('â Failed to fetch all positions:', err);
     }
   }
 }

@@ -1,24 +1,26 @@
-// updateMemoryFromResult.js — Poseidon Deep Learning Kernel (Autosave Edition)
+// updateMemoryFromResult.js — Poseidon Deep Learning Kernel (Autosave Edition, PPDA-Enhanced)
 
 const memory = {};
 
 export function updateMemoryFromResult(symbol, side, result, delta = 0, confidence = null, context = {}) {
-  // Validate params
   if (!symbol || !side) {
     console.warn('[DeepMemory] updateMemoryFromResult called with missing params:', { symbol, side, result });
     return;
   }
+
   side = side.toUpperCase();
   if (side === "BUY") side = "LONG";
   if (side === "SELL") side = "SHORT";
+
   console.log('[DeepMemory] Recording:', symbol, side, result, delta);
 
   if (!memory[symbol]) {
     memory[symbol] = { LONG: makeBase(), SHORT: makeBase() };
   }
-  let m = memory[symbol][side];
 
+  let m = memory[symbol][side];
   m.trades++;
+
   if (result === "win") {
     m.wins++;
     m.currentStreak = m.currentStreak >= 0 ? m.currentStreak + 1 : 1;
@@ -36,27 +38,39 @@ export function updateMemoryFromResult(symbol, side, result, delta = 0, confiden
   if (m.roiHistory.length > 15) m.roiHistory.shift();
   if (m.confidenceHistory.length > 15) m.confidenceHistory.shift();
 
-  // New: Contextual tracking
   m.contextHistory.push({
     result, delta, confidence,
     dcaCount: context.dcaCount ?? null,
     volume: context.volume ?? null,
     volatility: context.volatility ?? null,
     time: Date.now(),
+    ppdaWinSide: context.ppdaWinSide ?? null,
+    resolutionTime: context.resolutionTime ?? null,
+    recoveredROI: context.recoveredROI ?? null,
     ...context
   });
+
   if (m.contextHistory.length > 30) m.contextHistory.shift();
 
-  // Best context (update if win & higher ROI than before)
   if (result === 'win' && (m.bestContext == null || delta > m.bestContext.delta)) {
     m.bestContext = {
       delta, confidence, ...context, time: Date.now()
     };
   }
+
+  // === ✅ NEW: PPDA Recovery Stats Aggregation
+  if (context.ppdaWinSide && context.recoveredROI) {
+    if (!m.ppdaStats) m.ppdaStats = { recovered: [], avgRecovery: 0 };
+    m.ppdaStats.recovered.push(context.recoveredROI);
+    if (m.ppdaStats.recovered.length > 20) m.ppdaStats.recovered.shift();
+    m.ppdaStats.avgRecovery = (
+      m.ppdaStats.recovered.reduce((a, b) => a + parseFloat(b || 0), 0) / m.ppdaStats.recovered.length
+    ).toFixed(2);
+  }
+
   m.lastResult = result;
   m.lastTimestamp = Date.now();
 
-  // === AUTOSAVE: After every update, send memory to backend ===
   autosaveLearningMemory();
 }
 
@@ -72,6 +86,7 @@ function makeBase() {
     confidenceHistory: [],
     contextHistory: [],
     bestContext: null,
+    ppdaStats: null,
     lastResult: null,
     lastTimestamp: null,
   };
@@ -82,7 +97,6 @@ export function getMemory(symbol = null) {
   return memory;
 }
 
-// List hot/cold pairs (works as before)
 export function getHotColdPairs(winThreshold = 0.65, minTrades = 1) {
   const arr = [];
   Object.keys(memory).forEach(symbol => {
@@ -121,9 +135,8 @@ export function importLearningMemory(json) {
   }
 }
 
-// === AUTOSAVE FUNCTION ===
 function autosaveLearningMemory() {
-  if (typeof window === "undefined" || typeof fetch !== "function") return; // Don't run on backend
+  if (typeof window === "undefined" || typeof fetch !== "function") return;
   try {
     fetch('/api/memory', {
       method: "POST",
@@ -131,7 +144,6 @@ function autosaveLearningMemory() {
       body: exportLearningMemory()
     });
   } catch (err) {
-    // Silent fail (console only)
     if (console && console.warn) console.warn("[Memory] Autosave failed:", err.message);
   }
 }
