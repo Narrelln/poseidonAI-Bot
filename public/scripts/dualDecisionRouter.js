@@ -1,0 +1,59 @@
+// === dualDecisionRouter.js — Smart Strategy Delegator with Auto Execution ===
+
+const {
+  evaluatePoseidonDecision,
+  updateMemoryFromResult
+} = require('./evaluatePoseidonDecision');
+
+const { evaluatePPDA } = require('./ppdaDecisionEngine');
+const { executeTrade } = require('./futuresExecutionModule');
+const { getActiveSymbols } = require('./futuresSignalModule');
+
+void getActiveSymbols;
+
+let lastExecuted = {};
+
+async function routeTradeDecision(symbol) {
+  const cooldown = 30 * 1000; // 30 sec cooldown per symbol
+  const now = Date.now();
+
+  if (lastExecuted[symbol] && now - lastExecuted[symbol] < cooldown) {
+    return; // ⏳ Skip if still in cooldown
+  }
+
+  // === Try Conservative First
+  const conservativeDecision = await evaluatePoseidonDecision(symbol);
+
+  if (conservativeDecision === "TP") {
+    updateMemoryFromResult(symbol, "TP");
+    lastExecuted[symbol] = now;
+    return;
+  }
+
+  if (conservativeDecision === "SL") {
+    updateMemoryFromResult(symbol, "SL");
+    lastExecuted[symbol] = now;
+    return;
+  }
+
+  if (conservativeDecision === "DCA") {
+    executeTrade(symbol, "LONG", 100, false, 5); // Default 5x leverage
+    updateMemoryFromResult(symbol, "DCA");
+    lastExecuted[symbol] = now;
+    return;
+  }
+
+  // === Fallback: Try PPDA if HOLD
+  if (conservativeDecision === "HOLD") {
+    const ppdaDecision = await evaluatePPDA(symbol);
+
+    if (ppdaDecision?.action === "LONG" || ppdaDecision?.action === "SHORT") {
+      executeTrade(symbol, ppdaDecision.action, 100, false, 5);
+      lastExecuted[symbol] = now;
+    }
+  }
+}
+
+module.exports = {
+  routeTradeDecision
+};

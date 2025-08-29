@@ -1,0 +1,332 @@
+/* === Compact Account Overview Grid === */
+.compact-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.compact-grid .mini-block {
+  flex: 1 1 150px;
+  min-width: 140px;
+  max-width: 200px;
+  background: #0e1c30;
+  border: 1px solid #1b4d6e;
+  padding: 10px 12px;
+  border-radius: 10px;
+  box-shadow: 0 0 6px #01e6fb33;
+}
+
+.compact-grid .mini-block h4 {
+  margin: 0 0 6px 0;
+  color: #00f6ff;
+  font-size: 14px;
+  text-transform: uppercase;
+  font-family: 'Orbitron', sans-serif;
+  letter-spacing: 0.05em;
+}
+
+.compact-grid .mini-block p {
+  margin: 4px 0;
+  color: #b0dcff;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+/* === Live PnL Pulse Animation === */
+#futures-live-pnl.pulse-green {
+  animation: pnlGreenPulse 1.3s ease-out;
+}
+#futures-live-pnl.pulse-red {
+  animation: pnlRedPulse 1.3s ease-out;
+}
+
+@keyframes pnlGreenPulse {
+  0%   { color: #ffffff; text-shadow: none; }
+  50%  { color: #13ffb2; text-shadow: 0 0 8px #13ffb2cc; }
+  100% { color: #00ffaa; text-shadow: none; }
+}
+
+@keyframes pnlRedPulse {
+  0%   { color: #ffffff; text-shadow: none; }
+  50%  { color: #ff4d6d; text-shadow: 0 0 8px #ff4d6dcc; }
+  100% { color: #ff8888; text-shadow: none; }
+}
+
+/* Responsive grid layout */
+@media (max-width: 768px) {
+  main.futures-grid {
+    flex-direction: column;
+    gap: 12px;
+    padding: 10px;
+  }
+  .futures-col {
+    border: none;
+    padding-right: 0;
+  }
+}
+
+/* Collapse logic */
+.panel.collapsible-panel .panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.collapse-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #00f6ff;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0 6px;
+  text-shadow: 0 0 4px #00f6ff77;
+}
+
+.collapsible-panel .panel-body {
+  transition: max-height 0.25s ease;
+  overflow: hidden;
+}
+
+.collapsible-panel.collapsed .panel-body {
+  max-height: 0;
+  padding: 0;
+  margin: 0;
+}
+
+/* === Left Column Account Glance === */
+.account-glance {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.account-glance .mini-block {
+  flex: 1 1 150px;
+  background: #0e1c30;
+  border: 1px solid #1b4d6e;
+  padding: 10px 12px;
+  border-radius: 10px;
+  box-shadow: 0 0 6px #01e6fb33;
+}
+
+.account-glance h4 {
+  margin: 0 0 6px 0;
+  color: #00f6ff;
+  font-size: 14px;
+  text-transform: uppercase;
+  font-family: 'Orbitron', sans-serif;
+  letter-spacing: 0.05em;
+}
+
+.account-glance p {
+  margin: 4px 0;
+  color: #b0dcff;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+/* === Wallet Highlight Upgrade === */
+.account-glance .wallet-block {
+  background: linear-gradient(145deg, #031926, #09374e);
+  border: 1px solid #00f6ff;
+  box-shadow: 0 0 12px #00f6ff55;
+  color: #ffffff;
+  font-weight: bold;
+  position: relative;
+  animation: walletPulse 4s ease-in-out infinite;
+}
+
+.account-glance .wallet-block h4 {
+  color: #00f6ff;
+  font-size: 15px;
+  text-shadow: 0 0 3px #00f6ff88;
+}
+
+.account-glance .wallet-block p {
+  font-size: 14px;
+  color: #ffffff;
+  text-shadow: 0 0 4px #00f6ff33;
+}
+
+@keyframes walletPulse {
+  0%   { box-shadow: 0 0 10px #00f6ff55; }
+  50%  { box-shadow: 0 0 16px #00f6ffaa; }
+  100% { box-shadow: 0 0 10px #00f6ff55; }
+}
+.wallet-block {
+  background: linear-gradient(135deg, #072c45, #045d77);
+  border: 2px solid #00ffff99;
+  box-shadow: 0 0 10px #00ffff66;
+  font-weight: bold;
+}
+
+.wallet-block h4 {
+  color: #00ffff;
+  font-size: 15px;
+  text-shadow: 0 0 5px #00f6ffaa;
+}
+
+.wallet-block p {
+  color: #eaffff;
+  font-size: 14px;
+  font-weight: bold;
+  text-shadow: 0 0 4px #00f6ff44;
+}
+.wallet-block {
+  background: linear-gradient(135deg, #011c33, #01455a);
+  border: 2px solid #00ffffaa;
+  box-shadow: 0 0 12px #00ffff99;
+  font-weight: bold;
+  padding: 14px 16px;
+  border-radius: 12px;
+  position: relative;
+}
+
+.wallet-block h4 {
+  color: #00f7ff;
+  font-size: 15.5px;
+  text-shadow: 0 0 6px #00f6ffaa;
+  margin-bottom: 6px;
+  letter-spacing: 0.06em;
+}
+
+.wallet-block p {
+  color: #e7feff;
+  font-size: 14px;
+  font-weight: bold;
+  text-shadow: 0 0 3px #00f6ff66;
+  margin: 5px 0;
+}
+
+.wallet-block {
+  animation: walletPulse 4s infinite alternate;
+}
+
+@keyframes walletPulse {
+  0% { box-shadow: 0 0 12px #00ffff88; }
+  100% { box-shadow: 0 0 22px #00f6ffcc; }
+}
+.capital-block {
+  background: linear-gradient(135deg, #061d2e, #093547);
+  border: 2px solid #00ffcc88;
+  box-shadow: 0 0 10px #00ffcc66;
+  font-weight: bold;
+  padding: 14px 16px;
+  border-radius: 12px;
+  position: relative;
+}
+
+.capital-block h4 {
+  color: #00ffcc;
+  font-size: 15.5px;
+  text-shadow: 0 0 5px #00ffeebb;
+  margin-bottom: 6px;
+  letter-spacing: 0.06em;
+}
+
+.capital-block p {
+  color: #d8fff6;
+  font-size: 14px;
+  font-weight: bold;
+  text-shadow: 0 0 2px #00ffcc66;
+  margin: 5px 0;
+}
+#scanner-toggle button {
+  background: #111;
+  border: 1px solid #444;
+  color: #ccc;
+  padding: 6px 12px;
+  margin-right: 6px;
+  cursor: pointer;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+#scanner-toggle button.active-tab {
+  background: #00ff99;
+  color: #000;
+}
+
+#scanning-list {
+  font-family: 'JetBrains Mono', 'Roboto Mono', 'Courier Prime', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 8px;
+}
+
+.scan-entry {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 4px 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.scan-entry .symbol {
+  min-width: 100px;
+  font-weight: 600;
+}
+
+.scan-entry .price {
+  min-width: 90px;
+  color: #ccc;
+}
+
+.scan-entry .change {
+  min-width: 70px;
+}
+
+.scan-entry .volume {
+  min-width: 130px;
+  color: #bbb;
+}
+/* /public/scannerPanel.css */
+
+#scanning-list {
+  padding: 12px;
+  font-family: 'Roboto Mono', 'Courier New', monospace;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.log-entry {
+  background: #0f1114;
+  color: #ddd;
+  border-left: 4px solid #444;
+  padding: 10px;
+  margin-bottom: 6px;
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.log-entry span {
+  font-family: 'Roboto Mono', monospace;
+}
+
+.change-positive {
+  color: #00ff99;
+}
+
+.change-negative {
+  color: #ff6666;
+}
+
+.active-tab {
+  border-bottom: 2px solid #00f2ff;
+  font-weight: bold;
+}
+
+
+
+
+
+
+

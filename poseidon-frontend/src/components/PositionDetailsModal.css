@@ -1,0 +1,248 @@
+/* === Open Positions Table Styling === */
+.open-positions-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    font-size: 0.95rem;
+    background-color: #101010;
+    color: #eee;
+  }
+  
+  .open-positions-table th,
+  .open-positions-table td {
+    padding: 10px 12px;
+    border: 1px solid #333;
+    text-align: center;
+  }
+  
+  .open-positions-table th {
+    background-color: #1c1c1c;
+    color: #fff;
+  }
+  
+  .open-positions-table tr:nth-child(even) {
+    background-color: #181818;
+  }
+  
+  .open-positions-table .long {
+    color: #00ff88;
+    font-weight: bold;
+  }
+  
+  .open-positions-table .short {
+    color: #ff4f4f;
+    font-weight: bold;
+  }
+  
+  .open-positions-table button {
+    background-color: #222;
+    border: 1px solid #555;
+    color: white;
+    padding: 5px 8px;
+    margin-right: 4px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  
+  .open-positions-table button:hover {
+    background-color: #444;
+  }
+  
+  .dimmed {
+    color: #888;
+    padding: 10px;
+    text-align: center;
+  }
+  
+  /* === Modal Styling (from your CSS) === */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+  }
+  
+  .modal-card {
+    background: #121212;
+    border: 1px solid #888;
+    border-radius: 8px;
+    padding: 20px;
+    color: white;
+    width: 700px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .modal-header h2 {
+    font-size: 1.2rem;
+    margin: 0;
+  }
+  
+  .modal-header button {
+    background: none;
+    color: white;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+  }
+  
+  .modal-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 16px;
+  }
+  
+  .modal-grid div {
+    background: #1e1e1e;
+    padding: 12px;
+    border-radius: 6px;
+  }
+  
+  .modal-table {
+    width: 100%;
+    margin-top: 20px;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+  
+  .modal-table th,
+  .modal-table td {
+    border: 1px solid #444;
+    padding: 8px;
+    text-align: left;
+  }
+  
+  .modal-table th {
+    background-color: #222;
+    color: #ddd;
+  }
+
+  .modal-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 16px;
+    margin: 12px 0;
+  }
+  
+  .modal-label {
+    font-weight: bold;
+    text-align: right;
+  }
+  /* Container */
+.positions-wrapper {
+  padding: 4px 6px;
+  overflow-x: hidden;
+}
+
+/* Table base */
+.open-positions-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;             /* <- keeps widths locked */
+  background: #0f1016;
+  color: #e7faff;
+  font-size: 14px;                 /* readable, not tiny */
+  line-height: 1.25;
+  border: 1px solid #1e2a36;
+}
+
+/* Column widths (sum <= 100%) */
+.open-positions-table .col-symbol { width: 26%; }
+.open-positions-table .col-side   { width: 12%; }
+.open-positions-table .col-entry  { width: 14%; }
+.open-positions-table .col-value  { width: 14%; }
+.open-positions-table .col-pnl    { width: 14%; }
+.open-positions-table .col-roi    { width: 12%; }
+.open-positions-table .col-action { width: 8%;  }
+
+/* Cells */
+.open-positions-table th,
+.open-positions-table td {
+  border: 1px solid rgba(0,255,255,0.08);
+  padding: 8px 10px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.open-positions-table th {
+  background: linear-gradient(180deg, #0e1a22, #0b131a);
+  color: #7ef6ff;
+  font-weight: 700;
+  letter-spacing: .3px;
+}
+
+.open-positions-table tr:nth-child(even) td {
+  background: rgba(14, 26, 34, 0.35);
+}
+
+/* Column-specific alignment */
+.symbol-col { text-align: left; padding-left: 12px; }
+.num-col    { text-align: right; padding-right: 12px; }
+.side-col   { text-align: center; }
+.action-col { text-align: center; }
+
+/* Side tag */
+.side-tag {
+  display: inline-block;
+  min-width: 58px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(0,0,0,0.2);
+  font-weight: 700;
+}
+.side-tag.long  { color: #00ff88; }
+.side-tag.short { color: #ff5a5a; }
+
+/* PNL/ROI coloring */
+.num-col.pos { color: #00e676; }
+.num-col.neg { color: #ff4f4f; }
+
+/* Buttons */
+.btn-group { display: flex; gap: 6px; justify-content: center; }
+
+.btn-view,
+.btn-close {
+  background: rgba(0,0,0,0.35);
+  color: #e7faff;
+  border: 1px solid rgba(126, 246, 255, 0.3);
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.btn-close { border-color: rgba(255, 90, 90, 0.45); }
+
+.btn-view:hover { background: rgba(126, 246, 255, 0.12); }
+.btn-close:hover { background: rgba(255, 90, 90, 0.12); }
+
+/* Empty state */
+.dimmed {
+  color: #8da2b4;
+  padding: 8px;
+  text-align: center;
+}
+/* Column widths (sum <= 100%) */
+.open-positions-table .col-symbol { width: 20%; } /* was 26% */
+.open-positions-table .col-side   { width: 12%; }
+.open-positions-table .col-entry  { width: 16%; } /* was 14% */
+.open-positions-table .col-value  { width: 16%; } /* was 14% */
+.open-positions-table .col-pnl    { width: 16%; } /* was 14% */
+.open-positions-table .col-roi    { width: 12%; }
+.open-positions-table .col-action { width: 8%;  }

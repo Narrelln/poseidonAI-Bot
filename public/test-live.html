@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>Poseidon Live Feed — Test</title>
+  <link rel="stylesheet" href="/styles/theme.css"/>
+  <style>
+    body{background:#051520;color:#d8f3ff;font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial;}
+    .panel{border:1px solid #112b3a;border-radius:8px;background:#081c28;max-width:1100px;margin:24px auto;padding:12px 14px;}
+    .panel h2{margin:0 0 10px}
+    .lf-controls{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px;}
+    .lf-block{display:flex;flex-direction:column;gap:6px}
+    .lf-block select{min-width:140px;background:#061e2a;color:#d8f3ff;border:1px solid #124;border-radius:6px;padding:6px}
+    .lf-grow{flex:1 1 220px}
+    .lf-row{display:flex;gap:8px}
+    .lf-row input{flex:1;padding:8px 10px;border-radius:6px;border:1px solid #124;background:#061e2a;color:#d8f3ff}
+    .lf-feed{max-height:320px;overflow:auto;background:rgba(6,25,36,.65);border:1px solid #112b3a;border-radius:6px}
+    table{width:100%;table-layout:fixed;border-collapse:collapse}
+    th,td{padding:6px 8px;white-space:nowrap;border-bottom:1px solid rgba(17,43,58,.6)}
+    .col-time{width:90px}.col-type{width:90px}.col-level{width:90px}.col-symbol{width:120px}
+    .col-msg{white-space:normal}
+    .lf-warn{color:#ffcc66}.lf-error{color:#ff6b6b}.lf-success{color:#5ad17c}.lf-debug{opacity:.85}
+    .btn{padding:8px 12px;border-radius:6px;border:1px solid #124;background:#0e2b3d;color:#d8f3ff;cursor:pointer}
+  </style>
+</head>
+<body>
+  <div class="panel" id="live-feed-panel">
+    <h2>📈 Live Feed — Test Harness</h2>
+
+    <div class="lf-controls">
+      <div class="lf-block">
+        <label for="lf-type">Types</label>
+        <select id="lf-type" multiple size="4">
+          <option value="scanner" selected>Scanner</option>
+          <option value="ta" selected>TA</option>
+          <option value="decision" selected>Decisions</option>
+          <option value="trade" selected>Trades</option>
+          <option value="error" selected>Errors</option>
+        </select>
+      </div>
+      <div class="lf-block">
+        <label for="lf-level">Levels</label>
+        <select id="lf-level" multiple size="5">
+          <option value="debug" selected>Debug</option>
+          <option value="info" selected>Info</option>
+          <option value="warn" selected>Warn</option>
+          <option value="success" selected>Success</option>
+          <option value="error" selected>Error</option>
+        </select>
+      </div>
+      <div class="lf-grow">
+        <label for="lf-symbol">Filter symbol</label>
+        <div class="lf-row">
+          <input id="lf-symbol" placeholder="e.g. WIF-USDTM">
+          <button id="lf-clear" class="btn">Clear</button>
+          <button id="demo-once" class="btn">Emit Demo</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="lf-feed">
+      <table class="live-feed-table">
+        <thead>
+          <tr>
+            <th class="col-time">Time</th>
+            <th class="col-type">Type</th>
+            <th class="col-level">Level</th>
+            <th class="col-symbol">Symbol</th>
+            <th class="col-msg">Message</th>
+          </tr>
+        </thead>
+        <tbody id="lf-list"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modules -->
+  <script type="module" src="/scripts/core/feeder.js"></script>
+  <script type="module" src="/scripts/liveFeedV2.js"></script>
+
+  <!-- Demo emitter -->
+  <script type="module">
+    import { feed } from '/scripts/core/feeder.js';
+
+    function emitDemo(symbol = 'WIF-USDTM') {
+      const corr = `${symbol}-${Date.now()}`;
+      feed.scanner(symbol, 'Moonshot candidate', { qVol: 1_250_000, delta: 7.8 }, 'info', ['moonshot'], corr);
+      feed.ta(symbol, 'TA fetched', { rsi: 68, macd: 'bull', bb: 'expansion' }, 'debug', [], corr);
+      feed.decision(symbol, 'Trade candidate', { confidence: 82, allocationPct: 25 }, 'success', ['candidate'], corr);
+      feed.trade(symbol, 'Opened LONG', { size: 50, price: 2.34, leverage: 5 }, 'success', ['auto'], corr);
+      feed.error(symbol, 'Close attempt failed', { err: 'Network timeout' }, ['api'], corr);
+    }
+
+    document.getElementById('demo-once').addEventListener('click', () => emitDemo());
+    // heartbeat noise so you can see filtering/scrolling
+    setInterval(() => feed.scanner('SOL-USDTM', 'Heartbeat', {}, 'debug', [], 'hb'), 4000);
+  </script>
+</body>
+</html>

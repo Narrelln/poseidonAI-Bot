@@ -1,0 +1,177 @@
+{
+  "ADAUSDT": {
+    "confidence": 83,
+    "trapWarning": false,
+    "allocationPct": 25
+  },
+  "BTCUSDTM": {
+    "confidence": 78,
+    "trapWarning": true,
+    "allocationPct": 10
+  },
+  "ASPUSDTM": {
+    "confidence": 0,
+    "trapWarning": false,
+    "allocationPct": null
+  },
+  "ICNTUSDTM": {
+    "confidence": 0,
+    "trapWarning": false,
+    "allocationPct": null
+  },
+  "FORTHUSDTM": {
+    "confidence": 0,
+    "trapWarning": false,
+    "allocationPct": null
+  },
+  "HIPPOUSDTM": {
+    "confidence": 0,
+    "trapWarning": true,
+    "allocationPct": null
+  },
+  "TSTBSCUSDTM": {
+    "confidence": 5,
+    "trapWarning": true,
+    "allocationPct": null
+  },
+  "CTCUSDTM": {
+    "confidence": 0,
+    "trapWarning": false,
+    "allocationPct": null
+  },
+  "RESOLVUSDTM": {
+    "confidence": 0,
+    "trapWarning": false,
+    "allocationPct": null
+  },
+  "JELLYJELLYUSDTM": {
+    "confidence": 0,
+    "trapWarning": false,
+    "allocationPct": null
+  },
+  "EDUUSDTM": {
+    "confidence": 0,
+    "trapWarning": false,
+    "allocationPct": null
+  },
+  "MLNUSDTM": {
+    "confidence": 0,
+    "trapWarning": false,
+    "allocationPct": null
+  },
+  "ESUSDTM": {
+    "confidence": 0,
+    "trapWarning": false,
+    "allocationPct": null
+  },
+  "FRAGUSDTM": {
+    "confidence": 0,
+    "trapWarning": false,
+    "allocationPct": null
+  },
+  "XMRUSDTM": {
+    "confidence": 0,
+    "trapWarning": false,
+    "allocationPct": null
+  },
+  "NAORISUSDTM": {
+    "confidence": 0,
+    "trapWarning": true,
+    "allocationPct": null
+  },
+  "SIRENUSDTM": {
+    "confidence": 0,
+    "trapWarning": true,
+    "allocationPct": null
+  },
+  "VELVETUSDTM": {
+    "confidence": 20,
+    "trapWarning": false,
+    "allocationPct": null
+  },
+  "LAUNCHCOINUSDTM": {
+    "confidence": 0,
+    "trapWarning": true,
+    "allocationPct": null
+  },
+  "TANSSIUSDTM": {
+    "confidence": 0,
+    "trapWarning": true,
+    "allocationPct": null
+  },
+  "PRCLUSDTM": {
+    "confidence": 20,
+    "trapWarning": true,
+    "allocationPct": null
+  },
+  "PROMPTUSDTM": {
+    "confidence": 0,
+    "trapWarning": false,
+    "allocationPct": null
+  },
+  "DMCUSDTM": {
+    "confidence": 0,
+    "trapWarning": true,
+    "allocationPct": null
+  },
+  "INUSDTM": {
+    "confidence": 30,
+    "trapWarning": false,
+    "allocationPct": null
+  },
+  "CHILLGUYUSDTM": {
+    "confidence": 15,
+    "trapWarning": false,
+    "allocationPct": null
+  },
+  "GMXUSDTM": {
+    "confidence": 0,
+    "trapWarning": false,
+    "allocationPct": null
+  },
+  "ZEREBROUSDTM": {
+    "confidence": 0,
+    "trapWarning": true,
+    "allocationPct": null
+  },
+  "CROUSDTM": {
+    "confidence": 0,
+    "trapWarning": true,
+    "allocationPct": null
+  },
+  "CROSSUSDTM": {
+    "confidence": 0,
+    "trapWarning": false,
+    "allocationPct": null
+  },
+  "FUELUSDTM": {
+    "confidence": 0,
+    "trapWarning": false,
+    "allocationPct": null
+  },
+  "SSVUSDTM": {
+    "confidence": 0,
+    "trapWarning": false,
+    "allocationPct": null
+  },
+  "MAVUSDTM": {
+    "confidence": 0,
+    "trapWarning": false,
+    "allocationPct": null
+  },
+  "COOKIEUSDTM": {
+    "confidence": 0,
+    "trapWarning": false,
+    "allocationPct": null
+  },
+  "AIXBTUSDTM": {
+    "confidence": 15,
+    "trapWarning": false,
+    "allocationPct": null
+  },
+  "NFPUSDTM": {
+    "confidence": 0,
+    "trapWarning": false,
+    "allocationPct": null
+  }
+}
