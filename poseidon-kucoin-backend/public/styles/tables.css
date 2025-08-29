@@ -74,7 +74,7 @@ td.neutral  { color: #d1e9ff; }
 .close-btn:hover { background: #d6143b; }
 
 /* ====== Open Positions Enhancer Styling ====== */
-.open-positions-table input.position-note-input {
+/* .open-positions-table input.position-note-input {
   width: 100%;
   padding: 4px 6px;
   background-color: #0f1f2f;
@@ -101,7 +101,7 @@ td.neutral  { color: #d1e9ff; }
   text-align: center;
   color: #00f6ff;
   text-shadow: 0 0 5px #00f6ff88;
-}
+} */
 /* === Compact Grid Panel for Account Overview === */
 
 .compact-grid {
@@ -191,3 +191,328 @@ td.neutral  { color: #d1e9ff; }
 }
 
 
+.log-entry.log-green { color: #0f0; }
+.log-entry.log-red { color: #f44; }
+.log-entry.log-gray { color: #aaa; }
+
+.log-table {
+  width: 100%;
+  font-size: 14px;
+  border-collapse: collapse;
+}
+
+.log-table th, .log-table td {
+  padding: 4px 6px;
+  border-bottom: 1px solid #333;
+  text-align: center;
+}
+
+.log-green td { color: #0f0; }
+.log-red td { color: #f55; }
+.log-gray td { color: #aaa; }
+
+
+
+.feed-filter-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+#feed-filter {
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  background: #fff;
+}
+/* signal-log feed panel */
+
+  #futures-signal-feed table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    table-layout: fixed;
+  }
+
+  #futures-signal-feed th {
+    background-color: #002a3a;
+    color: cyan;
+    padding: 6px;
+  }
+
+  #futures-signal-feed td {
+    padding: 6px;
+    text-align: center;
+    color: white;
+    border: 1px solid #014e61;
+  }
+
+  /* Color signal column text */
+  .signal-bullish {
+    color: #00ff99; /* light green */
+    font-weight: bold;
+  }
+
+  .signal-bearish {
+    color: #ff6666; /* light red */
+    font-weight: bold;
+  }
+
+  /* Color delta change column */
+  .delta-positive {
+    color: #00ff99;
+  }
+
+  .delta-negative {
+    color: #ff4d4d;
+  }
+
+  /* Highlight high confidence */
+  .high-confidence {
+    background-color: rgba(0, 255, 255, 0.1);
+    font-weight: bold;
+  }
+/* Bullish signal row - light green background */
+.signal-table tbody tr.bullish {
+  background-color: rgba(0, 255, 0, 0.08);
+}
+
+/* Bearish signal row - light red background */
+.signal-table tbody tr.bearish {
+  background-color: rgba(255, 0, 0, 0.08);
+}
+
+/* Highlight strong confidence */
+.signal-table tbody tr.high-confidence td:nth-child(4) {
+  font-weight: bold;
+  color: #00ffff;
+}
+
+/* Positive delta in green */
+.signal-table tbody tr.delta-positive td:nth-child(5) {
+  color: #00ff00;
+}
+
+/* Negative delta in red */
+.signal-table tbody tr.delta-negative td:nth-child(5) {
+  color: #ff4d4d;
+}
+
+/* === PATCHED tables.css â€” with fixed log-table column widths === */
+
+.table-container, .trade-history-container, .open-positions-panel {
+  width: 100%;
+  overflow-x: auto;
+  background: none;
+  border-radius: 12px;
+}
+
+.trade-history-table, .open-positions-table, .table {
+  width: 100%;
+  min-width: 820px;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: #0a1424e6;
+  box-shadow: 0 0 14px #09f8fd11;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 15px;
+  margin: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  table-layout: fixed;
+}
+
+th, td {
+  padding: 10px 8px;
+  border-bottom: 1px solid #11c6e633;
+  text-align: center;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 1.05em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+th {
+  background: linear-gradient(90deg, #142746 60%, #1be1fb30 100%);
+  color: #13f1fc;
+  font-weight: bold;
+  letter-spacing: 0.07em;
+  text-shadow: 0 0 6px #00ffffaa;
+  border-bottom: 2px solid #00f7ff33;
+}
+
+tr:nth-child(even) { background: #11243b; }
+tr:nth-child(odd)  { background: #0b1830; }
+
+td { color: #eafaff; }
+
+tr:hover td {
+  background: #0cd8ff21;
+  transition: background 0.13s;
+}
+
+td.positive { color: #13ffb2; font-weight: bold; }
+td.negative { color: #ff4d6d; font-weight: bold; }
+td.neutral  { color: #d1e9ff; }
+
+/* === LOG TABLE COLUMN WIDTH PATCH === */
+.log-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.log-table th, .log-table td {
+  padding: 6px 10px;
+  text-align: center;
+  border-bottom: 1px solid #333;
+  color: #eafaff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 🎯 Explicit widths per column */
+.log-table th:nth-child(1), .log-table td:nth-child(1) { width: 80px; }   /* Symbol */
+.log-table th:nth-child(2), .log-table td:nth-child(2) { width: 80px; }   /* Signal */
+.log-table th:nth-child(3), .log-table td:nth-child(3) { width: 60px; }   /* RSI */
+.log-table th:nth-child(4), .log-table td:nth-child(4) { width: 80px; }   /* MACD */
+.log-table th:nth-child(5), .log-table td:nth-child(5) { width: 80px; }   /* BB */
+.log-table th:nth-child(6), .log-table td:nth-child(6) { width: 100px; }  /* Confidence */
+.log-table th:nth-child(7), .log-table td:nth-child(7) { width: 140px; }  /* Notes */
+
+.log-table th {
+  font-weight: bold;
+  color: #0ff;
+}
+
+/* === Fix for flex overriding <tr> === */
+.log-entry {
+  display: table-row !important;
+}
+
+.memory-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+  table-layout: fixed; /* ✅ ensures even column widths */
+}
+
+.memory-table th,
+.memory-table td {
+  padding: 6px 10px;
+  text-align: center;
+  border: 1px solid #444;
+  white-space: nowrap; /* ✅ prevents text from wrapping awkwardly */
+}
+
+.memory-table th {
+  background-color: #222;
+  color: #eee;
+}
+
+.memory-pagination {
+  text-align: center;
+  margin-top: 10px;
+}
+
+.memory-pagination button {
+  background-color: #333;
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  margin: 0 5px;
+  cursor: pointer;
+}
+
+.memory-pagination button[disabled] {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ✅ Color-coded win rate and streak */
+.memory-table .green { color: lime; font-weight: bold; }
+.memory-table .red { color: red; font-weight: bold; }
+.memory-table .gray { color: gray; font-weight: bold; }
+
+
+/* trade History panel enboldment  */
+/* Bold important trade history columns */
+.trade-history-table .th-side,
+.trade-history-table .pnl-pos,
+.trade-history-table .pnl-neg,
+.trade-history-table td:nth-child(7), /* ROI */
+.trade-history-table td:nth-child(8)  /* Status */ {
+  font-weight: 700;
+}
+
+/* Highlight OPEN trades: bold entire row */
+.trade-history-table tr.open-trade td {
+  font-weight: 700;
+}
+
+/* Trade history readability */
+.trade-history-table {
+  table-layout: fixed;
+  width: 100%;
+}
+.trade-history-table th,
+.trade-history-table td {
+  padding: 6px 8px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.trade-history-table .th-symbol { text-align: left; }
+.trade-history-table .th-side.long  { color: #22c55e; font-weight: 600; } /* green */
+.trade-history-table .th-side.short { color: #ef4444; font-weight: 600; } /* red */
+.trade-history-table .pnl-pos { color: #22c55e; font-weight: 600; }
+.trade-history-table .pnl-neg { color: #ef4444; font-weight: 600; }
+
+/* example CSS */
+.th-badge { padding:2px 6px; border-radius:4px; font-size:12px; }
+.th-open { background:#065f46; color:#e7f5ec; }
+.th-closed { background:#374151; color:#e5e7eb; }
+.pnl-pos { color:#10b981; }
+.pnl-neg { color:#ef4444; }
+.roi-pos { color:#10b981; }
+.roi-neg { color:#ef4444; }
+.roi-neutral { color:#9ca3af; }
+.th-side.long { color:#10b981; }
+.th-side.short { color:#ef4444; }
+
+/* --- Session + Strategy card fixes --- */
+.mini-block { min-width: 0; }                    /* allow ellipsis to work */
+.mini-block p {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  gap: 8px; margin: 2px 0;
+  white-space: nowrap;                           /* no wrapping */
+}
+
+.mini-block p span { margin-left: auto; }
+
+#session-pnl, #futures-live-pnl { font-weight: 700; }
+
+/* keep value side from pushing layout */
+#wallets-tracked, #tokens-monitored, #active-trades,
+#session-wins, #session-losses, #session-winrate,
+#win-streak, #loss-streak {
+  max-width: 120px; overflow: hidden; text-overflow: ellipsis;
+  text-align: right; display: inline-block;
+}
+
+/* Top Trade can be long – clamp with ellipsis */
+#top-trade {
+  max-width: 220px;           /* adjust to taste */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
+  text-align: right;
+}
+
+/* slightly tighter card so it never "breaks the table" */
+.compact-grid .mini-block { padding-right: 6px; }

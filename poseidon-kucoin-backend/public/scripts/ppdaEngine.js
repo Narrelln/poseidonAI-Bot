@@ -1,10 +1,13 @@
 // ppdaEngine.js — Peak Pressure Dual-Allocation Strategy Module (Patched)
 
 import { executeTrade, closeTrade } from './futuresExecutionModule.js';
-import { getOpenPositions, fetchFuturesPrice } from './futuresApi.js';
+// import { getOpenPositions, fetchFuturesPrice } from './futuresApiClient.js';
 import { logToFeed } from './futuresUtils.js';
 import { updatePerformance } from './futuresPerformancePanel.js';
-import { updateMemoryFromResult } from './updateMemoryFromResult.js'; // ✅ Corrected import
+// import { updateMemoryFromResult } from './updateMemoryFromResult.js'; ❌ removed — backend only
+
+// ✅ Frontend-safe fallback stub
+const updateMemoryFromResult = () => {};
 
 let activePPDATrades = {};
 let resolutionStats = {};
@@ -69,7 +72,6 @@ export async function resolvePPDAOutcome(symbol) {
 
     // === Performance + Memory
     updatePerformance({ recoveredROI: pnl.toFixed(2), symbol });
-
 
     updateMemoryFromResult(symbol, winner.side, 'win', pnl, 70, {
       dcaCount: 0,

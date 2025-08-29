@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Poseidon AI — Futures Dashboard</title>
+  <link rel="icon" href="/favicon.ico" type="image/x-icon"/>
+  <link href="/styles/futures.css" rel="stylesheet"/>
+  <link href="/styles/futures-core.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="/styles/signal-qa.css" />
+
+  <link rel="stylesheet" href="/styles/manual-controls.css" />
+  <link rel="stylesheet" href="/styles/tables.css"/>
+  <link rel="stylesheet" href="/styles/bot.css"/>
+  <link rel="stylesheet" href="/styles/modal.css" />
+  <link rel="stylesheet" href="/styles/theme.css"/>
+  <link rel="stylesheet" href="/styles/scannerPanel.css" />
+  <link rel="stylesheet" href="/styles/fun-mode.css">
+  <link rel="stylesheet" href="/styles/positionCard.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Orbitron:400,700|Share+Tech+Mono:400,700&display=swap">
+
+  <!-- 🔎 TRACE CONTROL (now OFF by default + optional hard silence) -->
+  <script>
+    // Flip true in DevTools only when you want to inspect inserts.
+    window.POSEIDON_FEED_TRACE = false;
+    // If true, tracer will be completely disabled even if FEED_TRACE is enabled.
+    window.POSEIDON_SILENCE_TRACE = true;
+
+    // 🧯 Safety toggles for autotrade + auditing
+    window.POSEIDON_AUTOTRADE_ENABLED = false;  // keep false while auditing
+    window.POSEIDON_PAPER = true;               // paper mode by default
+    window.POSEIDON_SIGNAL_AUDIT = true;        // enable signal auditing
+    window.POSEIDON_MIN_NOTIONAL = 25;          // min notional to trade (guardrail)
+  </script>
+</head>
+<body>
+<!-- ✅ Poseidon Bot Panel (cleaned) -->
+<div id="poseidon-bot" class="active">
+  <img src="/assets/robot.png" alt="Poseidon Bot" />
+  <div class="panel" id="memory-panel">
+    Poseidon. Strategy loaded! 
+  </div>
+  <div id="poseidon-toggle"></div>
+  <span id="poseidon-status" class="poseidon-bot-status text-red">Poseidon Bot: OFF</span>
+</div>
+
+  <nav class="nav-bar">
+    <a class="active" href="/futures.html">Futures</a>
+    <a href="/dashboard.html">Dashboard</a>
+    <a href="/sniper.html">Sniper</a>
+    <a href="/trade-monitor.html">Trade Monitor</a>
+    <a href="/accounts.html">Accounts</a>
+    <a href="/settings.html">Settings</a>
+    <a href="/index.html" style="color:#aaa;">Log Out</a>
+  </nav>
+
+  <main class="futures-grid" style="display: flex; gap: 32px; align-items: flex-start; margin-top: 22px; padding: 0 12px;">
+    <!-- LEFT COLUMN -->
+    <div class="futures-col" style="flex: 1 1 0; min-width: 330px; padding-right: 16px; border-right: 2px solid #112b3a;">
+
+      <section class="account-glance">
+        <div class="mini-block wallet-block">
+          <h4>💰 Wallet</h4>
+          <p>Total: <span id="wallet-total">--</span> USDT</p>
+          <p>Avail: <span id="wallet-available">--</span> USDT</p>
+        </div>
+        <div class="mini-block capital-block">
+          <h4>💹 Capital</h4>
+          <p>Score: <span id="capital-score-display">--</span></p>
+        </div>
+      </section>
+
+      <section class="panel" id="scanning-feed">
+        <div id="scanner-panel">
+          <table class="scanner-table">
+            <thead>
+              <tr><th>Symbol</th><th>Price</th><th>Change</th><th>Volume</th></tr>
+            </thead>
+            <tbody id="scanner-table-body"></tbody>
+          </table>
+        </div>
+      </section>
+      
+      <section class="panel collapsible-panel">
+        <div class="panel-header">
+          <h2>📡 Signal Analysis</h2>
+          <button class="collapse-btn">−</button>
+        </div>
+        <div class="panel-body">
+          <div class="feed-filter-wrapper">
+            <label for="signal-filter" style="font-weight: bold; margin-right: 6px;">Show:</label>
+            <select id="signal-filter">
+              <option value="all">All</option>
+              <option value="high-confidence">High Confidence (≥ 80%)</option>
+              <option value="trap-warning">Trap Warnings</option>
+            </select>
+          </div>
+          <div id="futures-signal-feed" class="log-feed">
+            <table class="signal-table">
+              <thead>
+                <tr><th>Time</th><th>Symbol</th><th>Signal</th><th>Confidence</th><th>Δ</th><th>Vol</th><th>Price</th></tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <div class="feed-filter-wrapper" style="margin-bottom: 10px; display:flex; align-items:center; gap:8px;">
+        <label for="feed-filter" style="font-weight: bold; margin-right: 6px;">Show:</label>
+        <select id="feed-filter">
+          <option value="all">All</option>
+          <option value="hot">Hot Tokens</option>
+          <option value="decision">Decisions</option>
+          <option value="analysis">Analysis</option>
+          <option value="memory">Memory</option>
+          <option value="ppda">PPDA</option>
+        </select>
+        <button id="feed-mode-toggle" class="feed-toggle-btn" type="button" title="Toggle fun/serious"></button>
+      </div>
+      
+      <div id="futures-log-feed" class="log-feed"></div>
+ 
+      <section class="panel" id="trade-history-panel">
+        <h2>📈 Trade History</h2>
+        <div class="trade-history-container">
+          <table class="trade-history-table">
+            <thead>
+              <tr>
+                <th>Symbol</th><th>Side</th><th>Entry</th><th>Exit</th>
+                <th>Qnt</th><th>PNL</th><th>ROI</th><th>Status</th><th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="trade-history-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>🧠 Deep Learning Memory</h2>
+        <div id="learning-memory-panel"></div>
+          <div class="log-entry">Loading learning stats...</div>
+        </div>
+      </section>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div class="futures-col" style="flex: 1 1 0; min-width: 330px;">
+      <section class="panel" style="padding: 12px 16px;">
+        <h2 style="margin-top: 0;">📊 Account Overview</h2>
+        <div class="compact-grid">
+          <div class="mini-block">
+            <h4>📈 Strategy</h4>
+            <p>Trades: <span id="fut-total">--</span></p>
+            <p>Win: <span id="fut-winrate">--</span></p>
+            <p>Avg ROI: <span id="fut-roi">--</span></p>
+            <p>Top: <span id="fut-topcoin">--</span></p>
+          </div>
+          <div class="mini-block">
+            <h4>🤖 Auto Status</h4>
+            <p>Status: <span id="futures-connection" class="text-green">--</span>
+              <span id="futures-connection-dot" style="margin-left: 10px;">🔴</span>
+            </p>
+            <p>Last: <span id="futures-last-trade">--</span></p>
+            <p>Live PnL: <span id="futures-live-pnl">--</span></p>
+          </div>
+          <div class="mini-block">
+            <h4>📅 Session + Strategy</h4>
+            <p>Wallets: <span id="wallets-tracked">0</span></p>
+            <p>Tokens: <span id="tokens-monitored">0</span></p>
+            <p>Active: <span id="active-trades">0</span></p>
+            <p>PNL: <span id="session-pnl">+0.00%</span></p>
+            <hr style="border-color:#333; margin: 4px 0;" />
+            <p>Wins: <span id="session-wins">0</span></p>
+            <p>Losses: <span id="session-losses">0</span></p>
+            <p>Win Rate: <span id="session-winrate">0%</span></p>
+            <p>Top Trade: <span id="top-trade">--</span></p>
+            <p>Win Streak: <span id="win-streak">0</span></p>
+            <p>Loss Streak: <span id="loss-streak">0</span></p>
+          </div>
+      </section>
+
+      <section class="panel manual-panel glowing-panel">
+        <h2>⚙️ Manual Trade Controls</h2>
+        <div id="manual-preview-tooltip" class="manual-preview-tooltip">Live preview...</div>
+        <form id="manual-trade-form" autocomplete="off">
+          <div class="row">
+            <input type="text" id="manual-symbol" class="manual-input" placeholder="SYMBOL e.g (DOGE)" list="symbol-options" />
+            <datalist id="symbol-options"></datalist>
+          </div>
+          <div class="row sliders triple-bubble-row">
+            <div class="bubble-box">
+              <label>Size</label><div class="bubble" id="manual-size-value">0.1</div>
+            </div>
+            <div class="bubble-box">
+              <label>Price</label><div class="bubble warning" id="manual-price-preview">--</div>
+            </div>
+            <div class="bubble-box">
+              <label>💰 Value</label><div class="bubble success" id="manual-value-preview">--</div>
+            </div>
+          </div>
+          <input type="range" id="manual-size" min="0.1" max="50" step="0.1" value="0.1" />
+          <div class="row sliders">
+            <label>Leverage <span id="manual-leverage-value" class="bubble">5x</span></label>
+            <input type="range" id="manual-leverage" min="1" max="20" step="1" value="5" />
+          </div>
+          <div class="row sliders">
+            <label>TP <span id="manual-tp-value" class="bubble">35%</span></label>
+            <input type="range" id="manual-tp" min="10" max="100" value="35" />
+          </div>
+          <div class="row sliders">
+            <label>SL <span id="manual-sl-value" class="bubble">20%</span></label>
+            <input type="range" id="manual-sl" min="5" max="50" value="20" />
+          </div>
+          <div class="row direction-row">
+            <button type="button" id="manual-long" class="dir-btn long selected">Long</button>
+            <button type="button" id="manual-short" class="dir-btn short">Short</button>
+          </div>
+          <div class="row actions">
+            <button type="button" id="open-trade" class="trade-btn open">🟢 Open Trade</button>
+          </div>
+          <div id="manual-preview" class="preview-row"></div>
+        </form>
+      </section>
+
+      <!-- ✅ React Open Positions Mount Point -->
+      <section class="panel">
+        <h2>📂 Open Positions</h2>
+        <div id="open-positions-root"></div>
+      </section>
+
+      <!-- ✅ TP / SL Tracker Panel -->
+      <section class="panel tp-panel" id="tp-sl-tracker-panel">
+        <div class="panel-header">🧨 TP / SL Tracker</div>
+        <div class="panel-body">
+          <div id="tp-feed" class="tp-feed"></div>
+        </div>
+      </section>
+
+      <section class="panel" id="ppda-monitor-panel">
+        <h2>📌 PPDA Monitor</h2>
+        <div id="ppda-monitor-feed" class="log-feed">
+          <div class="log-entry">Awaiting dual-entry events...</div>
+        </div>
+      </section>
+
+      <section class="panel" id="ppda-session-summary-panel">
+        <h2>📊 PPDA Session Summary</h2>
+        <div id="ppda-session-summary-body">
+          <div class="log-entry">Tracking dual-resolution performance...</div>
+        </div>
+      </section>
+
+      <section class="panel" id="poseidon-status-board">
+        <h2>📊 Poseidon Status Board</h2>
+        <div id="status-board">
+          <div id="status-entries"></div>
+        </div>
+      </section>
+
+      <!-- ✅ NEW: Signal QA Panel -->
+      <section class="panel" id="signal-qa-panel">
+        <h2>✅ Signal QA</h2>
+        <div id="signal-qa-stats" class="compact-grid"></div>
+        <div id="signal-qa-feed" class="log-feed"></div>
+      </section>
+    </div>
+  </main>
+
+  <style>
+    #status-board {
+      background: #0b0b1a; border: 1px solid #444; padding: 10px;
+      max-height: 500px; overflow-y: auto; font-family: monospace; color: #fff;
+    }
+    .status-entry { border-bottom: 1px solid #222; padding: 6px 0; }
+    .status-entry strong { color: #0ff; }
+    .status-entry .tag { display: inline-block; margin-left: 6px; font-size: 12px; padding: 2px 4px; border-radius: 4px; }
+    .tag.buy { background: #0f04; color: #0f0; }
+    .tag.sell { background: #4004; color: #f44; }
+    .tag.pump { background: #040; color: #0f0; }
+    .tag.drop { background: #400; color: #f44; }
+
+    /* 🛡️ Modal base (ensures it always sits above panels and isn't clipped) */
+    #modal-root { position: fixed; inset: 0; z-index: 9999; pointer-events: none; }
+    .pm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; pointer-events:auto; }
+    .pm-card { background:#0c0f17; border:1px solid #2b3a4a; border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,.6); max-width:720px; width:92vw; }
+
+    /* QA panel quick tweaks (uses existing panel styles) */
+    #signal-qa-stats .mini-block { min-width: 120px; }
+    #signal-qa-feed .log-entry.text-green { color: #22c55e; }
+    #signal-qa-feed .log-entry.text-red { color: #ef4444; }
+  </style>
+
+  <!-- ✅ Axios CDN Fix -->
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script type="module" src="/scripts/poseidonBotModule.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="module" src="/scripts/futuresModule.js"></script>
+  <script type="module" src="/scripts/futuresSignalModule.js"></script>
+  <!-- 🔁 NEW: Auditor must load AFTER futuresSignalModule -->
+  <script type="module" src="/scripts/signalAuditor.js"></script>
+  <script type="module" src="/scripts/manualTradeControls.js"></script>
+  <!-- <script type="module" src="/scripts/futuresStatsModule.js"></script> -->
+  <script type="module" src="/scripts/positionEnhancer.js"></script>
+  <script type="module" src="/scripts/sessionStatsModule.js"></script>
+  <script type="module" src="/scripts/futuresDecisionEngine.js"></script>
+  <script type="module" src="/scripts/walletModule.js"></script>
+  <!-- tradeHistoryPanel is vanilla (no require), keep as plain script -->
+  <script src="/scripts/tradeHistoryPanel.js" defer></script>
+  <script type="module" src="/scripts/botController.js"></script>
+  <script type="module" src="/scripts/scannerPanel.js"></script>
+  <script type="module" src="/scripts/taHandler.js"></script>
+  <script type="module" src="/scripts/futuresApiClient.js"></script>
+
+  <script type="module" src="/scripts/symbolDebugger.js"></script>
+  <script type="module" src="/scripts/learningMemory.js"></script>
+  <script type="module" src="/scripts/liveFeedRenderer.js"></script>
+ 
+  <script type="module" src="/scripts/capitalScoreModule.js"></script>
+ 
+  <script type="module" src="/scripts/voiceAnnouncer.js"></script>
+  <script type="module" src="/scripts/forceTradeHelper.js"></script>
+
+  <!-- ✅ Vite/React dev only -->
+  <script type="module" src="http://localhost:5173/@vite/client"></script>
+  <script type="module">
+    import RefreshRuntime from "http://localhost:5173/@react-refresh";
+    RefreshRuntime.injectIntoGlobalHook(window);
+    window.$RefreshReg$ = () => {};
+    window.$RefreshSig$ = () => (type) => type;
+    window.__vite_plugin_react_preamble_installed__ = true;
+  </script>
+  <script type="module" src="http://localhost:5173/src/main.jsx"></script>
+
+  <!-- 🔎 TRACE (throttled + silenced by default) -->
+  <script>
+    (function attachFeedTracers() {
+      if (window.POSEIDON_SILENCE_TRACE) return;          // hard kill switch
+      if (!window.POSEIDON_FEED_TRACE) return;            // off by default
+
+      const targets = [
+        ['#futures-log-feed', document.querySelector('#futures-log-feed')],
+        ['#futures-signal-feed tbody', document.querySelector('#futures-signal-feed tbody')]
+      ];
+
+      const bucket = new Map();
+      function throttleTrace(name) {
+        const now = Date.now();
+        const b = bucket.get(name) || { count: 0, last: 0, timer: null };
+        b.count++;
+        if (!b.timer) {
+          b.timer = setTimeout(() => {
+            console.debug(`[TRACE] ${name}: +${b.count} node(s)`);
+            bucket.set(name, { count: 0, last: now, timer: null });
+          }, 1000);
+        }
+        bucket.set(name, b);
+      }
+
+      targets.forEach(([name, el]) => {
+        if (!el) return;
+        const mo = new MutationObserver(muts => {
+          let added = 0;
+          muts.forEach(m => m.addedNodes.forEach(n => { if (n.nodeType === 1) added++; }));
+          if (added) throttleTrace(name);
+        });
+        mo.observe(el, { childList: true, subtree: true });
+        console.info('[TRACE] observing', name);
+      });
+    })();
+  </script>
+
+  <script>
+    window.confirmBullishRecovery = async function(symbol) {
+      try {
+        const res = await fetch(`/api/confirm-recovery?symbol=${encodeURIComponent(symbol)}`);
+        const data = await res.json();
+        return data.bullishRecovery || false;
+      } catch (err) {
+        console.error('Confirm recovery error:', err.message);
+        return false;
+      }
+    };
+  </script>
+
+  <!-- 🔧 Start the Signal Engine (guarded so you can flip it off for isolation) -->
+  <script type="module">
+    import { startSignalEngine } from '/scripts/futuresSignalModule.js';
+    if (!window.POSEIDON_SIGNAL_ENGINE_DISABLED) {
+      startSignalEngine();
+      console.log('🚀 Signal Engine Started');
+    } else {
+      console.log('🛑 Signal Engine blocked by POSEIDON_SIGNAL_ENGINE_DISABLED');
+    }
+  </script>
+
+  <script type="module">
+    import { renderAutoStatus } from '/scripts/autoStatusModule.js';
+    renderAutoStatus();
+    setInterval(renderAutoStatus, 15000);
+  </script>
+
+  <script type="module">
+    import { refreshWalletBalance } from '/scripts/walletModule.js';
+    refreshWalletBalance();
+  </script>
+
+  <script type="module">
+    import { startTpFeedRenderer } from '/scripts/tpStatusClient.js';
+    window.addEventListener('DOMContentLoaded', () => startTpFeedRenderer());
+  </script>
+
+  <!-- ⬇️ Direct child of <body> so React portals can overlay panels -->
+  <div id="modal-root"></div>
+
+</body>
+</html>

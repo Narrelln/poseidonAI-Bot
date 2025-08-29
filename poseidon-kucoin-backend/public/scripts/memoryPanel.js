@@ -39,3 +39,36 @@ export function initMemoryPanel() {
 
   panel.appendChild(table);
 }
+// updated //
+
+export async function renderMemoryPanel() {
+  const panel = document.getElementById('learning-memory-panel');
+  if (!panel) return;
+
+  panel.innerHTML = '<div>Loading memory...</div>';
+
+  try {
+    const res = await window.axios.get('/api/memory');
+    const memory = res.data || {};
+
+    panel.innerHTML = '';
+
+    const entries = Object.entries(memory);
+    if (entries.length === 0) {
+      panel.innerHTML = '<div>No memory saved yet.</div>';
+      return;
+    }
+
+    entries.forEach(([symbol, data]) => {
+      const row = document.createElement('div');
+      row.className = 'memory-entry';
+      row.innerHTML = `
+        <strong>${symbol}</strong>: 
+        ${Object.entries(data).map(([key, val]) => `${key}: ${val}`).join(', ')}
+      `;
+      panel.appendChild(row);
+    });
+  } catch (err) {
+    panel.innerHTML = `<div>Error loading memory: ${err.message}</div>`;
+  }
+}

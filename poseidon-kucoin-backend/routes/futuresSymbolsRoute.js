@@ -1,9 +1,8 @@
-// routes/futuresSymbolsRoute.js
-
 const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 
+// === GET /api/futures-symbols ===
 router.get('/futures-symbols', async (req, res) => {
   try {
     const url = 'https://api-futures.kucoin.com/api/v1/contracts/active';
@@ -21,8 +20,8 @@ router.get('/futures-symbols', async (req, res) => {
 
     res.json({ success: true, symbols });
   } catch (error) {
-    console.error('Error fetching futures symbols:', error.message);
-    res.status(500).json({ success: false, error: error.message });
+    console.error('[futures-symbols] Error:', error.message || error);
+    res.status(500).json({ success: false, error: error.message || 'Internal error' });
   }
 });
 

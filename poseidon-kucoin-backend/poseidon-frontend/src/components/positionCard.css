@@ -1,0 +1,78 @@
+/* === PositionCard.css === */
+
+.positions-wrapper {
+    padding: 20px;
+    color: #fff;
+    background-color: #111;
+    min-height: 100vh;
+  }
+  
+  .open-positions-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    background-color: #1a1a1a;
+  }
+  
+  .open-positions-table th,
+  .open-positions-table td {
+    padding: 10px 15px;
+    text-align: center;
+    border-bottom: 1px solid #333;
+  }
+  
+  .open-positions-table th {
+    background-color: #222;
+    font-weight: bold;
+    color: #ddd;
+  }
+  
+  .long {
+    color: lime;
+    font-weight: bold;
+  }
+  
+  .short {
+    color: red;
+    font-weight: bold;
+  }
+  
+  .dimmed {
+    text-align: center;
+    color: gray;
+    margin-top: 50px;
+  }
+  
+  .btn-group {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  }
+  
+  .btn-view,
+  .btn-close {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  
+  .btn-view {
+    background-color: #444;
+    color: white;
+  }
+  
+  .btn-close {
+    background-color: #7c1e1e;
+    color: white;
+  }
+  
+  .btn-view:hover {
+    background-color: #666;
+  }
+  
+  .btn-close:hover {
+    background-color: #a60000;
+  }
+  

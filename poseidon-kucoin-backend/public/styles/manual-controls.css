@@ -1,0 +1,425 @@
+.manual-panel form, #manual-controls form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.manual-input, #manual-symbol {
+  background: #152e3e;
+  color: #19ffe6;
+  border: 1.2px solid #18f1fd55;
+  font-family: 'Share Tech Mono', monospace;
+  padding: 7px 14px;
+  border-radius: 7px;
+  font-size: 1.08em;
+  outline: none;
+  margin-bottom: 7px;
+  transition: border 0.14s;
+}
+.manual-input:focus, #manual-symbol:focus { border: 1.3px solid #1afffa; }
+
+.row.sliders label, .form-row label {
+  color: #affffe;
+  font-size: 0.98em;
+  margin-right: 12px;
+  font-family: 'Orbitron', sans-serif;
+}
+
+input[type="range"] {
+  width: 150px;
+  accent-color: #0ff;
+  margin-left: 8px;
+}
+.dir-btn.long { background: #02ffae11; color: #19ffe7; border: 1px solid #19ffe7;}
+.dir-btn.short { background: #ff4d6d11; color: #ff4d6d; border: 1px solid #ff4d6d;}
+.dir-btn { border-radius: 7px; font-size: 1.05em; padding: 6px 16px; font-family: 'Share Tech Mono'; margin-right: 7px; cursor: pointer; transition: background 0.16s; }
+.dir-btn:hover { background: #13f1fc22; }
+.trade-btn.open { background: #19ffe7; color: #0c1333; border: none; border-radius: 7px; font-size: 1.08em; font-weight: bold; padding: 8px 24px; box-shadow: 0 0 9px #13f1fc22; margin-top: 8px; cursor: pointer; }
+.trade-btn.open:hover { background: #13f1fc; color: #082131; }
+.bubble {
+  background: #17f3e666;
+  color: #013b36;
+  font-weight: bold;
+  font-size: 0.96em;
+  padding: 2px 9px;
+  border-radius: 6px;
+  margin-left: 6px;
+}
+.preview-row { color: #affffe; font-size: 0.97em; margin-top: 5px; }
+
+.manual-preview-tooltip {
+  position: absolute;
+  background: #021b33f2;
+  color: #00f6ff;
+  border: 1px solid #00ffff33;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-family: 'Share Tech Mono', monospace;
+  border-radius: 5px;
+  box-shadow: 0 0 6px #00f6ff55;
+  z-index: 9999;
+  pointer-events: none;
+  display: none;
+  white-space: nowrap;
+}
+/* === Manual Trade Enhancements === */
+.manual-panel input.manual-input {
+  background: #0a1e2a;
+  border: 1px solid #1b6a8e;
+  color: #00f6ff;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  box-shadow: inset 0 0 6px #00f6ff33;
+}
+
+.manual-panel input.manual-input::placeholder {
+  color: #66c2e4aa;
+}
+
+/* Long/Short Buttons */
+.dir-btn {
+  padding: 6px 14px;
+  margin-right: 8px;
+  font-weight: bold;
+  border-radius: 6px;
+  border: 1px solid #00f6ff88;
+  background: #072638;
+  color: #00f6ff;
+  text-shadow: 0 0 4px #00f6ff55;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.dir-btn.long {
+  border-color: #13ffb2;
+  color: #13ffb2;
+}
+.dir-btn.short {
+  border-color: #ff4d6d;
+  color: #ff4d6d;
+}
+
+.dir-btn:hover {
+  background: #03131f;
+  transform: scale(1.05);
+}
+
+/* Open Trade Button */
+.trade-btn.open {
+  background: linear-gradient(145deg, #0d332a, #005c42);
+  color: #00ffcc;
+  border: 1px solid #00ffaa99;
+  border-radius: 8px;
+  font-weight: bold;
+  box-shadow: 0 0 8px #00ffaa55;
+  padding: 8px 16px;
+  margin-top: 10px;
+  transition: transform 0.2s ease;
+}
+
+.trade-btn.open:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 12px #00ffccaa;
+}
+
+.triple-bubble-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.bubble-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  font-size: 12px;
+  color: #ccc;
+}
+
+.bubble {
+  margin-top: 4px;
+  padding: 6px 12px;
+  background-color: #111;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: bold;
+  text-align: center;
+  min-width: 80px;
+  box-shadow: 0 0 8px #0ff3;
+}
+
+.bubble.success {
+  background-color: #113311;
+  color: #3f6;
+  box-shadow: 0 0 6px #3f6a;
+}
+
+.bubble.warning {
+  background-color: #331111;
+  color: #f66;
+  box-shadow: 0 0 6px #f66a;
+}
+
+/* Manual Controls – mode toggle */
+.mode-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 10px;
+}
+
+.mode-toggle .mode-label {
+  font-size: 12px;
+  opacity: .75;
+  letter-spacing: .3px;
+}
+
+.mode-btn {
+  border: 1px solid rgba(0,255,255,.25);
+  background: rgba(0,30,50,.6);
+  color: #9feaff;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.mode-btn.active {
+  background: rgba(0,160,120,.25);
+  border-color: rgba(0,255,180,.55);
+  color: #bfffe9;
+}
+
+.mode-btn:hover { filter: brightness(1.1); }
+
+/* Bubbles: keep the look consistent when we update text */
+#manual-size-value,
+#manual-price-preview,
+#manual-value-preview {
+  font-weight: 700;
+  letter-spacing: .3px;
+}
+
+/* ===== Manual Trade Controls – mode toggle ===== */
+.mode-toggle{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  margin-left:10px;
+  vertical-align:middle;
+}
+
+.mode-label{
+  font-size:12px;
+  letter-spacing:.5px;
+  color:#8bd7ff;
+  opacity:.7;
+}
+
+/* Base button */
+.mode-btn{
+  appearance:none;
+  border:1px solid rgba(0,255,255,.18);
+  background:
+    linear-gradient(180deg, rgba(12,24,38,.85), rgba(6,14,24,.85));
+  color:#cfefff;
+  font-weight:700;
+  font-size:12px;
+  padding:4px 10px;
+  border-radius:10px;
+  box-shadow:
+    inset 0 0 4px rgba(0,255,255,.12),
+    0 0 6px rgba(0,0,0,.35);
+  cursor:pointer;
+  transition:transform .05s ease, filter .15s ease, box-shadow .2s ease;
+}
+
+.mode-btn:hover{
+  filter:brightness(1.08);
+}
+
+.mode-btn:active{
+  transform:translateY(1px);
+}
+
+/* Active = neon teal pill */
+.mode-btn.active{
+  border-color:#18f0c8;
+  color:#0affcf;
+  background:
+    radial-gradient(60% 120% at 30% 0%, rgba(24,240,200,.20), transparent 60%),
+    linear-gradient(180deg, rgba(9,29,32,.95), rgba(6,20,22,.95));
+  box-shadow:
+    inset 0 0 8px rgba(24,240,200,.35),
+    0 0 10px rgba(24,240,200,.30),
+    0 0 1px #18f0c8;
+}
+
+/* Keep bubbles aligned with your panel */
+.triple-bubble-row .bubble-box label{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+/* TP STSTUS FEEED */
+#tp-feed {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  background: #0b1016;
+  border: 1px solid #0f2533;
+  padding: 8px;
+  border-radius: 6px;
+  max-height: 240px;
+  overflow: auto;
+}
+#tp-feed .tp-line { padding: 4px 0; border-bottom: 1px dashed #122; }
+#tp-feed .tp-line:last-child { border-bottom: none; }
+#tp-feed .tp-line.PURSUIT   { color: #9cd9ff; }
+#tp-feed .tp-line.TP1_TAKEN { color: #2cff85; font-weight: 600; }
+#tp-feed .tp-line.TRAILING  { color: #ffd479; }
+#tp-feed .tp-line.TRAIL_EXIT{ color: #78f89f; font-weight: 600; }
+#tp-feed .tp-line.SL_HIT    { color: #ff6b6b; font-weight: 600; }
+
+/* --- TP/SL Tracker containment & scroll --- */
+.tp-panel { 
+  position: relative;
+  min-width: 0;                 /* allow children to shrink in flex/grid columns */
+}
+
+.tp-panel .panel-body {
+  box-sizing: border-box;
+  padding: 8px 10px;
+  min-width: 0;
+}
+
+.tp-feed {
+  box-sizing: border-box;
+  width: 100%;
+  max-height: 220px;            /* <-- adjust to taste */
+  overflow: auto;               /* scroll, don't overflow panel */
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(10, 20, 30, 0.55);
+  border: 1px solid rgba(0, 255, 180, 0.18);
+  backdrop-filter: blur(2px);
+  /* keep long tokens/lines from blowing the box */
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
+}
+
+/* feed rows */
+.tp-feed .line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.25;
+  padding: 6px 8px;
+  margin: 2px 0;
+  border-radius: 6px;
+  background: rgba(0, 255, 180, 0.04);
+}
+
+/* subtle color tags */
+.tp-feed .state { opacity: 0.8; font-weight: 600; }
+.tp-feed .state.SL_HIT      { color: #ff6b6b; }
+.tp-feed .state.TP1_TAKEN   { color: #42ff93; }
+.tp-feed .state.TRAILING    { color: #00d0ff; }
+.tp-feed .state.TRAIL_EXIT  { color: #ffd166; }
+.tp-feed .state.PURSUIT     { color: #9ab6ff; }
+
+/* optional compact mode for tight layouts */
+.tp-feed.compact .line { font-size: 12px; padding: 4px 6px; }
+
+/* nice scrollbar (WebKit) – optional */
+.tp-feed::-webkit-scrollbar { height: 8px; width: 8px; }
+.tp-feed::-webkit-scrollbar-thumb { background: rgba(0,255,180,.35); border-radius: 6px; }
+.tp-feed::-webkit-scrollbar-track { background: rgba(255,255,255,.05); }
+
+/* ── TP/SL Tracker: panel look to match other panels ───────────────────── */
+.tp-panel {
+  margin-top: 16px;
+}
+
+.tp-panel .panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid #112b3a;
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+.tp-panel .panel-body {
+  padding: 10px 12px;
+}
+
+/* Container with fixed height + scroll (like Open Positions table wrap) */
+.tp-feed {
+  background: #0a1420;
+  border: 1px solid #112b3a;
+  border-radius: 8px;
+  max-height: 280px;          /* ← adjust to taste */
+  overflow: auto;
+  padding: 6px 6px 2px;
+}
+
+/* Row layout: time | contract | message */
+.tp-row {
+  display: grid;
+  grid-template-columns: 84px 110px 1fr;  /* time | symbol | text */
+  gap: 10px;
+  align-items: center;
+  padding: 8px 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  font-family: "Share Tech Mono", monospace;
+  font-size: 13px;
+}
+.tp-row:last-child {
+  border-bottom: none;
+}
+
+.tp-time     { color: #7aa2c2; white-space: nowrap; }
+.tp-contract { color: #cfe9ff; font-weight: 600; white-space: nowrap; }
+.tp-text     { color: #dbe8f5; }
+
+/* State badges (optional, if you render them) */
+.tp-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  vertical-align: baseline;
+  border: 1px solid transparent;
+}
+
+.tp-badge.sl     { background:#2a0f12; color:#ff6b6b; border-color:#5a1b20; }
+.tp-badge.tp1    { background:#0f2a18; color:#6bff95; border-color:#1b5a30; }
+.tp-badge.trail  { background:#0f2430; color:#69d2ff; border-color:#1b4c5a; }
+.tp-badge.hold   { background:#1b1b2a; color:#bcbcee; border-color:#2a2a4a; }
+
+/* Hover polish (consistent with tables) */
+.tp-row:hover {
+  background: rgba(255,255,255,0.03);
+}
+
+/* Scrollbar tidy (optional) */
+.tp-feed::-webkit-scrollbar { height: 8px; width: 8px; }
+.tp-feed::-webkit-scrollbar-thumb { background: #153349; border-radius: 6px; }
+
+/* Mobile squeeze */
+@media (max-width: 900px) {
+  .tp-row { grid-template-columns: 72px 92px 1fr; font-size: 12px; }
+}
+.tp-line code, .tp-line .bt { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.tp-line { white-space: pre-wrap; line-height: 1.25; margin: 2px 0; }

@@ -1,4 +1,9 @@
-import { updateMemoryFromResult } from './updateMemoryFromResult.js';
+// strategyMemory.js
+
+// Stubbed: updateMemoryFromResult does nothing in browser
+function updateMemoryFromResult(symbol, direction, result) {
+  // No-op in browser
+}
 
 const memoryMap = new Map(); // { symbol: { longWins, shortWins, longLosses, shortLosses } }
 

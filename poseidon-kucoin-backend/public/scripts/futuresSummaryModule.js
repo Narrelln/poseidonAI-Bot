@@ -1,8 +1,6 @@
-import { fetchFuturesPrice, fetchVolumeAndOI, getOpenPositions } from './futuresApi.js';
-import { getLastClosedTrade } from './futuresPositionTracker.js';
+import { toKuCoinContractSymbol, getOpenPositions } from './futuresApiClient.js';
 
-void fetchFuturesPrice;
-void fetchVolumeAndOI
+import { getLastClosedTrade } from './futuresPositionTracker.js';
 
 
 export async function updateFuturesSummary(symbol = 'DOGEUSDT') {

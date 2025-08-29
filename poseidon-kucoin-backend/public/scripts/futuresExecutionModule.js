@@ -2,8 +2,11 @@
 
 import { updateCapitalScore } from './capitalRiskEngine.js';
 import { logToFeed } from './futuresUtils.js';
-import { fetchTradableSymbols, getOpenPositions } from './futuresApi.js';
-import { triggerAutoShutdownWithCooldown } from './poseidonBotModule.js';
+import {
+  getOpenPositions,
+  fetchTradableSymbols
+} from './futuresApiClient.js'; // ✅ fetchFuturesPrice removed
+import * as botModule from './poseidonBotModule.js';
 
 let validSymbols = [];
 let symbolContractMap = {};
@@ -23,7 +26,6 @@ export async function initFuturesExecutionModule() {
   });
 }
 
-// === Flip logic: close opposite first, then place new ===
 export async function placeAndFlip(symbol, side, size = 100, leverage = 5, isManual = false) {
   symbol = symbol.toUpperCase();
   const contract = toKucoinContract(symbol);
@@ -43,7 +45,6 @@ export async function placeAndFlip(symbol, side, size = 100, leverage = 5, isMan
   await executeTrade(symbol, side, size, isManual, leverage);
 }
 
-// === Main execution — for manual & auto trades ===
 export async function executeTrade(symbol, direction, size = 100, isManual = false, leverage = 5, tp = null, sl = null) {
   symbol = symbol.toUpperCase();
   direction = direction.toLowerCase();
@@ -79,11 +80,12 @@ export async function executeTrade(symbol, direction, size = 100, isManual = fal
     console.error("❌ Trade failed", err);
     logToFeed(`❌ Trade failed: ${err.message}`);
     updateCapitalScore(-1);
-    triggerAutoShutdownWithCooldown();
+    if (typeof botModule.triggerAutoShutdownWithCooldown === 'function') {
+      botModule.triggerAutoShutdownWithCooldown();
+    }
   }
 }
 
-// === Close handler (used during flips) ===
 export async function closeTrade(symbol, side = null) {
   symbol = symbol.toUpperCase();
   const contract = toKucoinContract(symbol);
@@ -111,7 +113,6 @@ export async function closeTrade(symbol, side = null) {
   }
 }
 
-// === PPDA Entry (dual-side support) ===
 export async function ppdaExecute(symbol, side, usdtAmount = 5, leverage = 5) {
   await placeAndFlip(symbol, side, usdtAmount, leverage, false);
 }

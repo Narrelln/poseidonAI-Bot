@@ -940,5 +940,19 @@
       "lastResult": "loss",
       "lastTimestamp": 1752184830356
     }
+  },
+  "TESTUSDTM": {
+    "LONG": {
+      "trades": 1,
+      "wins": 1,
+      "losses": 0,
+      "lastResult": "win",
+      "lastDelta": 12.5,
+      "lastConfidence": 78,
+      "currentStreak": 1,
+      "meta": {
+        "testRun": true
+      }
+    }
   }
 }

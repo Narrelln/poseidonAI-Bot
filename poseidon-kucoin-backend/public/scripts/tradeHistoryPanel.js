@@ -1,57 +1,105 @@
-// scripts/renderTradeHistory.js
-
-document.addEventListener('DOMContentLoaded', () => {
-  const tbody = document.getElementById('trade-history-body');
-  if (!tbody) return;
-
-  async function loadHistory() {
-    try {
-      const res = await fetch('/api/trade-history');
-      const json = await res.json();
-      const trades = Array.isArray(json) ? json : json.trades || [];
-
-      tbody.innerHTML = '';
-
-      if (trades.length === 0) {
-        const row = document.createElement('tr');
-        row.innerHTML = `<td colspan="10">No trade history yet.</td>`;
-        tbody.appendChild(row);
+// public/scripts/tradeHistoryPanel.js (browser-only)
+(() => {
+    const tbody = document.getElementById('trade-history-body');
+    if (!tbody) return;
+  
+    const fmtNum = (v, min=2, max=6) => {
+      const n = Number(v);
+      if (!Number.isFinite(n)) return '—';
+      return n.toLocaleString(undefined, { minimumFractionDigits:min, maximumFractionDigits:max });
+    };
+    const fmtPrice = v => fmtNum(v, 4, 6);
+    const fmtQty   = v => fmtNum(v, 3, 3);
+    const fmtPNL   = v => fmtNum(v, 2, 6);
+    const fmtROI   = v => {
+      if (v == null || v === '') return '—';
+      const s = String(v).trim();
+      if (s.endsWith('%')) return s;
+      const n = Number(s);
+      return Number.isFinite(n) ? `${n.toFixed(2)}%` : '—';
+    };
+    const fmtDate  = v => {
+      if (!v) return '—';
+      const d = new Date(v);
+      return isNaN(d.getTime()) ? '—' : d.toLocaleString();
+    };
+    const sideText = s => (String(s).toLowerCase() === 'buy' ? 'Long' : 'Short');
+  
+    async function fetchLedger() {
+    const r = await fetch('/api/trade-ledger?limit=100', { cache: 'no-store' });
+      if (!r.ok) throw new Error(`Ledger history fetch failed: ${r.status}`);
+      const data = await r.json();
+      return Array.isArray(data?.trades) ? data.trades : (Array.isArray(data) ? data : []);
+    }
+  
+    function renderRows(trades) {
+      if (!Array.isArray(trades) || trades.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:#98a2b3;padding:12px;">No trades found.</td></tr>`;
         return;
       }
-
-      trades.forEach(trade => {
-        const row = document.createElement('tr');
-        const pnlVal = parseFloat(trade.pnl);
-        const pnlClass = !isNaN(pnlVal) && pnlVal > 0 ? 'positive' : (pnlVal < 0 ? 'negative' : '');
-
-        row.innerHTML = `
-          <td>${trade.symbol}</td>
-          <td>${trade.side}</td>
-          <td>${trade.entry}</td>
-          <td>${trade.exit || '-'}</td>
-          <td>${trade.leverage || '-'}</td>
-          <td>${trade.size || '-'}</td>
-          <td class="${pnlClass}">${isNaN(pnlVal) ? '-' : pnlVal.toFixed(2)}</td>
-          <td>${trade.roi || '-'}</td>
-          <td>${trade.status}</td>
-          <td>${trade.date || '-'}</td>
-        `;
-
-        tbody.appendChild(row);
-      });
-    } catch (err) {
-      console.error('Failed to load trade history:', err);
-      const row = document.createElement('tr');
-      row.innerHTML = `<td colspan="10">⚠️ Error loading history</td>`;
-      tbody.appendChild(row);
+  
+      tbody.innerHTML = trades.map(t => {
+        const status = String(t.status || '').toUpperCase();
+        const isOpen  = status === 'OPEN';
+        const symbol  = t.symbol || t.contract || '—';
+        const side    = sideText(t.side);
+        const entry   = t.entry;
+        const exitVal = isOpen ? (t.exitLive ?? '') : (t.exit ?? '');
+        const qty     = t.size ?? t.baseQty ?? '';
+        const pnlVal  = isOpen ? (t.pnlLive ?? '')  : (t.pnl ?? '');
+        const roiVal  = isOpen ? (t.roiLive ?? '')  : (t.roi ?? t.pnlPercent ?? '');
+  
+        // 🔧 Use ledger fields explicitly
+        const dateIso = isOpen
+          ? (t.openedAt || t.timestamp || t.date || '')
+          : (t.closedAt || t.date || '');
+  
+        const pnlNum  = Number(pnlVal);
+        const pnlPos  = Number.isFinite(pnlNum) ? pnlNum >= 0 : true;
+  
+        return `
+          <tr>
+            <td class="th-symbol">${symbol}</td>
+            <td class="th-side ${side.toLowerCase()}">${side}</td>
+            <td>${entry !== '' ? fmtPrice(entry) : '—'}</td>
+            <td>${exitVal !== '' ? fmtPrice(exitVal) : '—'}</td>
+            <td>${qty   !== '' ? fmtQty(qty)       : '—'}</td>
+            <td class="${pnlPos ? 'pnl-pos' : 'pnl-neg'}">${pnlVal !== '' ? fmtPNL(pnlVal) : '—'}</td>
+            <td>${fmtROI(roiVal)}</td>
+            <td>${status}</td>
+            <td>${fmtDate(dateIso)}</td>
+          </tr>`;
+      }).join('');
     }
-  }
-
-  loadHistory();
-
-  if (window.io) {
-    const socket = io();
-    socket.on('trade-closed', () => loadHistory());
-    socket.on('trade-confirmed', () => loadHistory());
-  }
-});
+  
+    async function loadOnce() {
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:12px;color:#98a2b3;">Loading…</td></tr>`;
+      try {
+        const trades = await fetchLedger();
+        renderRows(trades);
+      } catch (e) {
+        console.error('[trade-history] ledger load error:', e);
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:#f88;padding:12px;">Couldn’t load trade history.</td></tr>`;
+      }
+    }
+  
+    let refreshing = false;
+    async function refresh() {
+      if (refreshing) return;
+      refreshing = true;
+      try {
+        const trades = await fetchLedger();
+        renderRows(trades);
+      } finally {
+        refreshing = false;
+      }
+    }
+  
+    loadOnce();
+    if (window.io) {
+      const socket = io();
+      socket.on('trade-closed', refresh);
+      socket.on('trade-confirmed', refresh);
+    }
+    setInterval(refresh, 5000);
+  })();

@@ -11,12 +11,30 @@
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
     "express": "^4.21.2",
+    "json2csv": "^6.0.0-alpha.2",
     "kucoin-node-sdk": "^1.1.1",
+    "mongodb": "^4.17.2",
+    "mongoose": "^8.17.0",
     "socket.io": "^4.8.1",
     "technicalindicators": "^3.1.0",
     "uuid": "^11.1.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
-  }
+  },
+  "description": "",
+  "directories": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Narrelln/poseidonAI-Bot.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Narrelln/poseidonAI-Bot/issues"
+  },
+  "homepage": "https://github.com/Narrelln/poseidonAI-Bot#readme"
 }

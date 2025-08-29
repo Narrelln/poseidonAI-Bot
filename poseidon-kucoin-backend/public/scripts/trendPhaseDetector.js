@@ -1,20 +1,35 @@
-import { fetchFuturesPrice } from './futuresApi.js';
+import { getCachedScannerData } from './scannerCache.js';
+import { fetchTA } from './taHandler.js';
 
+function normalize(symbol) {
+  return symbol.replace(/[-_]/g, '').replace(/USDTM?$/, '').toUpperCase();
+}
+
+function getScannerToken(symbol, top50) {
+  const norm = normalize(symbol);
+  return top50.find(t => normalize(t.symbol) === norm);
+}
 
 export async function detectTrendPhase(symbol) {
   try {
-    const { price, history } = await fetchFuturesPrice(symbol);
-    if (!history || history.length < 3) return { phase: 'unknown', reason: 'Insufficient history' };
+    const { top50 } = await getCachedScannerData();
+    const token = getScannerToken(symbol, top50);
 
-    const macd = await getMACD(symbol);
-    const bb = await getBB(symbol);
+    const price = parseFloat(token?.price);
+    const history = token?.history || [];
+
+    if (!price || !history?.length || history.length < 3) {
+      return { phase: 'unknown', reason: 'Insufficient history' };
+    }
+
+    const ta = await fetchTA(symbol);
+    const slopeMACD = ta?.macd?.histogram ?? 0;
 
     const change1h = ((price - history[0]) / history[0]) * 100;
     const velocity = ((price - history[1]) / history[1]) * 100;
-    const slopeMACD = macd && typeof macd.histogram !== 'undefined' ? macd.histogram : 0;
 
     let phase = 'neutral';
-    let reasons = [];
+    const reasons = [];
 
     if (change1h > 30 && velocity < 3 && slopeMACD < 0) {
       phase = 'peak';

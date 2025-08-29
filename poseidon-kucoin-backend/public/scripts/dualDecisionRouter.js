@@ -1,15 +1,19 @@
 // === dualDecisionRouter.js — Smart Strategy Delegator with Auto Execution ===
 
-import { evaluatePoseidonDecision, updateMemoryFromResult } from './evaluatePoseidonDecision.js';
-import { evaluatePPDA } from './ppdaDecisionEngine.js';
-import { executeTrade } from './futuresExecutionModule.js';
-import { getActiveSymbols } from './futuresSignalModule.js';
+const {
+  evaluatePoseidonDecision,
+  updateMemoryFromResult
+} = require('./evaluatePoseidonDecision');
+
+const { evaluatePPDA } = require('./ppdaDecisionEngine');
+const { executeTrade } = require('./futuresExecutionModule');
+const { getActiveSymbols } = require('./futuresSignalModule');
 
 void getActiveSymbols;
 
 let lastExecuted = {};
 
-export async function routeTradeDecision(symbol) {
+async function routeTradeDecision(symbol) {
   const cooldown = 30 * 1000; // 30 sec cooldown per symbol
   const now = Date.now();
 
@@ -49,3 +53,7 @@ export async function routeTradeDecision(symbol) {
     }
   }
 }
+
+module.exports = {
+  routeTradeDecision
+};

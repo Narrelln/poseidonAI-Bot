@@ -1,88 +1,58 @@
-// utils/marketScanner.js
-// Utility-only fetchers for KuCoin Futures
+// === utils/marketScanner.js ===
 
-const axios = require('axios');
+const { getTA } = require('../handlers/taHandler');
+const { fetchKuCoinFuturesSymbols, fetchFuturesPrice } = require('../handlers/futuresApi');
+const { toKuCoinContractSymbol } = require('../handlers/futuresApi');
 
-const normalizeSymbol = (symbol) =>
-  symbol
-    .replace(/-?USDTM$/i, '')
-    .replace(/-?USDT$/i, '')
-    .replace(/[^A-Z]/gi, '')
-    .toUpperCase();
+const MIN_VOLUME = 100000;
 
-const toKucoinContract = (symbol) => `${normalizeSymbol(symbol)}-USDTM`;
-const toBybitSymbol   = (symbol) => `${normalizeSymbol(symbol)}USDT`;
-
-/**
- * Fetch the full array of futures tickers (bulk snapshot).
- * Returns an array of objects: { symbol, price, volValue, changeRate, … }
- */
-async function fetchBulkTickers() {
-  const url = 'https://api-futures.kucoin.com/api/v1/market/ticker?type=all';
-  try {
-    const res  = await axios.get(url);
-    const list = res.data?.data || [];
-    console.log(`✅ Loaded ${list.length} futures tickers.`);
-    return list;
-  } catch (err) {
-    console.error('❌ fetchBulkTickers failed:', err.message);
-    return [];
-  }
+function normalizeSymbol(symbol = '') {
+  return symbol.replace(/[-_]/g, '').toUpperCase();
 }
 
-/**
- * Fetch the list of active contracts.
- * Returns an array of contract objects (filtered to USDT-margined, status “Open”).
- */
-async function fetchKucoinContracts() {
-  const url = 'https://api-futures.kucoin.com/api/v1/contracts/active';
+async function analyzeSymbol(rawSymbol) {
+  const symbol = toKuCoinContractSymbol(rawSymbol);
   try {
-    const res  = await axios.get(url);
-    const raw  = Array.isArray(res.data?.data)
-      ? res.data.data
-      : Object.values(res.data?.data || {});
-    console.log(`📦 Raw contracts fetched: ${raw.length}`);
+    const ta = await getTA(symbol);
+    if (!ta || ta.success === false || !ta.signal || !['bullish', 'bearish'].includes(ta.signal)) return null;
 
-    const valid = raw.filter(c => {
-      const ok =
-        c &&
-        typeof c.symbol === 'string' &&
-        c.symbol.endsWith('USDTM') &&
-        c.status === 'Open';
-      if (!ok) console.warn(`[SKIP] Invalid/closed contract: ${c?.symbol}`);
-      return ok;
-    });
+    const { price, failed } = await fetchFuturesPrice(symbol);
+    if (failed || !price || price <= 0) return null;
 
-    console.log(`✅ Valid tradable contracts: ${valid.length}`);
-    return valid;
+    return {
+      symbol,
+      signal: ta.signal,
+      confidence: ta.confidence || 0,
+      price,
+      volume: ta.volume || 0,
+      bbSignal: ta.bb?.breakout ? 'Breakout' : 'None',
+      rsi: ta.rsi,
+      trapWarning: ta.trapWarning,
+      macdSignal: ta.macd?.signal,
+      range24h: ta.range24h,
+      range7D: ta.range7D,
+      range30D: ta.range30D
+    };
   } catch (err) {
-    console.error('❌ fetchKucoinContracts failed:', err.message);
-    return [];
-  }
-}
-
-/**
- * Fallback single-symbol price fetch.
- */
-async function fetchTickerPrice(symbol) {
-  try {
-    const url  = `https://api-futures.kucoin.com/api/v1/market/ticker?symbol=${symbol}`;
-    const res  = await axios.get(url);
-    const data = res.data?.data || {};
-    const price = parseFloat(data.price || data.last);
-    if (!price || isNaN(price)) throw new Error('Invalid price');
-    return price;
-  } catch (err) {
-    console.warn(`❌ fetchTickerPrice failed for ${symbol}:`, err.message);
+    console.warn(`[MarketScanner] Failed for ${symbol}:`, err.message);
     return null;
   }
 }
 
+async function fetchValidKuCoinContracts() {
+  try {
+    const contracts = await fetchKuCoinFuturesSymbols();
+    return contracts.filter(c => {
+      const vol = parseFloat(c.volume || 0);
+      return c.symbol && !/TEST|ALT/i.test(c.symbol) && vol >= MIN_VOLUME;
+    });
+  } catch (err) {
+    console.error('[MarketScanner] fetchValidKuCoinContracts error:', err.message);
+    return [];
+  }
+}
+
 module.exports = {
-  normalizeSymbol,
-  toKucoinContract,
-  toBybitSymbol,
-  fetchKucoinContracts,
-  fetchTickerPrice,
-  fetchBulkTickers,
+  analyzeSymbol,
+  fetchValidKuCoinContracts
 };

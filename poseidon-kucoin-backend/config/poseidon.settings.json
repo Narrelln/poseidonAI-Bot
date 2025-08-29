@@ -1,0 +1,19 @@
+{
+    "tp": {
+      "tp1_roi_pct": 100,
+      "tp1_partial_fraction": 0.4,
+      "trail": {
+        "use_atr_pct": true,
+        "base_gap_pct": 1.2,
+        "atr_coef": 1.5,
+        "momentum_boost": 0.8,
+        "min_gap_pct": 0.6,
+        "max_gap_pct": 4.0
+      }
+    },
+    "reversal": {
+      "enable_flip": false,
+      "flip_fraction": 0.25,
+      "min_momentum_for_flip": 0.72
+    }
+  }

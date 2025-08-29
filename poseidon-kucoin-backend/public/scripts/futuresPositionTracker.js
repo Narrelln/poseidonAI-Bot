@@ -1,6 +1,7 @@
 import { recordTradeResult } from './strategyMemory.js';
 import { applyTradeOutcome } from './capitalRiskEngine.js';
-import { updateMemoryFromResult } from './updateMemoryFromResult.js';
+// 🩹 Patch: Stub updateMemoryFromResult for frontend safety
+const updateMemoryFromResult = () => {};
 
 const trackers = new Map();
 const POSITIONS_STORAGE_KEY = 'poseidonFuturesPositions';
