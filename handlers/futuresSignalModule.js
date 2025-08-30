@@ -1,50 +1,68 @@
+// === FSM / Signal Engine (patched) ===
+// - Local calculateConfidence (server-side)
+// - Quote-volume aware gating
+// - Uses poseidonScanner for active symbols
+// - Compatible with taHandler output
+
 const {
   toKuCoinContractSymbol,
   getScanTokenBySymbol,
   getOpenPositions
 } = require('./futuresApi');
 
+// If you keep a server decision helper, leave this import;
+// otherwise swap to your server-side evaluatePoseidonDecision implementation.
 const { evaluatePoseidonDecision } = require('../handlers/decisionHelper');
 const { detectTrendPhase } = require('../handlers/trendPhaseDetector');
-const { calculateConfidence } = require('../handlers/taClient');
-const { getActiveSymbols } = require('../routes/newScanTokens');
 
-const MAX_VOLUME_CAP = 20_000_000;
+// ⬇︎ moved: getActiveSymbols should come from the scanner module
+const { getActiveSymbols } = require('../handlers/poseidonScanner');
+
+const axios = require('axios');
+
+const MAX_QUOTE_VOL = 20_000_000;
 const taCache = new Map();
 let scanIndex = 0;
 let scanInterval = null;
 
-// Normalize for base comparisons (e.g. DOGEUSDTM → DOGE)
+const BASE = `http://localhost:${process.env.PORT || 3000}`;
+
+// --- helpers ---------------------------------------------------------------
 function normalizeBaseSymbol(sym = '') {
-  return sym.replace(/[-_]/g, '').toUpperCase().replace(/USDTM?$/, '');
+  return String(sym).replace(/[-_]/g, '').toUpperCase().replace(/USDTM?$/, '');
+}
+
+// Same scoring you used in handlers/taHandler.js
+function calculateConfidence(macdSignal, bbSignal, volumeSpike) {
+  let score = 0;
+  if (macdSignal === 'bullish' || macdSignal === 'bearish') score += 30;
+  if (bbSignal === 'breakout') score += 30;
+  if (volumeSpike) score += 40;
+  return Math.min(score, 100);
 }
 
 async function fetchTA(rawSymbol) {
+  // Endpoint expects futures or spot; our /api/ta normalizes internally.
   const symbol = toKuCoinContractSymbol(rawSymbol);
   if (taCache.has(symbol)) return taCache.get(symbol);
 
   try {
-    const res = await fetch(`http://localhost:3000/api/ta/${symbol}`);
-    const ta = await res.json();
-    taCache.set(symbol, ta);
-    return ta;
+    const { data } = await axios.get(`${BASE}/api/ta/${encodeURIComponent(symbol)}`, { timeout: 12000 });
+    taCache.set(symbol, data || null);
+    return data || null;
   } catch (err) {
-    console.warn(`[TA] Fallback for ${symbol}:`, err.message);
+    console.warn(`[TA] fetch failed for ${symbol}:`, err.message);
     taCache.set(symbol, null);
     return null;
   }
 }
 
-async function detectBigDrop(symbol) {
-  return false;
-}
+async function detectBigDrop(_symbol) { return false; }
+async function detectBigPump(_symbol) { return false; }
 
-async function detectBigPump(symbol) {
-  return false;
-}
-
+// --- core ------------------------------------------------------------------
 async function analyzeAndTrigger(symbol, options = {}) {
-  if (!symbol || symbol.includes('ALTCOIN') || symbol.includes('ZEUS') || symbol.includes('TEST')) {
+  if (!symbol || /ALTCOIN|ZEUS|TEST/i.test(symbol)) {
     console.warn(`⚠️ Skipping fake/test symbol: ${symbol}`);
     return;
   }
@@ -53,42 +71,48 @@ async function analyzeAndTrigger(symbol, options = {}) {
   const baseSymbol = normalizeBaseSymbol(symbol);
 
   try {
+    // Scanner snapshot (prefer quoteVolume)
     const token = getScanTokenBySymbol(symbol);
-    const price = parseFloat(token?.price || 0);
-    const volume = parseFloat(token?.volume || 0);
+    const price = Number(token?.price || 0);
+    const quoteVolume =
+      Number(token?.quoteVolume ?? token?.turnover ?? token?.volume ?? 0);
 
-    if (!price || !volume || volume > MAX_VOLUME_CAP) {
-      console.warn(`⚠️ Skipping ${symbol} — invalid price: ${price}, volume: ${volume}`);
+    if (!(price > 0) || !(quoteVolume > 0) || quoteVolume > MAX_QUOTE_VOL) {
+      console.warn(`⚠️ Skipping ${symbol} — invalid price: ${price}, qVol: ${quoteVolume}`);
       return;
     }
 
+    // TA (server)
     const ta = await fetchTA(symbol);
-    if (!ta || ta.success === false) {
-      console.warn(`❌ No TA result for ${symbol}: ${ta?.error || 'unknown error'}`);
+    if (!ta || ta.nodata || ta.success === false) {
+      console.warn(`❌ No TA result for ${symbol}: ${ta?.error || 'unknown'}`);
       return;
     }
 
-    const macdSignal = ta.macd?.signal === 'bullish' ? 'Buy' : 'Sell';
-    const bbSignal = ta.bb?.breakout ? 'Breakout' : 'None';
+    // Normalize TA fields to your server format
+    const macdSignal  = ta.macdSignal || (ta.macd?.signal === 'bullish' ? 'bullish' : 'bearish');
+    const bbSignal    = ta.bbSignal || (ta.bb?.breakout ? 'breakout' : 'neutral');
     const volumeSpike = !!ta.volumeSpike;
-    const rsi = ta.rsi ?? '--';
+    const rsi         = Number.isFinite(Number(ta.rsi)) ? Number(ta.rsi) : null;
     const trapWarning = !!ta.trapWarning;
-    const signal = ta.signal ?? 'neutral';
+    const signal      = ta.signal ?? 'neutral';
 
-    // Only trade on valid signals
+    // Only trade on actionable signals
     if (!['bullish', 'bearish'].includes(signal)) {
       console.warn(`⛔ Skipping ${symbol} — TA signal '${signal}' not actionable`);
       return;
     }
 
-    const confidence = parseFloat(calculateConfidence(macdSignal, bbSignal, volumeSpike));
+    // Confidence (server-side calc to avoid frontend import)
+    const confidence = calculateConfidence(macdSignal, bbSignal, volumeSpike);
     if (confidence < 70) {
       console.warn(`⛔ Skipping ${symbol} — Confidence too low (${confidence}%)`);
       return;
     }
 
+    // Already open guard (futures positions)
     if (!options.manual) {
-      const open = await getOpenPositions();
+      const open = await getOpenPositions().catch(() => []);
       const alreadyOpen = open.some(pos => normalizeBaseSymbol(pos.symbol) === baseSymbol);
       if (alreadyOpen) {
         console.warn(`🔒 Already in open position: ${symbol}`);
@@ -96,21 +120,19 @@ async function analyzeAndTrigger(symbol, options = {}) {
       }
     }
 
-    const trendPhase = await detectTrendPhase(symbol);
-    if (['peak', 'reversal'].includes(trendPhase.phase)) {
-      const analysis = {};
-      await evaluatePoseidonDecision(symbol, analysis);
+    // Trend-phase guard
+    const trendPhase = await detectTrendPhase(contractSymbol).catch(() => null);
+    if (trendPhase && ['peak', 'reversal'].includes(trendPhase.phase)) {
+      // Observe-only
+      await evaluatePoseidonDecision(contractSymbol, {});
       return;
     }
 
-    const bigDrop = await detectBigDrop(symbol);
-    if (bigDrop) return;
+    // Big moves (stubs)
+    if (await detectBigDrop(contractSymbol)) return;
+    if (await detectBigPump(contractSymbol)) return;
 
-    const bigPump = await detectBigPump(symbol);
-    if (bigPump) return;
-
-    let allocationPct = 10;
-    if (confidence >= 85) allocationPct = 25;
+    let allocationPct = confidence >= 85 ? 25 : 10;
 
     const analysis = {
       macdSignal,
@@ -122,18 +144,21 @@ async function analyzeAndTrigger(symbol, options = {}) {
       signal,
       bigDrop: false,
       bigPump: false,
-      manual: options.manual || false,
+      manual: !!options.manual,
       allocationPct,
       price,
+      // ranges from TA (these may be 24h-derived in your handler)
       range24h: ta.range24h,
-      range7D: ta.range7D,
-      range30D: ta.range30D
+      range7D:  ta.range7D,
+      range30D: ta.range30D,
+      // pass volumes for downstream engines (quote-volume preferred)
+      quoteVolume,
     };
-    
-    console.log(`[📈 ${symbol}] Price: ${price}, 24h Range: ${ta.range24h?.low} → ${ta.range24h?.high}`);
-    console.log(`✅ Final constructed: ${symbol} | Signal: ${signal} | Confidence: ${confidence}%`);
-    await evaluatePoseidonDecision(symbol, analysis);
 
+    console.log(`[📈 ${contractSymbol}] Price: ${price}, 24h Range: ${ta.range24h?.low} → ${ta.range24h?.high}`);
+    console.log(`✅ Final constructed: ${contractSymbol} | Signal: ${signal} | Confidence: ${confidence}%`);
+
+    await evaluatePoseidonDecision(contractSymbol, analysis);
   } catch (err) {
     console.error(`❌ Analysis failed for ${symbol}:`, err.message);
   }
@@ -154,8 +179,9 @@ async function startSignalEngine() {
       return;
     }
 
-    const symbol = symbols[scanIndex];
-    if (symbol) await analyzeAndTrigger(symbol);
+    const item = symbols[scanIndex];
+    const sym = typeof item === 'string' ? item : (item?.symbol || '');
+    if (sym) await analyzeAndTrigger(sym);
 
     scanIndex = (scanIndex + 1) % symbols.length;
   }, 12_000);

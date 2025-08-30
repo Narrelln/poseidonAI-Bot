@@ -1,8 +1,25 @@
-// autoTradeModule.js — Executes trades via backend using KuCoin
+// autoTradeModule.js — Executes trades via backend using KuCoin (margin-first)
 
 const BASE_URL = "http://localhost:3000";
 
-// Open Trade (LONG or SHORT)
+// New: margin-first open
+export async function openMarginTrade(symbol = "DOGEUSDT", side = "LONG", notionalUsd = 10, leverage = 5, tpPercent = null, slPercent = null) {
+  try {
+    const res = await fetch(`${BASE_URL}/api/place-trade`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ symbol, side, notionalUsd, leverage, tpPercent, slPercent, manual: false })
+    });
+    const json = await res.json();
+    console.log("✅ Open Margin Trade Response:", json);
+    return json;
+  } catch (err) {
+    console.error("❌ Failed to open margin trade:", err);
+    return null;
+  }
+}
+
+// Legacy compatibility (still available if needed)
 export async function openTrade(contract = "DOGEUSDT", side = "buy", size = 1, leverage = 5) {
   try {
     const res = await fetch(`${BASE_URL}/api/order`, {
@@ -19,7 +36,6 @@ export async function openTrade(contract = "DOGEUSDT", side = "buy", size = 1, l
   }
 }
 
-// Close Trade (specify contract and side to close)
 export async function closeTrade(contract = "DOGEUSDT", side = "buy") {
   try {
     const res = await fetch(`${BASE_URL}/api/close-trade`, {
@@ -36,7 +52,7 @@ export async function closeTrade(contract = "DOGEUSDT", side = "buy") {
   }
 }
 
-// (Optional) Set TP/SL — If you have a backend endpoint for this, implement here.
+// Optional: TP/SL
 export async function setTPandSL(contract = "DOGEUSDT", takeProfit = 8, stopLoss = -5) {
   try {
     const res = await fetch(`${BASE_URL}/api/set-tp-sl`, {

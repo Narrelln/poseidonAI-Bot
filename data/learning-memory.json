@@ -1,177 +1,111 @@
 {
-  "ADAUSDT": {
-    "confidence": 83,
+  "XRPUSDT": {
+    "confidence": 0,
+    "allocationPct": null,
     "trapWarning": false,
-    "allocationPct": 25
+    "trapCount": 0,
+    "confidenceLog": [],
+    "avgConfidence": 0,
+    "momentum": {
+      "rsiRising": false,
+      "macdRising": false
+    },
+    "watchReason": null,
+    "watchStartTime": null,
+    "volatilityTag": null,
+    "lastPrice": 0,
+    "dna": {
+      "day": "2025-08-27",
+      "todayHigh": null,
+      "todayLow": null,
+      "athHits": 0,
+      "atlHits": 0
+    },
+    "windows": {
+      "deque": [],
+      "ath30": 0,
+      "atl30": 0
+    },
+    "sr": {
+      "levels": [],
+      "nearestSupport": 0,
+      "nearestResistance": 0
+    },
+    "ath": 0,
+    "atl": 0,
+    "athTime": null,
+    "atlTime": null,
+    "traces": [
+      {
+        "traceId": "meuim5k8-4g7rtz",
+        "source": "CYCLE_WATCHER",
+        "phase": "impulse",
+        "side": "long",
+        "confidence": 88,
+        "price": 0,
+        "time": "2025-08-27T21:56:54.826Z"
+      }
+    ],
+    "lastUpdate": "2025-08-27T21:56:54.826Z"
   },
-  "BTCUSDTM": {
-    "confidence": 78,
-    "trapWarning": true,
-    "allocationPct": 10
-  },
-  "ASPUSDTM": {
-    "confidence": 0,
+  "XRPUSDTM": {
+    "confidence": 27,
+    "allocationPct": null,
     "trapWarning": false,
-    "allocationPct": null
-  },
-  "ICNTUSDTM": {
-    "confidence": 0,
-    "trapWarning": false,
-    "allocationPct": null
-  },
-  "FORTHUSDTM": {
-    "confidence": 0,
-    "trapWarning": false,
-    "allocationPct": null
-  },
-  "HIPPOUSDTM": {
-    "confidence": 0,
-    "trapWarning": true,
-    "allocationPct": null
-  },
-  "TSTBSCUSDTM": {
-    "confidence": 5,
-    "trapWarning": true,
-    "allocationPct": null
-  },
-  "CTCUSDTM": {
-    "confidence": 0,
-    "trapWarning": false,
-    "allocationPct": null
-  },
-  "RESOLVUSDTM": {
-    "confidence": 0,
-    "trapWarning": false,
-    "allocationPct": null
-  },
-  "JELLYJELLYUSDTM": {
-    "confidence": 0,
-    "trapWarning": false,
-    "allocationPct": null
-  },
-  "EDUUSDTM": {
-    "confidence": 0,
-    "trapWarning": false,
-    "allocationPct": null
-  },
-  "MLNUSDTM": {
-    "confidence": 0,
-    "trapWarning": false,
-    "allocationPct": null
-  },
-  "ESUSDTM": {
-    "confidence": 0,
-    "trapWarning": false,
-    "allocationPct": null
-  },
-  "FRAGUSDTM": {
-    "confidence": 0,
-    "trapWarning": false,
-    "allocationPct": null
-  },
-  "XMRUSDTM": {
-    "confidence": 0,
-    "trapWarning": false,
-    "allocationPct": null
-  },
-  "NAORISUSDTM": {
-    "confidence": 0,
-    "trapWarning": true,
-    "allocationPct": null
-  },
-  "SIRENUSDTM": {
-    "confidence": 0,
-    "trapWarning": true,
-    "allocationPct": null
-  },
-  "VELVETUSDTM": {
-    "confidence": 20,
-    "trapWarning": false,
-    "allocationPct": null
-  },
-  "LAUNCHCOINUSDTM": {
-    "confidence": 0,
-    "trapWarning": true,
-    "allocationPct": null
-  },
-  "TANSSIUSDTM": {
-    "confidence": 0,
-    "trapWarning": true,
-    "allocationPct": null
-  },
-  "PRCLUSDTM": {
-    "confidence": 20,
-    "trapWarning": true,
-    "allocationPct": null
-  },
-  "PROMPTUSDTM": {
-    "confidence": 0,
-    "trapWarning": false,
-    "allocationPct": null
-  },
-  "DMCUSDTM": {
-    "confidence": 0,
-    "trapWarning": true,
-    "allocationPct": null
-  },
-  "INUSDTM": {
-    "confidence": 30,
-    "trapWarning": false,
-    "allocationPct": null
-  },
-  "CHILLGUYUSDTM": {
-    "confidence": 15,
-    "trapWarning": false,
-    "allocationPct": null
-  },
-  "GMXUSDTM": {
-    "confidence": 0,
-    "trapWarning": false,
-    "allocationPct": null
-  },
-  "ZEREBROUSDTM": {
-    "confidence": 0,
-    "trapWarning": true,
-    "allocationPct": null
-  },
-  "CROUSDTM": {
-    "confidence": 0,
-    "trapWarning": true,
-    "allocationPct": null
-  },
-  "CROSSUSDTM": {
-    "confidence": 0,
-    "trapWarning": false,
-    "allocationPct": null
-  },
-  "FUELUSDTM": {
-    "confidence": 0,
-    "trapWarning": false,
-    "allocationPct": null
-  },
-  "SSVUSDTM": {
-    "confidence": 0,
-    "trapWarning": false,
-    "allocationPct": null
-  },
-  "MAVUSDTM": {
-    "confidence": 0,
-    "trapWarning": false,
-    "allocationPct": null
-  },
-  "COOKIEUSDTM": {
-    "confidence": 0,
-    "trapWarning": false,
-    "allocationPct": null
-  },
-  "AIXBTUSDTM": {
-    "confidence": 15,
-    "trapWarning": false,
-    "allocationPct": null
-  },
-  "NFPUSDTM": {
-    "confidence": 0,
-    "trapWarning": false,
-    "allocationPct": null
+    "trapCount": 0,
+    "confidenceLog": [
+      27
+    ],
+    "avgConfidence": 27,
+    "momentum": {
+      "rsiRising": false,
+      "macdRising": false
+    },
+    "watchReason": null,
+    "watchStartTime": null,
+    "volatilityTag": null,
+    "lastPrice": 3.0282,
+    "dna": {
+      "day": "2025-08-27",
+      "todayHigh": 3.0282,
+      "todayLow": null,
+      "athHits": 0,
+      "atlHits": 0
+    },
+    "windows": {
+      "deque": [],
+      "ath30": 3.0282,
+      "atl30": 0
+    },
+    "sr": {
+      "levels": [
+        {
+          "price": 0,
+          "hitCount": 1
+        },
+        {
+          "price": 3.0282,
+          "hitCount": 1
+        }
+      ],
+      "nearestSupport": 3.0282,
+      "nearestResistance": 0
+    },
+    "ath": 3.0282,
+    "atl": 0,
+    "athTime": "2025-08-27T21:56:57.181Z",
+    "atlTime": null,
+    "traces": [
+      {
+        "traceId": "meuim5k8-4g7rtz",
+        "source": "CYCLE_WATCHER",
+        "phase": "impulse",
+        "side": "SELL",
+        "confidence": 27,
+        "price": 3.0282,
+        "time": "2025-08-27T21:56:57.184Z"
+      }
+    ],
+    "lastUpdate": "2025-08-27T21:56:57.184Z"
   }
 }

@@ -1,39 +1,36 @@
+// models/tpState.js
 /**
  * Poseidon — Model M01: TP State
  * ------------------------------
- * Purpose:
- *   Persist trailing/TP1 state per contract so the TP/SL monitor
- *   recovers cleanly after restarts (nodemon, deploys, crashes).
- *
- * Fields:
- *   - key: normalized contract key (e.g., "DOGEUSDTM")
- *   - contract: original contract string from exchange
- *   - tp1Done: whether 40% partial was already taken
- *   - peakRoi: highest ROI seen after TP1 (for trailing)
- *   - trailArmed: whether trailing is active
- *   - lastSeenQty: last known size (debugging/consistency)
- *   - updatedAt: last persistence time
+ * Persists trailing/TP1 state per contract so the TP/SL monitor
+ * recovers cleanly after restarts.
  *
  * Notes:
- *   The main server already connects Mongoose; this model only defines schema.
+ * - Unique index on `key` ensures one row per contract.
+ * - `timestamps` adds createdAt/updatedAt; monitor can still $set updatedAt explicitly.
+ * - Hot‑reload safe (mongoose.models guard) for nodemon/dev.
  */
 
 const mongoose = require('mongoose');
 
 const TpStateSchema = new mongoose.Schema(
   {
-    key: { type: String, required: true }, // index removed here
-    contract: { type: String, required: true },
-    tp1Done: { type: Boolean, default: false },
-    peakRoi: { type: Number, default: -Infinity },
-    trailArmed: { type: Boolean, default: false },
-    lastSeenQty: { type: Number, default: 0 },
-    updatedAt: { type: Date, default: Date.now }
+    key:         { type: String, required: true }, // normalized, e.g. "DOGEUSDTM"
+    contract:    { type: String, required: true }, // original exchange contract
+    tp1Done:     { type: Boolean, default: false },
+    peakRoi:     { type: Number,  default: Number.NEGATIVE_INFINITY },
+    trailArmed:  { type: Boolean, default: false },
+    lastSeenQty: { type: Number,  default: 0 },
+    // createdAt / updatedAt are added by timestamps below
   },
-  { collection: 'tp_states' }
+  {
+    collection: 'tp_states',
+    timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' },
+  }
 );
 
-// ✅ Single, authoritative index definition
+// One document per contract key
 TpStateSchema.index({ key: 1 }, { unique: true });
 
-module.exports = mongoose.model('TpState', TpStateSchema);
+// Hot‑reload guard to avoid OverwriteModelError during dev
+module.exports = mongoose.models.TpState || mongoose.model('TpState', TpStateSchema);

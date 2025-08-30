@@ -1,56 +1,85 @@
-/**
- * File #08: components/OpenPositionsPanel.jsx
- * Description:
- *   Renders open futures positions and lets the user close a position.
- *   - Sends ONLY { contract } to /api/close-trade (side is resolved server‑side)
- *   - Optimistic row removal + hard refresh
- *   - Live refresh on `trade-confirmed` and `trade-closed` socket events
- * Last Updated: 2025-08-11
- */
+// components/OpenPositionsPanel.jsx
+// Stable, accurate ROI/PnL display using backend-consistent logic.
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import PositionDetailsModal from './PositionDetailsModal';
 import './openPositions.css';
+import { toTaSymbol, fetchTA } from '../utils/taclient.js';
 
-// [1] Number helpers
-const n = (v, d = 0) => (Number.isFinite(Number(v)) ? Number(v) : d);
-const pctToNum = (v, d = 0) => {
-  if (v === null || v === undefined) return d;
-  if (typeof v === 'number') return Number.isFinite(v) ? v : d;
-  const num = parseFloat(String(v).replace('%', ''));
-  return Number.isFinite(num) ? num : d;
+// --- helpers ---
+const num = (v) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : undefined;
 };
-const firstNum = (...vals) => {
-  for (const v of vals) {
-    const num = Number(v);
-    if (Number.isFinite(num)) return num;
+const pctNum = (v) => {
+  if (v === null || v === undefined) return undefined;
+  if (typeof v === 'number') return Number.isFinite(v) ? v : undefined;
+  const n = parseFloat(String(v).replace('%', ''));
+  return Number.isFinite(n) ? n : undefined;
+};
+
+// --- ROI LOGIC (reliable fallback logic) ---
+function deriveRoi(pos, symbol = '') {
+  const r1 = pctNum(pos?.roi);
+  if (r1 !== undefined) {
+    console.debug(`[ROI][${symbol}] using pos.roi =`, r1);
+    return r1;
   }
-  return undefined;
-};
+
+  const r2 = pctNum(pos?.pnlPercent);
+  if (r2 !== undefined) {
+    console.debug(`[ROI][${symbol}] using pos.pnlPercent =`, r2);
+    return r2;
+  }
+
+  if (pos?.unrealisedRoePcnt !== undefined) {
+    const r3 = Number(pos.unrealisedRoePcnt) * 100;
+    if (Number.isFinite(r3)) {
+      console.debug(`[ROI][${symbol}] using unrealisedRoePcnt * 100 =`, r3);
+      return r3;
+    }
+  }
+
+  const pnl = num(pos?.pnlValue ?? pos?.pnl);
+  const cost = num(pos?.margin ?? pos?.costUsd ?? pos?.value ?? pos?.marginUsd);
+  console.debug(`[ROI][${symbol}] fallback pnl =`, pnl, 'cost =', cost);
+  if (Number.isFinite(pnl) && Number.isFinite(cost) && cost !== 0) {
+    const derived = (pnl / cost) * 100;
+    console.debug(`[ROI][${symbol}] using fallback pnl/margin = ${pnl}/${cost} = ${derived}`);
+    return derived;
+  }
+
+  console.debug(`[ROI][${symbol}] all fallback paths failed, defaulting to 0`);
+  return 0;
+}
+
+// --- bad display symbols to ignore for TA load ---
+const BAD_SYMBOLS = new Set(['ALL', 'MAJORS', 'MEMES', 'GAINERS', 'LOSERS', '', null, undefined]);
 
 export default function OpenPositionsPanel() {
-  // [2] State
   const [positions, setPositions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
-  const [taDataBySymbol, setTADataBySymbol] = useState({});
+
+  const pollTimerRef = useRef(null);
+  const inFlightRef = useRef(null);
+  const taInFlightRef = useRef(new Map());
+  const lastHashRef = useRef('');
   const socketRef = useRef(null);
 
-  // [3] Initial load + polling + sockets
   useEffect(() => {
-    fetchPositions();
-    const id = setInterval(fetchPositions, 10_000);
+    safeFetchPositions();
+    pollTimerRef.current = setInterval(safeFetchPositions, 10_000);
 
-    // 🔌 Live updates
-    if (window.io && !socketRef.current) {
-      const s = (socketRef.current = window.io());
+    if (!window.__POSEIDON_SOCKET && window.io) {
+      window.__POSEIDON_SOCKET = window.io();
+    }
+    socketRef.current = window.__POSEIDON_SOCKET || null;
 
-      s.on('trade-confirmed', () => {
-        fetchPositions();
-      });
-
-      s.on('trade-closed', (payload) => {
-        // optimistic remove if contract provided
+    if (socketRef.current) {
+      const s = socketRef.current;
+      const onConfirmed = () => safeFetchPositions();
+      const onClosed = (payload) => {
         if (payload?.contract) {
           setPositions((prev) =>
             prev.filter(
@@ -58,85 +87,118 @@ export default function OpenPositionsPanel() {
             )
           );
         }
-        // hard refresh to sync numbers/PNL history
-        fetchPositions();
-      });
+        safeFetchPositions();
+      };
+      s.on('trade-confirmed', onConfirmed);
+      s.on('trade-closed', onClosed);
+
+      return () => {
+        clearInterval(pollTimerRef.current);
+        if (inFlightRef.current) inFlightRef.current.abort();
+        try { s.off('trade-confirmed', onConfirmed); } catch {}
+        try { s.off('trade-closed', onClosed); } catch {}
+        for (const [, ctrl] of taInFlightRef.current) try { ctrl.abort(); } catch {}
+        taInFlightRef.current.clear();
+      };
     }
 
     return () => {
-      clearInterval(id);
-      if (socketRef.current) {
-        socketRef.current.close();
-        socketRef.current = null;
-      }
+      clearInterval(pollTimerRef.current);
+      if (inFlightRef.current) inFlightRef.current.abort();
+      for (const [, ctrl] of taInFlightRef.current) try { ctrl.abort(); } catch {}
+      taInFlightRef.current.clear();
     };
   }, []);
 
-  // [4] Data fetchers
-  async function fetchPositions() {
+  async function safeFetchPositions() {
+    if (inFlightRef.current) inFlightRef.current.abort();
+    const ctrl = new AbortController();
+    inFlightRef.current = ctrl;
+
     try {
-      const res = await fetch('/api/positions');
-      const data = await res.json();
-      if (data?.success && Array.isArray(data.positions)) {
-        setPositions(data.positions);
-        fetchTAData(data.positions);
+      const r = await fetch(`/api/positions?t=${Date.now()}`, {
+        signal: ctrl.signal,
+        headers: { Accept: 'application/json' },
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j || !Array.isArray(j.positions)) {
+        setLoading(false);
+        return;
+      }
+
+      const hash = JSON.stringify(
+        j.positions.map((p) => ({
+          c: p.contract,
+          s: p.symbol,
+          qty: p.size ?? p.quantity,
+          e: p.entryPrice,
+          m: p.markPrice,
+          pnl: p.pnlValue,
+          roi: deriveRoi(p, p.symbol || p.contract),
+        }))
+      );
+      if (hash !== lastHashRef.current) {
+        lastHashRef.current = hash;
+        setPositions(j.positions);
+        throttledFetchTA(j.positions);
       }
     } catch (e) {
-      console.error('OpenPositions: fetch error', e);
+      if (e?.name !== 'AbortError') {
+        console.warn('[OpenPositions] fetch error:', e?.message || e);
+      }
     } finally {
       setLoading(false);
+      if (inFlightRef.current === ctrl) inFlightRef.current = null;
     }
   }
 
-  async function fetchTAData(list) {
-    const map = {};
-    await Promise.all(
-      list.map(async (pos) => {
-        try {
-          const r = await fetch(`/api/ta/${pos.symbol}`);
-          const ta = await r.json();
-          if (ta?.price) map[pos.symbol] = ta;
-        } catch {
-          // ignore per-row TA errors
+  async function throttledFetchTA(list) {
+    const items = Array.isArray(list) ? list.slice(0, 10) : [];
+    for (const pos of items) {
+      const display = String(pos.symbol || pos.contract || '').trim();
+      if (!display || BAD_SYMBOLS.has(display.toUpperCase())) continue;
+
+      const prev = taInFlightRef.current.get(display);
+      if (prev) try { prev.abort(); } catch {}
+
+      const ctrl = new AbortController();
+      taInFlightRef.current.set(display, ctrl);
+      try {
+        await fetchTA(display, { signal: ctrl.signal });
+      } catch {}
+      finally {
+        if (taInFlightRef.current.get(display) === ctrl) {
+          taInFlightRef.current.delete(display);
         }
-      })
-    );
-    setTADataBySymbol(map);
-  }
-
-  // [5] Close — send only { contract }; server infers side & size
-  async function closePosition(contract) {
-  try {
-    // Optimistic: hide row instantly
-    setPositions(prev =>
-      prev.filter(p => String(p.contract).toUpperCase() !== String(contract).toUpperCase())
-    );
-
-    const r = await fetch('/api/close-trade', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contract }) // ← only contract
-    });
-
-    // If backend returns non-2xx, parse the body for a helpful message
-    let j;
-    try { j = await r.json(); } catch { j = null; }
-    if (!r.ok || !j?.success) {
-      // Restore by refetching and show reason
-      await fetchPositions();
-      const msg = (j && (j.error || j.details?.error)) || `HTTP ${r.status}`;
-      alert('❌ Close failed: ' + msg);
-      return;
+      }
     }
-
-    // Keep in sync with server-side calc
-    fetchPositions();
-  } catch (e) {
-    await fetchPositions();
-    alert('❌ Close error: ' + e.message);
   }
-}
-  // [6] Render
+
+  async function closePosition(contract) {
+    setPositions((prev) =>
+      prev.filter(
+        (p) => String(p.contract).toUpperCase() !== String(contract).toUpperCase()
+      )
+    );
+    try {
+      const r = await fetch('/api/close-trade', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ contract }),
+      });
+      const j = await r.json().catch(() => null);
+      if (!r.ok || !j?.success) {
+        await safeFetchPositions();
+        alert('❌ Close failed: ' + ((j && (j.error || j.details?.error)) || `HTTP ${r.status}`));
+      } else {
+        await safeFetchPositions();
+      }
+    } catch (e) {
+      await safeFetchPositions();
+      alert('❌ Close error: ' + (e?.message || 'Network error'));
+    }
+  }
+
   if (loading) return <div>Loading positions...</div>;
   if (!positions.length) return <div className="op-dimmed">No open positions</div>;
 
@@ -144,17 +206,6 @@ export default function OpenPositionsPanel() {
     <div className="op-wrapper">
       <div className="op-table-wrap">
         <table className="op-table" role="table">
-          <colgroup>
-            <col className="op-col-symbol" />
-            <col className="op-col-side" />
-            <col className="op-col-entry" />
-            <col className="op-col-value" />
-            <col className="op-col-pnl" />
-            <col className="op-col-roi" />
-            <col className="op-col-view" />
-            <col className="op-col-close" />
-          </colgroup>
-
           <thead>
             <tr>
               <th>Symbol</th>
@@ -167,81 +218,59 @@ export default function OpenPositionsPanel() {
               <th>Close</th>
             </tr>
           </thead>
-
           <tbody>
-            {positions.map((pos, idx) => {
-              // normalize numbers
-              const entry = n(pos.entryPrice);
-              const qty = n(pos.quantity ?? pos.size ?? pos.qty);
+            {positions.map((pos) => {
+              const contract = String(pos.contract || pos.symbol || '');
+              const display = String(pos.symbol || pos.contract || '');
+              const sideRaw = String(pos.side || '').toLowerCase();
+              const isLong = sideRaw.includes('buy') || sideRaw.includes('long')
+                ? true
+                : sideRaw.includes('sell') || sideRaw.includes('short')
+                ? false
+                : (Number(pos?.currentQty ?? pos?.size ?? 0) > 0);
 
-              // Cost (margin) is the value displayed; exposure only for tooltip
-              const cost = firstNum(pos.value, pos.margin, pos.costUsd, pos.marginUsd);
-              const exposure = firstNum(
-                pos.exposure,
-                pos.notionalUsd,
-                pos.notional,
-                entry * Math.abs(qty)
-              );
-              const value = cost;
-
-              const pnl = n(pos.pnlValue);
-              const roiNum = pctToNum(pos.roi ?? pos.roiPct ?? pos.pnlPercent);
-
-              // side chip (prefer explicit buy/sell; fallback to qty sign)
-              const sideStr = String(pos.side || '').toLowerCase();
-              const isLong =
-                sideStr.includes('buy') || sideStr.includes('long')
-                  ? true
-                  : sideStr.includes('sell') || sideStr.includes('short')
-                  ? false
-                  : qty > 0;
-
-              const valueTitle = Number.isFinite(exposure)
-                ? `Exposure: ${exposure.toFixed(2)} USDT`
-                : '';
+              const entry = num(pos.entryPrice);
+              const cost  = num(pos.margin ?? pos.value ?? pos.costUsd);
+              const pnl   = num(pos.pnlValue ?? pos.pnl);
+              const roi   = deriveRoi(pos, display);
 
               return (
-                <tr key={idx}>
-                  <td className="op-td-left" title={pos.symbol}>
-                    {pos.symbol}
-                  </td>
-
+                <tr key={contract}>
+                  <td>{display}</td>
                   <td>
                     <span className={`op-side ${isLong ? 'long' : 'short'}`}>
                       {isLong ? 'LONG' : 'SHORT'}
                     </span>
                   </td>
-
-                  <td className="op-num">{Number.isFinite(entry) ? entry.toFixed(6) : '--'}</td>
-
-                  <td className="op-num" title={valueTitle}>
-                    {Number.isFinite(value) ? Number(value).toFixed(2) : '--'}
-                  </td>
-
+                  <td className="op-num">{Number.isFinite(entry) ? entry.toFixed(6) : '—'}</td>
+                  <td className="op-num">{Number.isFinite(cost) ? cost.toFixed(2) : '—'}</td>
                   <td className={`op-num ${pnl > 0 ? 'pos' : pnl < 0 ? 'neg' : ''}`}>
-                    {Number.isFinite(pnl) ? pnl.toFixed(2) : '--'}
+                    {Number.isFinite(pnl) ? pnl.toFixed(2) : '—'}
                   </td>
-
-                  <td className={`op-num ${roiNum > 0 ? 'pos' : roiNum < 0 ? 'neg' : ''}`}>
-                    {Number.isFinite(roiNum) ? roiNum.toFixed(2) : '0.00'}%
+                  <td className={`op-num ${roi > 0 ? 'pos' : roi < 0 ? 'neg' : ''}`}>
+                    {Number.isFinite(roi) ? roi.toFixed(2) : '0.00'}%
                   </td>
-
                   <td>
                     <button
                       className="op-btn op-btn-view"
-                      onClick={() => setSelected({ symbol: pos.symbol, contract: pos.contract })}
+                      onClick={() =>
+                        setSelected({
+                          displaySymbol: display,
+                          apiSymbol: toTaSymbol(display),
+                          contract,
+                        })
+                      }
                     >
                       👁 View
                     </button>
                   </td>
-
                   <td>
-                  <button
-  className="op-btn op-btn-close"
-  onClick={() => closePosition(pos.contract)}
->
-  🛑 Close
-</button>
+                    <button
+                      className="op-btn op-btn-close"
+                      onClick={() => closePosition(contract)}
+                    >
+                      🛑 Close
+                    </button>
                   </td>
                 </tr>
               );
@@ -252,7 +281,8 @@ export default function OpenPositionsPanel() {
 
       {selected && (
         <PositionDetailsModal
-          symbol={selected.symbol}
+          symbol={selected.apiSymbol}
+          displaySymbol={selected.displaySymbol}
           contract={selected.contract}
           onClose={() => setSelected(null)}
         />

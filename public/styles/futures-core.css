@@ -327,6 +327,17 @@
 
 
 
+/* // ---- Tiny CSS you might want in your stylesheet ---- */
+.strategy-status { display:flex; gap:.6rem; align-items:center; font-size:12px; opacity:.9; }
+.st-chip { display:flex; gap:.4rem; align-items:center; }
+.sep { opacity:.6; }
+.dot { width:.55rem; height:.55rem; border-radius:50%; background:#444; display:inline-block; }
+.dot--on { background:#19d27c; box-shadow:0 0 6px rgba(25,210,124,.6); }
+.dot--off { background:#666; }
 
 
-
+.voice-pill{
+  display:inline-block; margin-left:8px; padding:2px 8px; border-radius:12px;
+  background:#0b2433; border:1px solid #1f4358; font:12px/20px monospace; cursor:pointer;
+}
+.voice-pill.on{ background:#123c19; border-color:#1f8f3a; }

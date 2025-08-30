@@ -4,21 +4,20 @@
  * Description:
  *   Source of truth for closing KuCoin futures positions.
  *   - Exports:
- *       1) closeFuturesPositionService({ contract, side }) → Promise<{success,...}>
+ *       1) closeFuturesPositionService({ contract, side, fraction, exit, pnl, pnlPercent })
  *          (pure service; no req/res)
  *       2) closeFuturesPosition(req, res) → Express handler using the service
  *   - Finds the live open position, builds a reduceOnly market order with leverage,
- *     computes PnL/ROI, and updates local trade history.
+ *     then delegates persistence to the single-writer ledger (closePosition).
  *
  * Upgrade U03 (Feed):
  *   - Emits TP/SL feed events on close success/failure so the UI tracker can show:
  *       🔻 Close requested / ✅ Closed / ⚠️ Close error
  *   - Uses optional pushTpFeed (safe-required) → pushTpFeed({ contract, text, state, ... })
  *
- * Last Updated: 2025-08-13
+ * Last Patched: 2025-08-17
  */
 
-/* ───────────────────────── §0. Imports & setup ────────────────────────── */
 const axios = require('axios');
 const { signKucoinV3Request } = require('../utils/signRequest');
 const {
@@ -27,8 +26,10 @@ const {
   getOpenFuturesPositions,
   getContractSpecs
 } = require('../kucoinHelper');
-const { closeTrade, safeReadHistory } = require('../utils/tradeHistory');
-const { getKucoinOrderFill } = require('../utils/kucoinUtils');
+
+// 🔁 single-writer ledger (authoritative persistence)
+const { closePosition } = require('../utils/tradeLedger');
+
 require('dotenv').config();
 
 const BASE_URL = process.env.KUCOIN_BASE_URL || 'https://api-futures.kucoin.com';
@@ -41,14 +42,48 @@ let pushTpFeed;
 try { ({ pushTpFeed } = require('../tpSlMonitor')); } catch (_) { pushTpFeed = undefined; }
 const feed = (entry) => { try { if (typeof pushTpFeed === 'function') pushTpFeed(entry); } catch (_) {} };
 
-/* ───────────────────────── §1. Pure service ────────────────────────────── */
+// ───────────────────────── helpers ─────────────────────────
+const num = (v) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : NaN;
+};
+const pctStr = (v) => (Number.isFinite(v) ? `${v.toFixed(2)}%` : undefined);
+
+// We still compute a best-effort PnL/ROI for the FEED message only,
+// but the ledger will compute and persist authoritative values.
+function computeLocalPnl({ entry, exit, side, size, multiplier }) {
+  const e = +entry, x = +exit, s = Math.abs(+size||0), m = +multiplier || 1;
+  if (!(e>0 && x>0 && s>0)) return NaN;
+  const diff = x - e;
+  const signed = (String(side).toLowerCase()==='sell') ? -diff : diff;
+  return signed * s * m;
+}
+function computeLocalROI({ pnl, entry, size, multiplier, leverage }) {
+  const e=+entry, s=Math.abs(+size||0), m=+multiplier||1, L=Math.max(1,+leverage||1);
+  const cost = e>0 ? (e*s*m)/L : NaN;
+  if (!Number.isFinite(cost) || cost<=0 || !Number.isFinite(+pnl)) return '';
+  return ((+pnl / cost)*100).toFixed(2)+'%';
+}
+
+// ──────────────────────── main service ─────────────────────
 /**
- * closeFuturesPositionService({ contract, side? })
- * - Closes a live KuCoin futures position with reduceOnly MARKET order
- * - Computes PnL/ROI for local history
- * - Emits feed events (if feed hook available)
+ * closeFuturesPositionService
+ * @param {Object} args
+ * @param {string} args.contract    - symbol in any form (DOGE, DOGEUSDTM, DOGE-USDTM)
+ * @param {string} [args.side]      - optional UI side (ignored for safety; we derive from live pos)
+ * @param {number} [args.fraction]  - optional partial fraction (0..1). If omitted → full size
+ * @param {number} [args.exit]      - optional exit price hint (only used for feed text)
+ * @param {number} [args.pnl]       - optional pnl USDT hint (only used for feed text)
+ * @param {string} [args.pnlPercent]- optional ROI string "12.34%" hint (only used for feed text)
  */
-async function closeFuturesPositionService({ contract: raw, side: uiSide }) {
+async function closeFuturesPositionService({
+  contract: raw,
+  side: _uiSide,
+  fraction,
+  exit: exitHint,
+  pnl: pnlHint,
+  pnlPercent: roiHint
+}) {
   if (!raw) {
     const res = { success: false, error: 'Missing contract', code: 400 };
     feed({ contract: '-', state: 'CLOSE_ERROR', text: `❌ Close error: ${res.error}` });
@@ -58,7 +93,7 @@ async function closeFuturesPositionService({ contract: raw, side: uiSide }) {
   const contractHyphen = parseToKucoinContractSymbol(raw); // e.g. ADA-USDTM
   const apiSymbolKey   = toKucoinApiSymbol(contractHyphen); // e.g. ADAUSDTM
 
-  // Fetch live
+  // Fetch live open positions
   let open = [];
   try {
     open = await getOpenFuturesPositions();
@@ -84,13 +119,27 @@ async function closeFuturesPositionService({ contract: raw, side: uiSide }) {
   const sideStr = String(pos.side || '').toLowerCase(); // 'buy' | 'sell'
   const positionIsLong =
     sideStr === 'buy' ||
-    Number(pos.currentQty) > 0 ||
-    Number(pos.sizeSigned) > 0;
+    num(pos.currentQty) > 0 ||
+    num(pos.sizeSigned) > 0;
 
   const closeSide = positionIsLong ? 'SELL' : 'BUY';
 
-  // Units to close
-  const contractsToClose = Number(pos.size || 0);
+  // Contracts + lot rounding (support partial fraction)
+  const specs = await getContractSpecs(contractHyphen); // lotSize, multiplier, etc.
+  const totalContracts = Math.max(0, num(pos.size) || 0);
+  const lot = Math.max(1, specs.lotSize || 1);
+
+  let fractionSafe = num(fraction);
+  if (!Number.isFinite(fractionSafe) || fractionSafe <= 0 || fractionSafe > 1) {
+    fractionSafe = 1; // full close by default
+  }
+
+  // round down to lot size, minimum 1 lot if fraction > 0
+  let contractsToClose = Math.floor(totalContracts * fractionSafe / lot) * lot;
+  if (fractionSafe > 0 && contractsToClose === 0 && totalContracts > 0) {
+    contractsToClose = Math.min(lot, totalContracts);
+  }
+
   if (!(contractsToClose > 0)) {
     const res = { success: false, error: 'Position size is zero', code: 400 };
     feed({ contract: contractHyphen, state: 'CLOSE_ERROR', text: `❌ Close error: ${res.error}` });
@@ -115,10 +164,10 @@ async function closeFuturesPositionService({ contract: raw, side: uiSide }) {
   feed({
     contract: contractHyphen,
     state: 'CLOSE_REQUEST',
-    text: `🔻 Close requested: ${contractHyphen} • side=${closeSide} • size=${contractsToClose}`
+    text: `🔻 Close requested: ${contractHyphen} • side=${closeSide} • size=${contractsToClose}${fractionSafe < 1 ? ` (${Math.round(fractionSafe*100)}%)` : ''}`
   });
 
-  // Sign & send
+  // Sign & send to KuCoin
   const bodyStr = JSON.stringify(bodyObj);
   const headers = signKucoinV3Request('POST', '/api/v1/orders', '', bodyStr, API_KEY, API_SECRET, API_PASSPHRASE);
   const kuRes = await axios.post(`${BASE_URL}/api/v1/orders`, bodyObj, { headers }).catch(e => ({ error: e }));
@@ -139,62 +188,64 @@ async function closeFuturesPositionService({ contract: raw, side: uiSide }) {
 
   const orderId = kuRes.data.data.orderId;
 
-  // Try to fetch fill price
-  let exit = 0;
+  // Try to fetch fill price (only to show nicer feed text; persistence is handled by ledger)
+  let exitForFeed = Number(exitHint) || 0;
   try {
+    const { getKucoinOrderFill } = require('../utils/kucoinUtils');
     let fill = await getKucoinOrderFill(orderId);
     if (!fill?.price) {
       await new Promise(r => setTimeout(r, 1200));
       fill = await getKucoinOrderFill(orderId);
     }
-    exit = Number(fill?.price) || 0;
+    exitForFeed = Number(fill?.price) || exitForFeed;
   } catch { /* ignore */ }
 
-  // Fallback if still missing
-  if (!exit) {
-    try {
-      await getOpenFuturesPositions(); // refresh (not strictly needed)
-      exit = Number(pos.markPrice || pos.entryPrice || 0) || 0;
-    } catch { /* ignore */ }
+  // Compute PnL/ROI for FEED text (best-effort, not persisted)
+  const entry = num(pos.entryPrice) || 0;
+  const baseQty = (contractsToClose * (specs.multiplier || 1)); // not used in feed but kept for clarity
+  let pnlForFeed = (Number.isFinite(num(pnlHint)) ? num(pnlHint) : NaN);
+  let roiForFeed = (typeof roiHint === 'string' && roiHint) ? roiHint : '';
+
+  if (!Number.isFinite(pnlForFeed) && entry > 0 && Number.isFinite(exitForFeed) && exitForFeed > 0) {
+    const pnlUsd = computeLocalPnl({
+      entry,
+      exit: exitForFeed,
+      side: sideStr,
+      size: contractsToClose,
+      multiplier: specs.multiplier || 1
+    });
+    pnlForFeed = pnlUsd;
+    if (!roiForFeed) {
+      roiForFeed = computeLocalROI({
+        pnl: pnlUsd,
+        entry,
+        size: contractsToClose,
+        multiplier: specs.multiplier || 1,
+        leverage: lev
+      }) || '0.00%';
+    }
   }
+  const pnlOut = Number.isFinite(pnlForFeed) ? pnlForFeed.toFixed(4) : '0.0000';
 
-  // PnL/ROI calc for history
-  const entry = Number(pos.entryPrice || 0);
-  const specs = await getContractSpecs(contractHyphen);
-  const baseQty = contractsToClose * (specs.multiplier || 1);
-  let pnl = '0.0000';
-  let pnlPercent = '0.00%';
+  // 🔒 Persist via ledger — single authoritative writer (resolves exit, computes PnL/ROI)
+  await closePosition({
+    symbol: contractHyphen,
+    side: positionIsLong ? 'buy' : 'sell',
+    // ❗ FIX: use exitForFeed/roiForFeed variables (exitOut/pnlPercent did not exist)
+    exitHint: Number(exitForFeed) || 0,
+    // pass the numeric hint if available; ledger will recompute if not finite
+    pnlHint: Number.isFinite(pnlForFeed) ? pnlForFeed : undefined,
+    roiHint: roiForFeed
+  });
 
-  if (entry > 0 && exit > 0) {
-    const diff = positionIsLong ? (exit - entry) : (entry - exit);
-    const pnlUsd = diff * baseQty;                 // fees ignored
-    pnl = pnlUsd.toFixed(4);
-    const cost = (baseQty * entry) / lev;          // initial margin
-    const roi = cost > 0 ? (pnlUsd / cost) * 100 : 0;
-    pnlPercent = roi.toFixed(2) + '%';
-  }
-
-  // Update local trade history
-  const history = safeReadHistory() || [];
-  const openTrade = history.find(t =>
-    String(t.symbol).toUpperCase() === contractHyphen.toUpperCase() &&
-    String(t.status).toUpperCase() === 'OPEN'
-  );
-
-  if (openTrade) {
-    await closeTrade(contractHyphen, openTrade.side, exit || 0, pnl, pnlPercent);
-  } else {
-    await closeTrade(contractHyphen, positionIsLong ? 'buy' : 'sell', exit || 0, pnl, pnlPercent);
-  }
-
-  // Feed: final success
+  // Feed: final success (show exit if we got a fill; else ≈ means ledger resolved it)
   feed({
     contract: contractHyphen,
     state: 'CLOSED',
-    text: `✅ Closed ${contractHyphen} • ${closeSide} • size=${contractsToClose} @ ${exit || '≈'} | PnL ${pnl} (${pnlPercent})`,
-    pnl,
-    pnlPercent,
-    exitPrice: exit || null
+    text: `✅ Closed ${contractHyphen} • ${closeSide} • size=${contractsToClose} @ ${exitForFeed || '≈'} | PnL ${pnlOut} (${roiForFeed || '0.00%'})`,
+    pnl: pnlOut,
+    pnlPercent: roiForFeed || '0.00%',
+    exitPrice: Number.isFinite(exitForFeed) && exitForFeed > 0 ? exitForFeed : null
   });
 
   return {
@@ -204,19 +255,37 @@ async function closeFuturesPositionService({ contract: raw, side: uiSide }) {
       closedSide: closeSide,
       size: contractsToClose,
       orderId,
-      exit,
-      pnl,
-      pnlPercent
+      // note: persisted exit/pnl/roi live in the ledger; this is feed-only
+      exit: Number.isFinite(exitForFeed) && exitForFeed > 0 ? exitForFeed : 0,
+      pnl: pnlOut,
+      pnlPercent: roiForFeed || '0.00%'
     }
   };
 }
 
-/* ───────────────────────── §2. Express handler ─────────────────────────── */
+// ───────────────────── express handler ────────────────────
 async function closeFuturesPosition(req, res) {
   try {
-    const { contract: rawContract, symbol, side } = req.body || {};
+    const {
+      contract: rawContract,
+      symbol,
+      side,
+      fraction,
+      exit,
+      pnl,
+      pnlPercent
+    } = req.body || {};
+
     const contract = (rawContract || symbol || '').trim();
-    const result = await closeFuturesPositionService({ contract, side });
+
+    const result = await closeFuturesPositionService({
+      contract,
+      side,
+      fraction,
+      exit,
+      pnl,
+      pnlPercent
+    });
 
     if (result.success) {
       return res.json(result);
@@ -225,13 +294,17 @@ async function closeFuturesPosition(req, res) {
     return res.status(code).json(result);
   } catch (err) {
     const msg = err?.response?.data?.msg || err.message;
-    feed({ contract: (req.body?.contract || req.body?.symbol || '-'), state: 'CLOSE_ERROR', text: `❌ Close error: ${msg}` });
+    feed({
+      contract: (req.body?.contract || req.body?.symbol || '-'),
+      state: 'CLOSE_ERROR',
+      text: `❌ Close error: ${msg}`
+    });
     console.error('[closeFuturesPosition] ❌ ERROR:', err?.response?.data || err.message);
     return res.status(500).json({ success: false, error: msg });
   }
 }
 
-/* ───────────────────────── §3. Exports ─────────────────────────────────── */
+// ───────────────────────── exports ────────────────────────
 module.exports = {
   closeFuturesPositionService,
   closeFuturesPosition

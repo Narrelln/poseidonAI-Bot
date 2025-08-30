@@ -1,119 +1,144 @@
 // routes/sessionStatsRoute.js
+// Ledger-first session stats + streaks/topTrade + tokens/active counts
+
 const express = require('express');
-const router = express.Router();
+const router  = express.Router();
 
-const { safeReadHistory } = require('../utils/tradeHistory');
+// Safe fetch (Node 18+ has global fetch; else lazy-load node-fetch)
+const fetch = global.fetch || ((...args) =>
+  import('node-fetch').then(({ default: f }) => f(...args))
+);
+
+// sources we already have elsewhere
 const { getOpenFuturesPositions } = require('../kucoinHelper');
-const { getCachedTokens } = require('../handlers/futuresApi');
-const { getWalletBalance } = require('../handlers/walletModule');
 
-const n = (v, d = 0) => {
-  const x = Number(v);
-  return Number.isFinite(x) ? x : d;
-};
+// Safe optional imports (won't crash if file names differ)
+let getCapitalStatus;
+try { ({ getCapitalStatus } = require('../handlers/capitalStatus')); } catch (_) {}
+let getActiveSymbols;
+try { ({ getActiveSymbols } = require('../routes/newScanTokens')); } catch (_) {}
+let TradeLedgerModel;
+try { TradeLedgerModel = require('../models/TradeLedger'); } catch (_) {}
 
-function computeClosedTradeStats(history) {
-  const closed = history.filter(t => String(t.status).toUpperCase() === 'CLOSED');
+function toNum(v) {
+  if (v == null) return NaN;
+  const n = Number(String(v).replace(/[,%$]/g, ''));
+  return Number.isFinite(n) ? n : NaN;
+}
 
-  let trades = 0, wins = 0, losses = 0;
-  let sumRoi = 0, roiCount = 0;
-  let topTrade = null;
+async function fetchLedger(limit = 500) {
+  // Prefer Mongo model if available
+  if (TradeLedgerModel) {
+    const rows = await TradeLedgerModel.find({}).sort({ closedAt: 1 }).limit(limit).lean();
+    return Array.isArray(rows) ? rows : [];
+  }
+  // Fallback: call the HTTP route your server already mounted
+  try {
+    const r = await fetch(`http://localhost:${process.env.PORT || 3000}/api/trade-ledger?limit=${limit}`);
+    const j = await r.json();
+    if (j && j.success && Array.isArray(j.trades)) return j.trades;
+    if (Array.isArray(j)) return j;
+    if (Array.isArray(j?.rows)) return j.rows;
+  } catch {}
+  return [];
+}
 
-  for (const t of closed) {
-    const pnl = n(t.pnl, 0);
-    const roiPct = typeof t.roi === 'string'
-      ? n(t.roi.replace(/\s*%$/, ''))
-      : n(t.roi);
+function tallyWinsLosses(rows) {
+  let wins = 0, losses = 0;
+  for (const t of rows) {
+    if (String(t.status || '').toUpperCase() !== 'CLOSED') continue;
+    const pnl = toNum(t.pnl);
+    if (!Number.isFinite(pnl) || pnl === 0) continue;
+    if (pnl > 0) wins++; else losses++;
+  }
+  return { wins, losses };
+}
 
-    trades++;
-    if (pnl > 0) wins++;
-    if (pnl < 0) losses++;
-
-    if (Number.isFinite(roiPct)) {
-      sumRoi += roiPct;
-      roiCount++;
-    }
-
-    if (!topTrade || Math.abs(pnl) > Math.abs(n(topTrade.pnl))) {
-      topTrade = { symbol: t.symbol, pnl: Number(pnl.toFixed(2)), roi: Number.isFinite(roiPct) ? roiPct : null };
+function computeTopTrade(rows) {
+  let best = null;
+  for (const t of rows) {
+    if (String(t.status || '').toUpperCase() !== 'CLOSED') continue;
+    const pnl = toNum(t.pnl);
+    if (!Number.isFinite(pnl)) continue;
+    if (!best || Math.abs(pnl) > Math.abs(best.pnl)) {
+      best = { symbol: t.symbol || 'N/A', pnl, roi: t.roi ?? null };
     }
   }
+  return best;
+}
 
-  let winStreak = 0, lossStreak = 0;
-  for (const t of closed) {
-    const pnl = n(t.pnl, 0);
-    if (pnl > 0) {
-      if (lossStreak === 0) winStreak++;
-      else break;
-    } else if (pnl < 0) {
-      if (winStreak === 0) lossStreak++;
-      else break;
-    } else break;
+function computeStreaks(rows) {
+  const sorted = rows
+    .filter(t => String(t.status || '').toUpperCase() === 'CLOSED')
+    .sort((a, b) => {
+      const ta = toNum(a.closedAt ?? a.closeTime ?? a.updatedAt ?? a.time ?? 0);
+      const tb = toNum(b.closedAt ?? b.closeTime ?? b.updatedAt ?? b.time ?? 0);
+      return ta - tb;
+    });
+
+  let curW = 0, curL = 0, maxW = 0, maxL = 0;
+  for (const t of sorted) {
+    const pnl = toNum(t.pnl);
+    if (!Number.isFinite(pnl) || pnl === 0) { curW = 0; curL = 0; continue; }
+    if (pnl > 0) { curW++; curL = 0; if (curW > maxW) maxW = curW; }
+    else         { curL++; curW = 0; if (curL > maxL) maxL = curL; }
   }
-
-  const winRate = trades > 0 ? (wins / trades) * 100 : 0;
-  const avgRoi = roiCount > 0 ? (sumRoi / roiCount) : null;
-
-  return {
-    trades,
-    wins,
-    losses,
-    winRate: Number(winRate.toFixed(1)),
-    winStreak,
-    lossStreak,
-    avgRoi: avgRoi !== null ? Number(avgRoi.toFixed(2)) : null,
-    topTrade: topTrade || null,
-  };
+  return { winStreak: maxW, lossStreak: maxL };
 }
 
 router.get('/session-stats', async (_req, res) => {
   try {
-    let openPositions = [];
-    try { openPositions = await getOpenFuturesPositions(); } catch {}
-    const active = Array.isArray(openPositions) ? openPositions.length : 0;
-    const livePnl = Array.isArray(openPositions)
-      ? openPositions.reduce((s, p) => s + n(p.pnlValue ?? p.pnl ?? 0), 0)
-      : 0;
-
+    // tokens & active
     let tokens = 0;
     try {
-      const list = await getCachedTokens();
-      const arr =
-        Array.isArray(list) ? list :
-        Array.isArray(list?.top50) ? list.top50 :
-        (Array.isArray(list?.gainers) || Array.isArray(list?.losers))
-          ? [...(list.gainers || []), ...(list.losers || [])]
-          : [];
-      tokens = arr.length;
+      if (typeof getActiveSymbols === 'function') {
+        const arr = await getActiveSymbols(); // can be sync; await is harmless
+        tokens = Array.isArray(arr) ? arr.length : 0;
+      }
     } catch {}
 
-    let wallets = 0;
-    try {
-      const bal = await getWalletBalance();
-      if (Number(bal) >= 0) wallets = 1;
-    } catch {}
+    const positions = await getOpenFuturesPositions().catch(() => []);
+    const activeTrades = Array.isArray(positions) ? positions.length : 0;
 
-    const history = safeReadHistory();
-    const stats = computeClosedTradeStats(history);
+    // capital score (prefer dedicated component if available)
+    let capitalScore = 0;
+    if (typeof getCapitalStatus === 'function') {
+      const cap = await getCapitalStatus().catch(() => null);
+      if (cap && typeof cap.score === 'number') capitalScore = cap.score;
+    }
 
-    res.json({
-      success: true,
-      pnlScore: Number(livePnl.toFixed(2)),
-      wallets,
+    // ledger-driven stats
+    const ledger = await fetchLedger(500);
+    const { wins, losses } = tallyWinsLosses(ledger);
+    const total = wins + losses;
+    const winRate = total ? +(wins * 100 / total).toFixed(1) : 0;
+
+    const top = computeTopTrade(ledger);
+    const streaks = computeStreaks(ledger);
+
+    return res.json({
+      // counts
+      wallets: 0,             // fill when you wire multi-wallet tracking
       tokens,
-      active,
-      trades: stats.trades,
-      wins: stats.wins,
-      losses: stats.losses,
-      winRate: stats.winRate,
-      avgRoi: stats.avgRoi,
-      winStreak: stats.winStreak,
-      lossStreak: stats.lossStreak,
-      topTrade: stats.topTrade
+      active: activeTrades,
+
+      // performance
+      pnlScore: capitalScore, // % used by the front-end
+      wins, losses, winRate,
+      winStreak: streaks.winStreak,
+      lossStreak: streaks.lossStreak,
+      topTrade: top ? {
+        symbol: top.symbol,
+        pnl: Number(top.pnl.toFixed(2)),
+        roi: top.roi ?? null
+      } : null,
+
+      // for debugging
+      _rows: undefined
     });
   } catch (err) {
-    console.error('[session-stats] error:', err.message);
-    res.status(500).json({ success: false, error: err.message });
+    console.error('❌ /api/session-stats error:', err.message);
+    res.status(500).json({ error: 'session-stats failed' });
   }
 });
 

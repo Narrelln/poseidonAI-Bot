@@ -437,3 +437,82 @@ td.neutral  { color: #d1e9ff; }
 .memory-table .gray { color: gray; font-weight: bold; }
 
 
+/* trade History panel enboldment  */
+/* Bold important trade history columns */
+.trade-history-table .th-side,
+.trade-history-table .pnl-pos,
+.trade-history-table .pnl-neg,
+.trade-history-table td:nth-child(7), /* ROI */
+.trade-history-table td:nth-child(8)  /* Status */ {
+  font-weight: 700;
+}
+
+/* Highlight OPEN trades: bold entire row */
+.trade-history-table tr.open-trade td {
+  font-weight: 700;
+}
+
+/* Trade history readability */
+.trade-history-table {
+  table-layout: fixed;
+  width: 100%;
+}
+.trade-history-table th,
+.trade-history-table td {
+  padding: 6px 8px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.trade-history-table .th-symbol { text-align: left; }
+.trade-history-table .th-side.long  { color: #22c55e; font-weight: 600; } /* green */
+.trade-history-table .th-side.short { color: #ef4444; font-weight: 600; } /* red */
+.trade-history-table .pnl-pos { color: #22c55e; font-weight: 600; }
+.trade-history-table .pnl-neg { color: #ef4444; font-weight: 600; }
+
+/* example CSS */
+.th-badge { padding:2px 6px; border-radius:4px; font-size:12px; }
+.th-open { background:#065f46; color:#e7f5ec; }
+.th-closed { background:#374151; color:#e5e7eb; }
+.pnl-pos { color:#10b981; }
+.pnl-neg { color:#ef4444; }
+.roi-pos { color:#10b981; }
+.roi-neg { color:#ef4444; }
+.roi-neutral { color:#9ca3af; }
+.th-side.long { color:#10b981; }
+.th-side.short { color:#ef4444; }
+
+/* --- Session + Strategy card fixes --- */
+.mini-block { min-width: 0; }                    /* allow ellipsis to work */
+.mini-block p {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  gap: 8px; margin: 2px 0;
+  white-space: nowrap;                           /* no wrapping */
+}
+
+.mini-block p span { margin-left: auto; }
+
+#session-pnl, #futures-live-pnl { font-weight: 700; }
+
+/* keep value side from pushing layout */
+#wallets-tracked, #tokens-monitored, #active-trades,
+#session-wins, #session-losses, #session-winrate,
+#win-streak, #loss-streak {
+  max-width: 120px; overflow: hidden; text-overflow: ellipsis;
+  text-align: right; display: inline-block;
+}
+
+/* Top Trade can be long – clamp with ellipsis */
+#top-trade {
+  max-width: 220px;           /* adjust to taste */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
+  text-align: right;
+}
+
+/* slightly tighter card so it never "breaks the table" */
+.compact-grid .mini-block { padding-right: 6px; }

@@ -51,42 +51,47 @@ function registerOrderRoute(app, io) {
         console.warn('⚠️ setLeverageForSymbol failed:', e?.response?.data || e.message);
       }
 
-      // 4) Quantity (USDT) as source of truth
-      const notionalUsd =
-        Number.isFinite(+body.notionalUsd) && +body.notionalUsd > 0
-          ? +body.notionalUsd
-          : Number.isFinite(+body.value) && +body.value > 0 && leverage > 0
-          ? (+body.value * leverage)
-          : Number.isFinite(+body.marginUsd) && +body.marginUsd > 0 && leverage > 0
-          ? (+body.marginUsd * leverage)
-          : NaN;
+// 4) Quantity (USDT) as source of truth
+const notionalUsd =
+  (Number.isFinite(+body.notionalUsd) && +body.notionalUsd > 0)
+    ? +body.notionalUsd
+    : (Number.isFinite(+body.value) && +body.value > 0 && leverage > 0)
+    ? (+body.value * leverage)
+    : (Number.isFinite(+body.marginUsd) && +body.marginUsd > 0 && leverage > 0)
+    ? (+body.marginUsd * leverage)
+    : NaN;
 
-      if (!Number.isFinite(notionalUsd) || notionalUsd <= 0) {
-        return res.status(400).json({ success: false, error: 'Provide notionalUsd (Quantity USDT) or margin/value' });
-      }
+if (!Number.isFinite(notionalUsd) || notionalUsd <= 0) {
+  return res.status(400).json({ success: false, error: 'Provide notionalUsd (Quantity USDT) or margin/value' });
+}
 
-      const tradePayload = {
-        contract,
-        side,
-        type: 'market',
-        leverage,
-        manual: !!body.manual,
-        notionalUsd,
-        tpPercent: Number(body.tpPercent || 35),
-        slPercent: Number(body.slPercent || 20),
-      };
+// sanitize TP/SL to clean numbers (default + no negatives)
+const tp = Math.max(0, Number.isFinite(+body.tpPercent) ? +body.tpPercent : 35);
+const sl = Math.max(0, Number.isFinite(+body.slPercent) ? +body.slPercent : 20);
 
-      // UI event: pending
-      io.emit('trade-pending', {
-        contract,
-        side,
-        leverage,
-        notionalUsd,
-        manual: !!body.manual,
-        tpPercent: tradePayload.tpPercent,
-        slPercent: tradePayload.slPercent,
-        timestamp: Date.now(),
-      });
+// build tradePayload using sanitized tp/sl
+const tradePayload = {
+  contract,
+  side,
+  type: 'market',
+  leverage,
+  manual: !!body.manual,
+  notionalUsd,
+  tpPercent: tp,
+  slPercent: sl,
+};
+
+// UI event: pending (✅ also use tp/sl here)
+io.emit('trade-pending', {
+  contract,
+  side,
+  leverage,
+  notionalUsd,
+  manual: !!body.manual,
+  tpPercent: tp,
+  slPercent: sl,
+  timestamp: Date.now(),
+});
 
       // 🚀 Place order
       const result = await placeFuturesOrder(tradePayload);
@@ -95,26 +100,41 @@ function registerOrderRoute(app, io) {
         io.emit('trade-confirmed', result.data);
 
         // 🔵 Seed TP/SL feed so the UI never shows "no snapshot yet"
-        try { ensureSnapshot?.(contract); } catch {}
+        try { ensureSnapshot?.(contract); } catch (e) {}
+
+        // Normalize side for consistent UI text
+        const SIDE = side === 'SELL' ? 'SELL' : 'BUY';
+
+        // 1) Log the entry placement immediately (persists in feed)
+        try {
+          pushTpFeed?.({
+            contract,
+            state: 'OPENED',
+            text: `🟢 Entry placed: \`${contract}\` • ${SIDE}`,
+          });
+        } catch (e) {}
+
+        // 2) Then log the exchange acceptance
         try {
           pushTpFeed?.({
             contract,
             state: 'ORDER_ACCEPTED',
-            text: `✅ Order accepted for ${contract} (${side}) • lev ${leverage}x`,
+            text: `✅ Order accepted for ${contract} (${SIDE}) • lev ${leverage}x`,
           });
-        } catch {}
+        } catch (e) {}
 
         return res.json({ success: true, data: result.data, code: result.code });
-      }
+      } // ← close the success IF block
 
-      // Error
+      // Error path (non‑success result)
       try {
         pushTpFeed?.({
           contract,
           state: 'ORDER_ERROR',
           text: `❌ Order rejected for ${contract}: ${result?.msg || 'Unknown error'}`,
         });
-      } catch {}
+      } catch (e) {}
+
       return res.status(400).json({ success: false, error: result?.msg || 'Unknown error' });
 
     } catch (err) {

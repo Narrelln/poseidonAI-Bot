@@ -1,71 +1,34 @@
 // /public/scripts/core/feeder.js
-// Tiny event bus + structured feed helpers
+import { FEED_TYPES, normalizeFeed } from './feedTypes.js';
 
-// ---- mini emitter ----
-const _listeners = new Map(); // type => Set<fn>
-
+const _listeners = new Map();
 function _emit(type, entry) {
-  // wildcard first
-  const any = _listeners.get('*');
-  if (any) for (const fn of any) try { fn(entry); } catch {}
-  // typed listeners
-  const set = _listeners.get(type);
-  if (set) for (const fn of set) try { fn(entry); } catch {}
+  const any = _listeners.get('*'); if (any) for (const fn of any) try { fn(entry); } catch {}
+  const set = _listeners.get(type); if (set) for (const fn of set) try { fn(entry); } catch {}
 }
+export function on(type, fn){ if(!_listeners.has(type)) _listeners.set(type,new Set()); _listeners.get(type).add(fn); }
+export function off(type, fn){ _listeners.get(type)?.delete(fn); }
 
-function on(type, fn) {
-  if (!_listeners.has(type)) _listeners.set(type, new Set());
-  _listeners.get(type).add(fn);
-}
-function off(type, fn) {
-  _listeners.get(type)?.delete(fn);
-}
-
-// ---- utils ----
-function mk(sym, type, msg, data = {}, level = 'info', tags = [], corrId = '') {
-  return {
-    ts: Date.now(),
-    symbol: sym || 'SYSTEM',
-    type,           // 'scanner' | 'ta' | 'decision' | 'trade' | 'error'
-    level,          // 'debug' | 'info' | 'warn' | 'success' | 'error'
-    message: msg || '',
-    data,
-    tags: Array.isArray(tags) ? tags : [],
-    corrId: String(corrId || '')
-  };
-}
-
-// ---- API ----
 export const feed = {
   on, off,
-
   scanner(sym, msg, data = {}, level = 'info', tags = [], corrId = '') {
-    const e = mk(sym, 'scanner', msg, data, level, tags, corrId);
+    const e = normalizeFeed({ type: FEED_TYPES.SCANNER, symbol: sym, level, message: msg, data, tags, corr: corrId });
     _emit('scanner', e); _emit('*', e);
-    if (level !== 'debug') console.log(`[FEED][scanner][${level}] ${sym}${corrId ? ' ('+corrId+')' : ''} → ${msg}`, data, tags);
   },
-
   ta(sym, msg, data = {}, level = 'info', tags = [], corrId = '') {
-    const e = mk(sym, 'ta', msg, data, level, tags, corrId);
+    const e = normalizeFeed({ type: FEED_TYPES.TA, symbol: sym, level, message: msg, data, tags, corr: corrId });
     _emit('ta', e); _emit('*', e);
-    if (level !== 'debug') console.log(`[FEED][ta][${level}] ${sym}${corrId ? ' ('+corrId+')' : ''} → ${msg}`, data, tags);
   },
-
   decision(sym, msg, data = {}, level = 'info', tags = [], corrId = '') {
-    const e = mk(sym, 'decision', msg, data, level, tags, corrId);
+    const e = normalizeFeed({ type: FEED_TYPES.DECISION, symbol: sym, level, message: msg, data, tags, corr: corrId });
     _emit('decision', e); _emit('*', e);
-    if (level !== 'debug') console.log(`[FEED][decision][${level}] ${sym}${corrId ? ' ('+corrId+')' : ''} → ${msg}`, data, tags);
   },
-
   trade(sym, msg, data = {}, level = 'success', tags = [], corrId = '') {
-    const e = mk(sym, 'trade', msg, data, level, tags, corrId);
+    const e = normalizeFeed({ type: FEED_TYPES.TRADE, symbol: sym, level, message: msg, data, tags, corr: corrId });
     _emit('trade', e); _emit('*', e);
-    console.log(`[FEED][trade][${level}] ${sym}${corrId ? ' ('+corrId+')' : ''} → ${msg}`, data, tags);
   },
-
   error(sym, msg, data = {}, tags = [], corrId = '') {
-    const e = mk(sym, 'error', msg, data, 'error', tags, corrId);
+    const e = normalizeFeed({ type: FEED_TYPES.ERROR, symbol: sym, level: 'error', message: msg, data, tags, corr: corrId });
     _emit('error', e); _emit('*', e);
-    console.error(`[FEED][error] ${sym}${corrId ? ' ('+corrId+')' : ''} → ${msg}`, data, tags);
   },
 };

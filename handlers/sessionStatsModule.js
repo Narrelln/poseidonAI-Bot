@@ -1,13 +1,4 @@
-// handlers/sessionStatsModule.js — Live Session Stats (auto-fetch)
-//
-// What it does
-// - On every getSessionStats() call, fetches live data from your HTTP APIs:
-//   • /api/positions        → open trades + live PnL
-//   • /api/scan-tokens      → token count (top list)
-//   • /api/wallet-balance   → if reachable → wallets=1, else 0
-//
-// - Falls back to in-memory values if endpoints fail
-// - Keeps the old setters around (no breaking changes)
+// handlers/sessionStatsModule.js — Live Session Stats (auto-fetch) + BACK-COMPAT SHIMS
 
 const axios = require('axios');
 
@@ -43,7 +34,6 @@ async function fetchOpenPositions() {
 async function fetchTokenCount() {
   try {
     const { data } = await axios.get(`${BASE}/api/scan-tokens`, { timeout: 6000 });
-    // Prefer top50 if present; else count unique from gainers/losers
     if (Array.isArray(data?.top50)) return data.top50.length;
     const pool = [
       ...(Array.isArray(data?.gainers) ? data.gainers : []),
@@ -59,13 +49,33 @@ async function fetchTokenCount() {
 async function detectWalletPresent() {
   try {
     const { data } = await axios.get(`${BASE}/api/wallet-balance`, { timeout: 6000 });
-    // If endpoint responds with a number (or success), assume one primary wallet
     if (data && (typeof data === 'number' || typeof data?.balance === 'number' || data?.success)) {
       return 1;
     }
     return 0;
   } catch {
     return 0;
+  }
+}
+
+// === NEW: Back-compat shim for callers expecting safeReadHistory() ===
+// Reads from the ledger; never throws; returns [] on failure.
+async function safeReadHistory(limit = 100) {
+  try {
+    const { list } = require('../utils/tradeLedger');
+    const rows = await list(Math.min(Math.max(Number(limit) || 100, 1), 500));
+    return Array.isArray(rows) ? rows : [];
+  } catch {
+    return [];
+  }
+}
+
+// === NEW: Back-compat shim for callers expecting safeReadPositions() ===
+async function safeReadPositions() {
+  try {
+    return await fetchOpenPositions();
+  } catch {
+    return [];
   }
 }
 
@@ -78,7 +88,7 @@ async function getSessionStats() {
       detectWalletPresent(),
     ]);
 
-    // Live PnL score: sum of pnlValue/pnl across open positions
+    // Live PnL score: sum pnl/pnlValue across open positions
     let pnlScore = 0;
     for (const p of positions) {
       const v = num(p.pnlValue, null);
@@ -95,8 +105,7 @@ async function getSessionStats() {
         ? positions.length
         : (Array.isArray(activeTrades) ? activeTrades.length : 0),
     };
-  } catch (err) {
-    // Final safety fallback to in-memory values
+  } catch {
     return {
       pnlScore: 0,
       wallets: Array.isArray(trackedWallets) ? trackedWallets.length : 0,
@@ -107,8 +116,13 @@ async function getSessionStats() {
 }
 
 module.exports = {
+  // setters
   setActiveSymbols,
   setTrackedWallets,
   setActiveTrades,
+  // live stats
   getSessionStats,
+  // BACK-COMPAT shims
+  safeReadHistory,
+  safeReadPositions,
 };

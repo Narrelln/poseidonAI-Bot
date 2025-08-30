@@ -1,24 +1,15 @@
-// === /public/scripts/scannerCache.js ===
-// Scanner cache with learning-memory prioritization
-// + QUIET mode & throttled logging (no spam)
-// + Skips "refreshed" logs if payload didn't change meaningfully
-
-let cachedScannerData = {
-  top50: [],
-  lastUpdated: 0
-};
-
+// /public/scripts/scannerCache.js  (patched, resilient to missing /api/learning-memory)
+let cachedScannerData = { top50: [], lastUpdated: 0 };
 let isRefreshing = false;
 
-// ---- Quiet / Log control ----------------------------------------------------
-const QUIET_DEFAULT = false; // set true if you want silence by default
+const QUIET_DEFAULT = false;
 let QUIET_MODE =
   (typeof window !== 'undefined' && !!window.POSEIDON_QUIET) ||
   (typeof localStorage !== 'undefined' && localStorage.getItem('poseidon.quiet') === '1') ||
   QUIET_DEFAULT;
 
 let lastLogAt = 0;
-const LOG_COOLDOWN_MS = 20_000; // at most one "refreshed" log every 20s
+const LOG_COOLDOWN_MS = 20_000;
 
 function logInfo(...args) {
   if (QUIET_MODE) return;
@@ -30,31 +21,45 @@ function logInfo(...args) {
 
 export function setQuietMode(on) {
   QUIET_MODE = !!on;
-  try {
-    localStorage.setItem('poseidon.quiet', QUIET_MODE ? '1' : '0');
-  } catch {}
+  try { localStorage.setItem('poseidon.quiet', QUIET_MODE ? '1' : '0'); } catch {}
 }
 
 if (typeof window !== 'undefined') {
-  window.setPoseidonQuiet = setQuietMode; // handy toggle from console
+  window.setPoseidonQuiet = setQuietMode;
 }
 
-// ---- Helpers ----------------------------------------------------------------
-async function fetchLearningMemory() {
-  try {
-    const res = await fetch('/api/learning-memory');
-    if (!res.ok) throw new Error(`Status ${res.status}`);
-    const json = await res.json();
-    return json || {};
-  } catch (err) {
-    if (!QUIET_MODE) console.warn('⚠️ Failed to fetch learning memory:', err.message);
-    return {};
+function n(v) { const x = Number(v); return Number.isFinite(x) ? x : NaN; }
+
+// ---------- symbol helpers ----------
+function sanitizeToken(token) {
+  const symRaw = String(token?.symbol || token || '').toUpperCase();
+  const symbol = symRaw;
+  const price = n(token?.price ?? token?.lastPrice);
+
+  const volumeBase = n(token?.volume ?? token?.baseVolume ?? token?.turnoverBase);
+  const qv24 = n(token?.quoteVolume24h);
+  const qvProvider = n(token?.quoteVolume ?? token?.turnover);
+
+  const qvComputed = (Number.isFinite(price) && Number.isFinite(volumeBase)) ? price * volumeBase : NaN;
+  const quoteVolume = Number.isFinite(qv24) ? qv24
+                     : Number.isFinite(qvProvider) ? qvProvider
+                     : Number.isFinite(qvComputed) ? qvComputed
+                     : NaN;
+
+  if (!QUIET_MODE && Number.isFinite(qvProvider) && Number.isFinite(qvComputed)) {
+    const diff = Math.abs(qvProvider - qvComputed);
+    const rel = qvProvider !== 0 ? diff / Math.abs(qvProvider) : 0;
+    if (rel > 0.25) {
+      console.warn(
+        `[ScannerCache] ⚠️ quoteVolume mismatch for ${symbol}: provider=${qvProvider} vs computed=${qvComputed} (price=${price}, volumeBase=${volumeBase})`
+      );
+    }
   }
+
+  return { ...token, symbol, price, volumeBase, quoteVolume, quoteVolume24h: Number.isFinite(qv24) ? qv24 : undefined };
 }
 
-// Shallow signature used to detect "no-change" payloads (keeps logs quiet)
 function signatureOf(list) {
-  // capture symbol + rounded winRate only (order matters)
   return JSON.stringify(
     list.map(t => [
       String(t.symbol || '').toUpperCase(),
@@ -63,31 +68,112 @@ function signatureOf(list) {
   );
 }
 
+// dual key: futures BASE-USDTM and spot BASEUSDT
+function keysForMemory(sym) {
+  const u = String(sym || '').toUpperCase();
+  const base = u.replace(/[-_]/g, '').replace(/USDTM?$/, '');
+  return [`${base}-USDTM`, `${base}USDT`];
+}
+
+// ---------- memory fetch (resilient) ----------
+async function fetchLearningMemory() {
+  // 1) Try the base route (Mongo summary or LONG/SHORT map)
+  try {
+    const res = await fetch('/api/learning-memory', { cache: 'no-store' });
+    if (res.ok) {
+      const json = await res.json();
+      const rawMap = (json && (json.memory || json)) || {};
+      // Normalize: if entries have LONG/SHORT, keep; if they have {points, updatedAt}, mark exists
+      const norm = {};
+      if (rawMap && typeof rawMap === 'object') {
+        for (const [key, val] of Object.entries(rawMap)) {
+          if (val && (val.LONG || val.SHORT)) {
+            norm[key.toUpperCase()] = {
+              LONG:  val.LONG  || { wins: 0, trades: 0 },
+              SHORT: val.SHORT || { wins: 0, trades: 0 }
+            };
+          } else if (val && (typeof val.points !== 'undefined' || typeof val.updatedAt !== 'undefined')) {
+            // summary shape -> mark existence
+            norm[key.toUpperCase()] = { __exists: true };
+          }
+        }
+      }
+      return norm;
+    }
+  } catch (_) {
+    // fall through to #2
+  }
+
+  // 2) Fallback: derive a neutral memory map from /api/scan-tokens
+  try {
+    const res = await fetch('/api/scan-tokens', { cache: 'no-store' });
+    if (res.ok) {
+      const data = await res.json();
+      const top = Array.isArray(data?.top50) ? data.top50 : [];
+      const map = {};
+      for (const row of top) {
+        const sym = String(row?.symbol || '').toUpperCase();
+        if (!sym) continue;
+        const base = sym.replace(/[-_]/g, '').replace(/USDTM?$/, '');
+        const fut = `${base}-USDTM`;
+        const spot = `${base}USDT`;
+        map[fut] = { __exists: true };
+        map[spot] = map[fut];
+      }
+      return map;
+    }
+  } catch (err) {
+    if (!QUIET_MODE) console.warn('⚠️ Failed to fetch fallback memory via scan-tokens:', err?.message || err);
+  }
+
+  // 3) Nothing available
+  return {};
+}
+
 function enrichAndRankWithMemory(top50, memory) {
   const enriched = top50.map(token => {
-    const sym = String(token.symbol || '').toUpperCase();
-    const mem = memory[sym] || {};
-    const long = mem.LONG || {};
-    const short = mem.SHORT || {};
+    const t = sanitizeToken(token);
+    const [futKey, spotKey] = keysForMemory(t.symbol);
 
-    const longWR = long.trades ? long.wins / long.trades : 0;
-    const shortWR = short.trades ? short.wins / short.trades : 0;
-    const avgWinRate = ((longWR + shortWR) / 2) || 0;
+    const m = memory[futKey] || memory[spotKey] || {};
+    let avgWinRate;
 
-    return { ...token, winRate: avgWinRate };
+    if (m.LONG || m.SHORT) {
+      const long = m.LONG || {};
+      const short = m.SHORT || {};
+      const longWR  = Number.isFinite(long.trades)  && long.trades  > 0 ? long.wins  / long.trades  : NaN;
+      const shortWR = Number.isFinite(short.trades) && short.trades > 0 ? short.wins / short.trades : NaN;
+
+      if (Number.isFinite(longWR) && Number.isFinite(shortWR)) {
+        avgWinRate = (longWR + shortWR) / 2;
+      } else if (Number.isFinite(longWR)) {
+        avgWinRate = longWR;
+      } else if (Number.isFinite(shortWR)) {
+        avgWinRate = shortWR;
+      } else {
+        avgWinRate = 0.5; // no usable stats
+      }
+    } else if (m.__exists) {
+      // We have *some* memory/snapshot for the symbol (summary shape) -> tiny bump
+      avgWinRate = 0.55;
+    } else {
+      // No memory at all -> neutral
+      avgWinRate = 0.5;
+    }
+
+    return { ...t, winRate: avgWinRate };
   });
 
   enriched.sort((a, b) => (b.winRate || 0) - (a.winRate || 0));
   return enriched;
 }
-
-// ---- Public API -------------------------------------------------------------
+// ---------- cache refresh ----------
 export async function refreshScannerCache() {
   if (isRefreshing) return;
   isRefreshing = true;
 
   try {
-    const res = await fetch('/api/scan-tokens');
+    const res = await fetch('/api/scan-tokens', { cache: 'no-store' });
     if (!res.ok) throw new Error(`Status ${res.status}`);
     const json = await res.json();
 
@@ -100,7 +186,6 @@ export async function refreshScannerCache() {
     const memory = await fetchLearningMemory();
     const ranked = enrichAndRankWithMemory(incoming, memory);
 
-    // Skip update/log if nothing meaningful changed
     const oldSig = signatureOf(cachedScannerData.top50);
     const newSig = signatureOf(ranked);
     const changed = oldSig !== newSig;

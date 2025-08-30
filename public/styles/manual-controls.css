@@ -421,3 +421,5 @@ input[type="range"] {
 @media (max-width: 900px) {
   .tp-row { grid-template-columns: 72px 92px 1fr; font-size: 12px; }
 }
+.tp-line code, .tp-line .bt { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.tp-line { white-space: pre-wrap; line-height: 1.25; margin: 2px 0; }

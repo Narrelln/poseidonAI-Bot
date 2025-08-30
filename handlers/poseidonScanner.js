@@ -1,141 +1,205 @@
 // === handlers/poseidonScanner.js ===
+// Server-side consumer of the frozen scanner set (40 movers + 10 memes).
+// - No local universe building; we only process what newScanTokens exposes.
+// - Meme entries ALWAYS pass (server already gated them by 25m–1.5b or whitelist).
+// - Movers pass as delivered (server already enforced 100k–20m).
+// - Per-symbol debounce to avoid noisy re-eval.
+// - Keeps activeSymbols for other modules. Decisions are DISABLED by default; CycleWatcher owns entries.
+
+// eslint-disable-next-line no-console
 
 const { setActiveSymbols } = require('../handlers/sessionStatsModule.js');
 const { initFuturesPositionTracker } = require('../handlers/futuresPositionTracker.js');
-const { getCachedScannerData } = require('../routes/newScanTokens');
+const { getCachedScannerData } = require('../routes/newScanTokens'); // in-memory cache provider
 const { toKuCoinContractSymbol } = require('../handlers/futuresApi.js');
-const { initFuturesDecisionEngine } = require('./futuresDecisionEngine');
-const { analyzeAndTrigger } = require('./analyzeAndTrigger');
-const { logSignalToFeed } = require('./liveFeedRenderer');
 
+// Evaluate decisions on the server (guarded by SCANNER_DECISIONS)
+const { evaluatePoseidonDecision } = require('../handlers/evaluatePoseidonDecision.js');
+
+// Optional feed logger (safe if missing, path differs per project)
+let logSignalToFeed = () => {};
+try {
+  ({ logSignalToFeed } = require('../handlers/liveFeedRenderer'));
+} catch (_) {
+  try { ({ logSignalToFeed } = require('./liveFeedRenderer')); } catch {}
+}
+
+// Optional per-token profile (may flag .whitelisted)
+let getPattern = () => ({});
+try {
+  ({ getPattern } = require('./data/tokenPatternMemory.js'));
+} catch {}
+
+// ------------------ state / knobs ------------------
 let activeSymbols = [];
 let scannerStarted = false;
-let DEBUG_MODE = false;
-const lastAnalysisCache = {}; // symbol -> { price, volume, ts }
+let DEBUG = false;
 
-function toggleScannerDebug() {
-  DEBUG_MODE = !DEBUG_MODE;
-  console.log(`🛠️ DEBUG_MODE is now ${DEBUG_MODE ? 'ON' : 'OFF'}`);
+// NEW: hard gate — scanner must NOT send decisions by default
+const SCANNER_DECISIONS = String(process.env.SCANNER_DECISIONS || 'false') === 'true';
+
+const REANALYZE_COOLDOWN_MS = 15_000; // 15s debounce per symbol
+const lastAnalysis = new Map();       // key: BASE -> { price, qv, ts }
+
+function up(s){ return String(s || '').toUpperCase(); }
+function baseOfContract(contract=''){
+  const m = up(contract).match(/^([A-Z0-9]+)-USDTM$/);
+  return m ? m[1] : up(contract).replace(/[-_]/g,'').replace(/USDTM?$/,'');
 }
+function pickQuoteVolume(row){
+  // prefer canonical fields emitted by newScanTokens
+  const qv24 = Number(row?.quoteVolume24h);
+  if (Number.isFinite(qv24)) return qv24;
+  const qv = Number(row?.quoteVolume ?? row?.turnover ?? row?.volume);
+  return Number.isFinite(qv) ? qv : NaN;
+}
+function num(v){ const n = Number(v); return Number.isFinite(n) ? n : NaN; }
+function canonBase(key){
+  // Use BTC as canonical for XBT/BTC joins
+  let b = up(key).replace(/[-_]/g,'').replace(/USDTM?$/,'');
+  if (b === 'XBT') b = 'BTC';
+  return b;
+}
+
+function toggleScannerDebug(){ DEBUG = !DEBUG; console.log(`🪛 poseidonScanner DEBUG=${DEBUG?'ON':'OFF'}`); }
 global.toggleScannerDebug = toggleScannerDebug;
 
-async function refreshSymbols() {
+// ------------------ core refresh ------------------
+async function refreshSymbols(){
   try {
-    const response = await getCachedScannerData(true);
-    if (!response || response.success === false) return;
+    const cache = await getCachedScannerData(true);
+    if (!cache || cache.success === false) return;
 
-    const combined = response.top50 || [];
+    // We trust the server’s selection and categories.
+    const incoming = Array.isArray(cache.top50) ? cache.top50 : [];
     const seen = new Set();
 
-    const enrichedSymbols = combined.filter(item => {
-      const symbol = item.symbol?.toUpperCase();
-      const price = parseFloat(item.price);
-      const volume = parseFloat(item.quoteVolume);
-      const change = parseFloat(item.priceChgPct);
+    const rows = incoming.map(item => {
+      // item fields are produced by routes/newScanTokens.js
+      const srcSymbol = up(item?.symbol || item?.base || '');
+      const contract  = toKuCoinContractSymbol(srcSymbol); // normalize to "BASE-USDTM"
+      const base      = baseOfContract(contract);
 
-      const isFake = /ALTCOIN|TEST|TROLL/i.test(symbol || '');
-      const isDuplicate = seen.has(symbol);
-      const isMissingSymbol = !symbol;
+      const price = num(item?.price);
+      const qv    = pickQuoteVolume(item);
+      const change = num(item?.priceChgPct ?? item?.change);
+      const category = String(item?.category || '').toLowerCase(); // "gainer" | "loser" | "" | "meme" (if you added it upstream)
 
-      if (isMissingSymbol || isDuplicate || isFake) return false;
+      // Upstream may not set "meme" literal in category; we infer from list membership when present.
+      const isMeme = category === 'meme' || Boolean(item?.isMeme);
 
-      seen.add(symbol);
-      item.symbol = symbol;
-      item.price = isNaN(price) ? 0 : price;
-      item.quoteVolume = isNaN(volume) ? 0 : volume;
-      item.change = isNaN(change) ? 0 : +change.toFixed(2);
+      // Profiles can mark tokens as whitelisted for any extra local rule (kept for future use)
+      let prof = {};
+      try { prof = getPattern(contract) || {}; } catch {}
+      const profileWhitelisted = !!prof.whitelisted;
+
+      return {
+        base, contract, price, quoteVolume: qv, change: Number.isFinite(change)?+change.toFixed(2):0,
+        confidence: Number(item?.confidence) || 0,
+        category, isMeme, profileWhitelisted
+      };
+    })
+    .filter(r => {
+      if (!r.contract || !r.base) return false;
+      if (seen.has(r.contract)) return false;
+      seen.add(r.contract);
+      // Minimal sanity only; DO NOT reapply volume bands here.
+      if (!(r.price > 0) || !(r.quoteVolume > 0)) return false;
       return true;
     });
 
-    activeSymbols = enrichedSymbols.map(e => ({
-      symbol: toKuCoinContractSymbol(e.symbol),
-      price: e.price,
-      volume: e.quoteVolume || e.volume || 0,
-      confidence: e.confidence || 0,
+    // Expose to the rest of the app
+    activeSymbols = rows.map(r => ({
+      symbol: r.contract,
+      price: r.price,
+      volume: r.quoteVolume,
+      confidence: r.confidence,
+      category: r.category,
+      isMeme: r.isMeme
     }));
-
     setActiveSymbols(activeSymbols);
-    activeSymbols.forEach(initFuturesPositionTracker);
 
-    for (const token of enrichedSymbols) {
-      const now = Date.now();
-      const last = lastAnalysisCache[token.symbol];
-      const price = token.price;
-      const volume = token.quoteVolume;
+    // Make sure trackers are initialized (idempotent)
+    for (const s of activeSymbols) {
+      try { initFuturesPositionTracker(s.symbol); } catch {}
+    }
 
-      // 🚨 Validate before processing
-      const { getPattern } = require('./data/tokenPatternMemory.js'); // place at top
+    // Fan out to the decision engine (DISABLED unless SCANNER_DECISIONS=true)
+    const now = Date.now();
 
-      // ...
-      
-      const profile = getPattern(token.symbol) || {};
-      const isWhitelisted = profile?.whitelisted || false;
-      
-      if (
-        !token.symbol ||
-        typeof token.symbol !== 'string' ||
-        isNaN(price) || price <= 0 ||
-        isNaN(volume) || volume <= 0 ||
-        (volume > 20_000_000 && !isWhitelisted)
-      ) {
-        console.warn(`⚠️ Invalid scanner data for ${token.symbol} — Price: ${price}, Volume: ${volume}, Whitelisted: ${isWhitelisted}`);
-        continue;
-      }
-
-      // Skip if minimal change
-      if (last && now - last.ts < 15_000) {
-        const priceChange = Math.abs(price - last.price) / last.price;
-        const volChange = Math.abs(volume - last.volume) / last.volume;
-        if (priceChange < 0.01 && volChange < 0.01) continue;
-      }
-
-      try {
-        const result = await analyzeAndTrigger(token.symbol, {
-          price,
-          volume,
-          change: token.change
-        });
-
-        lastAnalysisCache[token.symbol] = { price, volume, ts: now };
-
-        if (!result || result.signal === 'neutral') continue;
-
-        const confidence = result.confidence || 0;
-        const alreadyOpen = result.openPosition === true;
-
-        if (confidence >= 70 && !alreadyOpen) {
-          const allocation = confidence >= 85 ? 0.25 : 0.10;
-          result.allocation = allocation;
-          logSignalToFeed(result);
+    if (SCANNER_DECISIONS) {
+      for (const tok of rows) {
+        const k = canonBase(tok.contract);
+        const prev = lastAnalysis.get(k);
+        if (prev && (now - prev.ts < REANALYZE_COOLDOWN_MS)) {
+          const pd = Math.abs(tok.price - prev.price) / Math.max(prev.price, 1e-9);
+          const vd = Math.abs(tok.quoteVolume - prev.qv) / Math.max(prev.qv, 1e-9);
+          if (pd < 0.01 && vd < 0.01) continue; // <1% both → skip
         }
-      } catch (err) {
-        if (DEBUG_MODE) console.warn(`⚠️ Analysis failed for ${token.symbol}: `, err.message);
+
+        try {
+          await evaluatePoseidonDecision(tok.contract, {
+            manual: false,
+            price: tok.price,
+            quoteVolume: tok.quoteVolume,
+            changePct: tok.change,
+            confidence: tok.confidence,
+            category: tok.category,
+            isMeme: tok.isMeme,
+            whitelisted: tok.profileWhitelisted || tok.isMeme // memes/whitelist pass downstream guards
+          });
+
+          lastAnalysis.set(k, { price: tok.price, qv: tok.quoteVolume, ts: now });
+
+          if (tok.confidence >= 70) {
+            logSignalToFeed({
+              symbol: tok.contract,
+              confidence: tok.confidence,
+              signal: 'candidate',
+              volume: tok.quoteVolume,
+              price: tok.price,
+              tag: tok.isMeme ? 'meme' : 'mover'
+            });
+          }
+        } catch (e) {
+          if (DEBUG) console.warn(`decision error ${tok.contract}:`, e?.message || e);
+        }
       }
     }
+
+    if (DEBUG) console.log(`[Scanner] processed=${rows.length} active=${activeSymbols.length}`);
   } catch (err) {
-    if (DEBUG_MODE) console.warn('⚠️ refreshSymbols error:', err.message);
+    if (DEBUG) console.warn('[Scanner] refreshSymbols error:', err?.message || err);
   }
 }
 
-function getActiveSymbols() {
-  return activeSymbols;
-}
+// ------------------ lifecycle / API ------------------
+function getActiveSymbols(){ return activeSymbols; }
 
-function startScanner() {
+function startScanner(){
   if (scannerStarted) return;
   scannerStarted = true;
 
-  initFuturesDecisionEngine();
+  // Initialize engine only if we explicitly allow scanner decisions
+  if (SCANNER_DECISIONS) {
+    try {
+      const { initFuturesDecisionEngine } = require('./futuresDecisionEngine');
+      if (typeof initFuturesDecisionEngine === 'function') initFuturesDecisionEngine();
+    } catch {}
+  }
 
-  // const { startHotTokenEngine } = require('../engines/hotTokenEngine.js');
-  // startHotTokenEngine();
+  // First pull + interval (leave at 60s; server is locked for 7 days)
+  refreshSymbols().catch(()=>{});
+  globalThis.__POSEIDON_SCANNER_TIMER__ = setInterval(() => {
+    refreshSymbols().catch(()=>{});
+  }, 60_000);
 
-  // setInterval(refreshSymbols, 15 * 60 * 1000); // Every 15 minutes
-  // refreshSymbols();
+  console.log('🚀 PoseidonScanner (server consumer) started @60s');
 }
 
 module.exports = {
   refreshSymbols,
   getActiveSymbols,
-  startScanner
+  startScanner,
+  toggleScannerDebug
 };

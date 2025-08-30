@@ -1,0 +1,72 @@
+{
+  "$schema": "https://poseidon/policy.schema.json",
+  "version": 1,
+  "updatedAt": 1756558149102,
+  "defaults": {
+    "minConfidence": 35,
+    "maxLeverage": 5,
+    "sizeUSDT": 50,
+    "tpPercents": [
+      15
+    ],
+    "slPercent": 5,
+    "allowLong": true,
+    "allowShort": true,
+    "trailing": false,
+    "lockOnRetest": true,
+    "strict75": false,
+    "cooldownMs": 6000
+  },
+  "profiles": {
+    "breakout-momo": {
+      "open": true,
+      "minConfidence": 45,
+      "tpPercents": [
+        40
+      ],
+      "slPercent": 6,
+      "sizeUSDT": 75,
+      "notes": "Continuation breakouts only; skip if overextended"
+    },
+    "range-revert": {
+      "open": true,
+      "minConfidence": 38,
+      "tpPercents": [
+        15
+      ],
+      "slPercent": 5,
+      "sizeUSDT": 60,
+      "notes": "Mean reversion near bands"
+    },
+    "cycle-24-48": {
+      "open": true,
+      "minConfidence": 12,
+      "tpPercents": [
+        100
+      ],
+      "slPercent": 8,
+      "sizeUSDT": 90,
+      "notes": "Longer swing (your preferred, higher win on longer holds)"
+    },
+    "reversal-surge": {
+      "open": true,
+      "minConfidence": 48,
+      "tpPercents": [
+        22
+      ],
+      "slPercent": 7,
+      "sizeUSDT": 70,
+      "onlyUniverse": "reversal",
+      "preferShortVolatile": true,
+      "lockOnRetest": true,
+      "strict75": true,
+      "cooldownMs": 8000,
+      "notes": "Non-majors; prefer short on high vol, retest then go"
+    }
+  },
+  "minConf": {
+    "major": 85,
+    "meme": 85,
+    "other": 77
+  }
+}

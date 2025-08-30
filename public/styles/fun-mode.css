@@ -1,0 +1,33 @@
+/* === Clean Fun Mode (No Emoji, Tactical Feel) === */
+
+.mode-fun .story-feed {
+    background-color: #111;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #2a2a2a;
+  }
+  
+  .mode-fun .story-line {
+    background-color: #1a1a1a;
+    color: #e6e6e6;
+    font-weight: 500;
+    font-family: 'Share Tech Mono', 'Orbitron', monospace;
+    border-left: 4px solid #3ecf8e;
+    padding: 6px 10px;
+    margin: 6px 0;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+  }
+  
+  /* Major entries (like BTC/ETH) stand out slightly */
+  .mode-fun .story-line.major {
+    border-left-color: #009fff;
+    background-color: #202830;
+    color: #cdefff;
+  }
+
+  /* optional – add to your stylesheet */
+.story-feed .story-line { display:flex; align-items:center; gap:.5rem; }
+.story-feed .story-line .count { margin-left:.35rem; font-weight:700; opacity:.7; }

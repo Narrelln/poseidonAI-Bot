@@ -7,21 +7,25 @@
  *   - SL rule: when ROI <= -SL%, close fully.
  *   - Persist TP/Trail state in Mongo so restarts don’t lose context.
  *
- * Dependencies:
- *   - utils/tradeHistory.getOpenTradesWithTPSL()
+ * Dependencies (patched):
+ *   - utils/tradeLedger.list()  → derive open trades that have TP/SL set
+ *   - utils/tradeLedger.reconcileAgainst(openSet)
  *   - GET /api/positions
  *   - POST /api/partial-close   (preferred for partial exits)
  *   - POST /api/close-trade     (fallback; ideally supports { fraction })
  *   - models/TpState.js (Mongoose model)
+ *   - models/tpFeed.js (Mongo persistence for the live feed)
  *
  * Debugging:
  *   - Logs prefixed with [P01-TPMON]
- *   - Sections §1..§8 for quick navigation
+ *   - Sections §1..§9 for quick navigation
  */
 
 const axios = require('axios');
-const { getOpenTradesWithTPSL } = require('./utils/tradeHistory');
-const TpState = require('./models/tpState'); // ⬅️ NEW: persistence model
+const { list, reconcileAgainst } = require('./utils/tradeLedger'); // ✅ ledger-based
+
+const TpState = require('./models/tpState');
+const TpFeedModel = require('./models/tpFeed');
 const { parseToKucoinContractSymbol } = require('./kucoinHelper');
 
 /* ───────────────────────── §1. Config & constants ───────────────────────── */
@@ -44,36 +48,146 @@ const closingLocks = new Set(); // contractKey -> lock against double submits
 // Cache mirrors DB row for low-latency loop; DB is source of truth across restarts.
 const tpState = new Map();      // contractKey -> { tp1Done, peakRoi, trailArmed, lastSeenQty }
 const lastLog = new Map();      // contractKey -> ts (throttle)
+
 /**
  * Poseidon — Upgrade U03: TP/SL Live Status Feed (snapshots)
  * ----------------------------------------------------------
  * Purpose:
  *   - Provide read-only snapshots of TP/SL state for a UI feed.
- * Debug:
- *   - Look for [U03-TPFEED] logs
  * API:
  *   - GET /api/tp-snapshots (see routes/tpStatusRoute.js)
  */
-
-// 🔵 U03 feed buffer (bounded ring)
 const FEED_MAX = 200;
-const tpFeed = []; // { ts, contract, text, roi, peak, state }
+const tpFeed = [];
 
-/** Internal helper: push one feed line, keep buffer bounded, and emit to UI */
+/** Restore last FEED_MAX feed rows from Mongo into memory (oldest→newest). */
+async function initTpFeed() {
+  try {
+    const rows = await TpFeedModel.find({})
+      .sort({ ts: -1 })
+      .limit(FEED_MAX)
+      .lean()
+      .exec();
+    tpFeed.splice(0, tpFeed.length, ...rows.reverse());
+    console.log(`[U03-TPFEED] restored ${tpFeed.length} lines from DB`);
+  } catch (e) {
+    console.warn('[U03-TPFEED] restore failed:', e.message);
+  }
+}
+
+/* ---------- Pro feed formatting ---------- */
+
+/** Map a state → styled message */
+function renderFeedRow(row) {
+  const c = (row.contract || '').toUpperCase();
+  const S = (v) => (v === undefined || v === null ? '' : String(v));
+  const pct = (v) => (Number.isFinite(v) ? `${v.toFixed(2)}%` : S(v));
+  const px  = (v) => (Number.isFinite(v) ? v.toFixed(4) : S(v));
+  const bk  = (v) => (v ? `\`${v}\`` : '');
+
+  switch (row.state) {
+    case 'OPENED':
+      return `✅ Entry Placed: ${bk(c)} • ${S(row.side)?.toUpperCase() || 'BUY/SELL'} • ${S(row.lev) ? `${row.lev}× Leverage` : ''}`.trim();
+
+    case 'ORDER_ACCEPTED':
+      return `✅ Order accepted for ${bk(c)} (${S(row.side)?.toUpperCase() || 'BUY/SELL'}) • lev ${S(row.lev) || '--'}x`;
+
+    case 'CLOSE_REQ':
+      return `🛑 Close Initiated: ${bk(c)} • Requested ${S(row.reqSide)?.toUpperCase() || 'CLOSE'} • Size: ${S(row.size) || '--'}`;
+
+    case 'CLOSE_OK':
+      return `✅ Position Closed: ${bk(c)} • ${S(row.side)?.toUpperCase() || '--'} • Size: ${S(row.size) || '--'} @ ${px(Number(row.price))}
+  PnL: ${S(row.pnl)} USDT (${pct(Number(row.roi))})`;
+
+    case 'CLOSE_FAIL':
+      return `⚠️ Close Failed: ${bk(c)} — ${S(row.reason) || 'No position / exchange rejected'}`;
+
+    case 'NO_POSITION':
+      return `⚠️ No Position Found: ${bk(c)} — already closed on exchange`;
+
+    case 'SL_HIT':
+      return `🛑 Stop-Loss Hit: ${bk(c)} • ROI ${pct(Number(row.roi))} → Closing all`;
+
+    case 'TP1_TAKEN':
+      return `🎯 TP1 Reached: ${bk(c)} • ROI ${pct(Number(row.roi))} → Taking ${Math.round((row.takeFraction ?? 0.4) * 100)}%`;
+
+    case 'TRAILING':
+      return `🚀 Trailing: ${bk(c)} • ROI ${pct(Number(row.roi))} • Peak ${pct(Number(row.peak))} • Stop ≈ ${pct(Number(row.trailTrigger))}`;
+
+    case 'TRAIL_EXIT':
+      return `✅ Trailing Stop: ${bk(c)} • ROI ${pct(Number(row.roi))} ≤ stop → Closing remainder`;
+
+    case 'PURSUIT':
+      return `🎯 Pursuing TP1 (100%): ${bk(c)} • Progress ${S(row.progress) ?? '--'}% • ROI ${pct(Number(row.roi))}`;
+
+    case 'ROI_WAIT':
+      return `⏳ ROI Not Ready: ${bk(c)} • awaiting first snapshot`;
+
+    case 'NO_SNAPSHOT':
+      return `⏸️ ${bk(c)}: no snapshot yet`;
+
+    case 'ROI_FAIL':
+      return `❌ ROI Calc Error: ${bk(c)} • check pnl/cost fields`;
+
+    default:
+      return row.text || `${bk(c)} • ${S(row.state)}`;
+  }
+}
+
+/** Persist one feed row to DB and hard-cap to FEED_MAX docs. */
+async function persistFeedRow(row) {
+  try {
+    await TpFeedModel.create(row);
+    const extra = await TpFeedModel.find({}, { _id: 1 })
+      .sort({ ts: -1 })
+      .skip(FEED_MAX)
+      .lean()
+      .exec();
+    if (extra.length) {
+      await TpFeedModel.deleteMany({ _id: { $in: extra.map(x => x._id) } });
+    }
+  } catch (e) {
+    console.warn('[U03-TPFEED] persist failed:', e.message);
+  }
+}
+
+/** Push one feed line: format → ring buffer → emit → persist (single source) */
 function pushFeed(entry) {
   const row = { ts: Date.now(), ...entry };
+
+  // compute helpers for nicer messages
+  if (row.state === 'TRAILING' && row.peak != null && row.givebackPct != null) {
+    const gb = Number(row.givebackPct);
+    if (Number.isFinite(gb) && Number.isFinite(row.peak)) {
+      row.trailTrigger = row.peak - (row.peak * gb);
+    }
+  }
+  if (row.state === 'PURSUIT' && row.roi != null) {
+    const tpTarget = 100;
+    const prog = Math.max(0, Math.min(100, (Number(row.roi) / tpTarget) * 100));
+    row.progress = Math.round(prog);
+  }
+
+  // format text if not present
+  row.text = row.text || renderFeedRow(row);
+
+  // in-memory ring
   tpFeed.push(row);
   if (tpFeed.length > FEED_MAX) tpFeed.splice(0, tpFeed.length - FEED_MAX);
 
-  // visible trace for backend logs
-  console.log('[U03-TPFEED]', row.text || JSON.stringify(row));
+  // backend trace
+  console.log('[U03-TPFEED]', row.text);
 
-  // emit to frontend if io was exposed globally by your server
+  // websocket
   try {
     const io = globalThis.__POSEIDON_IO__;
     if (io) io.emit('tp-feed', row);
-  } catch (_) { /* no-op */ }
+  } catch (_) {}
+
+  // async persist
+  persistFeedRow(row);
 }
+
 /* ───────────────────────── §3. Helpers ─────────────────────────────────── */
 
 const num = (v, d = 0) => {
@@ -87,6 +201,7 @@ const pctToNum = (v) => {
   return Number.isFinite(n) ? n : NaN;
 };
 const toKey = (s) => String(s || '').trim().toUpperCase().replace(/[-_]/g, '');
+// retained for clarity; not required elsewhere right now
 const isLongFromSide = (side) => {
   const s = String(side || '').toLowerCase();
   if (s.includes('buy') || s.includes('long')) return true;
@@ -95,21 +210,14 @@ const isLongFromSide = (side) => {
 };
 
 /* ───────────────────────── §4. Snapshot (ROI/price/side/size) ──────────── */
-//* ───────────────────────── §4. Snapshot (ROI/price/side/size) ──────────── */
-/**
- * Pull the latest ROI/price/side/size for a contract from /api/positions.
- * Robust symbol matching: contract | symbol | instId | instrumentId | apiSymbol | symbolCode
- * Normalized to KuCoin contract style and compared hyphen-insensitively.
- */
+
 async function fetchPositionSnapshot(contractOrSymbol) {
-  // normalize our target to no-hyphen uppercase (e.g., ETHUSDTM)
   const want = toKey(parseToKucoinContractSymbol(contractOrSymbol));
 
   try {
     const { data } = await axios.get(`${BASE}/api/positions`, { timeout: 8000 });
     const list = (data && data.positions) || [];
 
-    // try several common id fields
     const p = list.find(row => {
       const candidates = [
         row.contract,
@@ -123,41 +231,39 @@ async function fetchPositionSnapshot(contractOrSymbol) {
     });
 
     if (!p) {
-      // helpful debug once in a while if nothing matches
       console.warn('[TPMON] no match for', contractOrSymbol,
         'first candidates=', list.slice(0, 3).map(r => (r.contract || r.symbol || r.instId || r.instrumentId)));
       return null;
     }
 
-    // ROI direct if provided; else compute from pnl / initial cost
     let roi =
       pctToNum(p.roi) ??
       pctToNum(p.roiPct) ??
       pctToNum(p.pnlPercent);
 
-      if (!Number.isFinite(roi)) {
-        const pnl  = num(p.pnlValue ?? p.pnl, NaN);
-        const cost = num(p.posInit ?? p.initMargin ?? p.margin ?? p.costUsd ?? p.marginUsd, NaN);
-      
-        if (!Number.isFinite(pnl) || !Number.isFinite(cost)) {
-          const contract = p.contract || p.symbol || p.instId || p.instrumentId || 'unknown';
-          pushFeed({
-            contract,
-            state: 'ROI_FAIL',
-            text: `❌ ROI fail on ${contract}: pnl=${pnl}, cost=${cost}`
-          });
-          console.warn('[TPMON][ROI FAIL]', contract, { pnl, cost });
-        }
-      
-        if (Number.isFinite(pnl) && Number.isFinite(cost) && cost > 0) {
-          roi = (pnl / cost) * 100;
-        }
+    if (!Number.isFinite(roi)) {
+      const pnl  = num(p.pnlValue ?? p.pnl, NaN);
+      const cost = num(p.posInit ?? p.initMargin ?? p.margin ?? p.costUsd ?? p.marginUsd, NaN);
+
+      if (!Number.isFinite(pnl) || !Number.isFinite(cost)) {
+        const contract = p.contract || p.symbol || p.instId || p.instrumentId || 'unknown';
+        pushFeed({
+          contract,
+          state: 'ROI_FAIL',
+          text: `❌ ROI fail on ${contract}: pnl=${pnl}, cost=${cost}`
+        });
+        console.warn('[TPMON][ROI FAIL]', contract, { pnl, cost });
       }
+
+      if (Number.isFinite(pnl) && Number.isFinite(cost) && cost > 0) {
+        roi = (pnl / cost) * 100;
+      }
+    }
 
     return {
       roi,
       price: num(p.markPrice ?? p.price ?? p.entryPrice, NaN),
-      side:  (p.side || ''),                           // 'buy' | 'sell'
+      side:  (p.side || ''),
       size:  num(p.size ?? p.currentQty ?? p.quantity, 0),
       contract: p.contract || p.symbol || p.instId || p.instrumentId
     };
@@ -171,10 +277,8 @@ async function fetchPositionSnapshot(contractOrSymbol) {
 
 async function loadState(contract) {
   const key = toKey(contract);
-  // cache hit?
   if (tpState.has(key)) return tpState.get(key);
 
-  // DB fetch
   const row = await TpState.findOne({ key }).lean().exec();
   const st = row
     ? {
@@ -275,45 +379,60 @@ async function maybePartialClose(contract, fraction) {
 if (!globalThis.__POSEIDON_TP_MON_TIMER__) {
   globalThis.__POSEIDON_TP_MON_TIMER__ = setInterval(async () => {
     try {
-      const trades = getOpenTradesWithTPSL();
+      // 0) Pull exchange truth and build a set of open contract keys
+      const posRes  = await axios.get(`${BASE}/api/positions`, { timeout: 8000 }).catch(() => ({ data: {} }));
+      const posList = (posRes?.data?.positions) || [];
+      const openSet = new Set(
+        posList.map(p => toKey(parseToKucoinContractSymbol(
+          p.contract || p.symbol || p.instId || p.instrumentId || p.apiSymbol || p.symbolCode
+        )))
+      );
+
+      // 0.1) Reconcile local OPEN trades with exchange (closes ghosts)
+      try {
+        await reconcileAgainst(openSet); // ✅ pass the live open set
+      } catch (_) {}
+
+      // 1) Iterate locally OPEN trades (after reconciliation)
+      const all = await list(200).catch(() => []); // ✅ guard: never crash loop
+      const trades = all.filter(t =>
+        String(t.status).toUpperCase() === 'OPEN' &&
+        (t.tpPercent !== '' || t.slPercent !== '')
+      );
 
       for (const t of trades) {
         const contract = t.contract || t.symbol;
-        const key = toKey(contract);
+        const key = toKey(parseToKucoinContractSymbol(contract));
+
+        // Skip + clear state if not really open on exchange
+        if (!openSet.has(key)) {
+          await deleteState(contract);
+          continue;
+        }
 
         const slPct     = num(t.slPercent, 0);
         const userTpPct = num(t.tpPercent, 0);
 
         const snap = await fetchPositionSnapshot(contract);
         if (!snap) {
-          throttleLog(key, `⏭️ Skip ${contract}: no snapshot`);
-          pushFeed({ contract, state: 'NO_SNAPSHOT', text: `⏭️ ${contract}: no snapshot yet` });
+          // ensure a single seed line exists; don't spam
+          ensureSnapshot(contract);
           continue;
         }
 
         const { roi, price, side, size } = snap;
         if (!Number.isFinite(roi)) {
           throttleLog(key, `⏭️ Skip ${contract}: ROI not ready (price=${Number.isFinite(price) ? price : '--'})`);
-          pushFeed({
-            contract,
-            state: 'ROI_WAIT',
-            text: `⏳ ${contract}: ROI not ready (price=${Number.isFinite(price) ? price : '--'})`,
-          });
+          pushFeed({ contract, state: 'ROI_WAIT' });
           continue;
         }
 
-        const isLong = isLongFromSide(side);
         const st = await loadState(contract);
 
         // SL: close all if ROI <= -SL%
         const slHit = slPct > 0 && roi <= -slPct;
         if (slHit) {
-          pushFeed({
-            contract,
-            roi,
-            state: 'SL_HIT',
-            text: `🛑 SL hit on ${contract}: ROI ${roi.toFixed(2)}% ≤ -${slPct}% → closing all`,
-          });
+          pushFeed({ contract, roi, state: 'SL_HIT' });
           LOG(`🛑 SL hit ${contract} | ROI=${roi.toFixed(2)}% ≤ -${slPct}% → close all`);
           await maybeCloseTrade(contract);
           await deleteState(contract);
@@ -322,12 +441,7 @@ if (!globalThis.__POSEIDON_TP_MON_TIMER__) {
 
         // TP1: once at 100% ROI → take 40% partial
         if (!st.tp1Done && roi >= CFG.tp1RoiPct) {
-          pushFeed({
-            contract,
-            roi,
-            state: 'TP1_TAKEN',
-            text: `🎯 TP1 reached ${contract}: ROI ${roi.toFixed(2)}% ≥ ${CFG.tp1RoiPct}% → taking ${Math.round(CFG.tp1TakeFraction * 100)}%`,
-          });
+          pushFeed({ contract, roi, state: 'TP1_TAKEN', takeFraction: CFG.tp1TakeFraction });
           LOG(`🎯 TP1 ${contract} | ROI=${roi.toFixed(2)}% ≥ ${CFG.tp1RoiPct}% → take ${Math.round(CFG.tp1TakeFraction*100)}%`);
           await maybePartialClose(contract, CFG.tp1TakeFraction);
           st.tp1Done = true;
@@ -349,7 +463,8 @@ if (!globalThis.__POSEIDON_TP_MON_TIMER__) {
             roi,
             peak: st.peakRoi,
             state: 'TRAILING',
-            text: `🚀 Trailing ${contract}: ROI ${roi.toFixed(2)}% • peak ${st.peakRoi.toFixed(2)}% • stop ≈ ${trailTrigger.toFixed(2)}%`,
+            givebackPct: CFG.trailGivebackPct,
+            trailTrigger
           });
 
           throttleLog(
@@ -358,13 +473,7 @@ if (!globalThis.__POSEIDON_TP_MON_TIMER__) {
           );
 
           if (roi <= trailTrigger) {
-            pushFeed({
-              contract,
-              roi,
-              peak: st.peakRoi,
-              state: 'TRAIL_EXIT',
-              text: `✅ Trailing stop: ROI ${roi.toFixed(2)}% ≤ ${trailTrigger.toFixed(2)}% → closing remainder`,
-            });
+            pushFeed({ contract, roi, peak: st.peakRoi, state: 'TRAIL_EXIT' });
             LOG(`✅ Trailing stop ${contract}: ROI ${roi.toFixed(2)}% ≤ ${trailTrigger.toFixed(2)}% → close remainder`);
             await maybeCloseTrade(contract);
             await deleteState(contract);
@@ -373,13 +482,7 @@ if (!globalThis.__POSEIDON_TP_MON_TIMER__) {
         } else {
           // Pre-TP1 monitoring
           const progress = Math.max(0, Math.min(100, (roi / CFG.tp1RoiPct) * 100));
-          pushFeed({
-            contract,
-            roi,
-            state: 'PURSUIT',
-            text: `🎯 Pursuing TP1 (100%) on ${contract}: progress ${progress.toFixed(0)}% (ROI ${roi.toFixed(2)}%)`,
-          });
-
+          pushFeed({ contract, roi, state: 'PURSUIT', progress });
           throttleLog(
             key,
             `🟡 Hold ${contract} | ROI=${roi.toFixed(2)}%` + (userTpPct > 0 ? ` • userTP=${userTpPct}%` : '')
@@ -396,6 +499,7 @@ if (!globalThis.__POSEIDON_TP_MON_TIMER__) {
 } else {
   LOG('⏭️ already running, skip starting a second timer');
 }
+
 /* ───────────────────────── §8. Log throttle ────────────────────────────── */
 
 function throttleLog(key, msg, ms = 3000) {
@@ -409,12 +513,10 @@ function throttleLog(key, msg, ms = 3000) {
 
 /* ───────────────────────── §9. Public API (exports) ────────────────────── */
 
-/** Return last 100 feed lines for the UI. */
 function getTpSnapshots() {
   return { feed: tpFeed.slice(-100) };
 }
 
-/** Ensure a seed line exists when a trade opens (so UI doesn't show "no snapshot yet"). */
 function ensureSnapshot(contract) {
   if (!contract) return;
   const exists = tpFeed.some(
@@ -430,13 +532,11 @@ function ensureSnapshot(contract) {
   }
 }
 
-/** Allow other modules to push arbitrary TP feed entries. */
-function pushTpFeed(entry) {
-  pushFeed(entry);
-}
+function pushTpFeed(entry) { pushFeed(entry); }
 
 module.exports = {
   ensureSnapshot,
   pushTpFeed,
   getTpSnapshots,
+  initTpFeed,   // exported so you can hydrate explicitly on server start
 };

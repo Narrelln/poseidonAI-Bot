@@ -1,9 +1,47 @@
-// handlers/updateMemoryFromResult.js
+// handlers/data/updateMemoryFromResult.js
+// Local, atomic, disk-backed trade outcome memory (per symbol & side).
+// API: getMemory(symbol), updateMemoryFromResult(symbol, side, result, percent, confidence, meta)
 
-const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
 
-let memory = {};
+const MEMORY_PATH = path.join(process.cwd(), 'data', 'poseidonMemory.json');
 
+// ---------- utils ----------
+function ensureFile() {
+  const dir = path.dirname(MEMORY_PATH);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  if (!fs.existsSync(MEMORY_PATH)) fs.writeFileSync(MEMORY_PATH, '{}');
+}
+function atomicWrite(obj) {
+  try {
+    ensureFile();
+    const tmp = MEMORY_PATH + '.tmp';
+    fs.writeFileSync(tmp, JSON.stringify(obj, null, 2));
+    fs.renameSync(tmp, MEMORY_PATH);
+  } catch (e) {
+    console.warn('⚠️ poseidonMemory save failed:', e.message);
+  }
+}
+function loadDisk() {
+  try {
+    ensureFile();
+    const raw = fs.readFileSync(MEMORY_PATH, 'utf8') || '{}';
+    return JSON.parse(raw);
+  } catch (e) {
+    console.warn('⚠️ poseidonMemory load failed:', e.message);
+    return {};
+  }
+}
+function normalizeKey(sym) {
+  return String(sym || '').trim().toUpperCase().replace(/-/g, '');
+}
+function normSide(side) {
+  const s = String(side || '').toUpperCase();
+  if (s === 'BUY' || s === 'LONG') return 'LONG';
+  if (s === 'SELL' || s === 'SHORT') return 'SHORT';
+  return 'LONG';
+}
 function initStats() {
   return {
     trades: 0,
@@ -17,63 +55,40 @@ function initStats() {
   };
 }
 
-const fs = require('fs');
-const path = require('path');
-const MEMORY_PATH = path.join(__dirname, '..', 'utils', 'data', 'poseidonMemory.json');
+// ---------- state ----------
+let memory = loadDisk();
 
+// ---------- API ----------
 function getMemory(symbol) {
-  if (!memory[symbol]) {
-    // Attempt to load from disk
-    try {
-      const fileData = fs.readFileSync(MEMORY_PATH, 'utf8');
-      const diskMemory = JSON.parse(fileData);
-      if (diskMemory[symbol]) {
-        memory[symbol] = diskMemory[symbol];
-        console.log(`📥 Loaded ${symbol} from disk memory`);
-      }
-    } catch (e) {
-      console.warn(`⚠️ Could not load ${symbol} from disk:`, e.message);
-    }
+  const key = normalizeKey(symbol);
+  if (!memory[key]) {
+    memory[key] = { LONG: initStats(), SHORT: initStats() };
+    atomicWrite(memory);
   }
-
-  if (!memory[symbol]) {
-    memory[symbol] = { LONG: initStats(), SHORT: initStats() };
-  }
-
-  return memory[symbol];
+  return memory[key];
 }
 
 async function updateMemoryFromResult(symbol, side, result, percent, confidence, meta = {}) {
-  if (!memory[symbol]) memory[symbol] = { LONG: initStats(), SHORT: initStats() };
+  const key = normalizeKey(symbol);
+  const s = normSide(side);
+  if (!memory[key]) memory[key] = { LONG: initStats(), SHORT: initStats() };
 
-  const m = memory[symbol][side];
-  m.trades++;
-  if (result === 'win') m.wins++;
-  if (result === 'loss') m.losses++;
+  const m = memory[key][s];
+
+  m.trades += 1;
+  if (result === 'win') m.wins += 1;
+  if (result === 'loss') m.losses += 1;
   m.lastResult = result;
-  m.lastDelta = percent;
-  m.lastConfidence = confidence;
+  m.lastDelta = Number(percent) || 0;
+  m.lastConfidence = Number(confidence) || 0;
   m.currentStreak += result === 'win' ? 1 : -1;
-  m.meta = meta;
+  m.meta = meta || {};
 
-  console.log(`💾 Syncing memory for ${symbol} (${side}) → ${result} @ ${percent.toFixed(2)}%`);
-
-  try {
-    const res = await axios.post('http://localhost:3000/api/memory', {
-      [symbol]: { [side]: m }
-    });
-
-    if (res?.data?.success) {
-      console.log(`✅ Memory synced for ${symbol}`);
-    } else {
-      console.warn(`⚠️ Memory sync response invalid:`, res.data);
-    }
-  } catch (err) {
-    console.warn(`❌ Memory sync failed for ${symbol}:`, err.message);
-  }
+  console.log(`💾 Memory: ${key} [${s}] → ${result} @ ${(Number(percent) || 0).toFixed(2)}% (C:${m.lastConfidence})`);
+  atomicWrite(memory);
 }
 
 module.exports = {
+  getMemory,
   updateMemoryFromResult,
-  getMemory
 };

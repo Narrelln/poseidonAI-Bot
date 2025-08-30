@@ -1,0 +1,218 @@
+/* ===== Modal base (safe overlay above everything) ===== */
+#modal-root {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none; /* host only; children re-enable */
+  }
+  .pm-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.55);
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: auto;
+  }
+  .pm-card {
+    background: #0c0f17;
+    border: 1px solid #2b3a4a;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.6);
+    max-width: 760px;
+    width: min(96vw, 760px);
+    max-height: 88vh;
+    overflow: auto;
+  }
+  
+  /* (Optional) Fullscreen toggle used by the modal tool button */
+  .pm-card.fullscreen {
+    width: 100vw; height: 100vh; max-width: none; max-height: none; border-radius: 0;
+  }
+  
+  /* ===== Signal QA panel ===== */
+  #signal-qa-panel .compact-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+  }
+  #signal-qa-stats .mini-block {
+    background: #0b1220;
+    border: 1px solid #1d2a38;
+    padding: 10px 12px;
+    border-radius: 8px;
+  }
+  #signal-qa-stats .mini-block h4 {
+    margin: 0 0 6px; font-size: 12px; color: #7aa4c2; letter-spacing: .02em;
+  }
+  #signal-qa-stats .mini-block p {
+    margin: 0; font-family: "Share Tech Mono", monospace; font-size: 14px;
+  }
+  #signal-qa-feed.log-feed {
+    max-height: 320px; overflow: auto; border: 1px solid #172334; border-radius: 8px;
+    background: #0b1020; padding: 8px;
+  }
+  #signal-qa-feed .log-entry {
+    border-bottom: 1px dashed #1b2a44; padding: 6px 2px; font-family: "Share Tech Mono", monospace;
+  }
+  #signal-qa-feed .log-entry:last-child { border-bottom: none; }
+  #signal-qa-feed .text-green { color: #22c55e; }
+  #signal-qa-feed .text-red   { color: #ef4444; }
+  
+  /* Optional: Tiny badge helpers you already use elsewhere */
+  .badge.pos { color:#27e8a7; background:#0e2a22; border:1px solid #134a3e; padding:2px 6px; border-radius:6px; }
+  .badge.neg { color:#ff7b7b; background:#2a1212; border:1px solid #5b2a2a; padding:2px 6px; border-radius:6px; }
+  .badge.neu { color:#b3c1d1; background:#161a23; border:1px solid #2a3340; padding:2px 6px; border-radius:6px; }
+
+
+  .qa-toggle {
+    background:#0b6; border:1px solid #0a5; color:#fff;
+    padding:6px 10px; border-radius:6px; font-weight:600; cursor:pointer;
+  }
+  .qa-toggle:hover { filter:brightness(1.1); }
+  .qa-badge {
+    display:inline-block; margin-left:8px; font-size:12px;
+    padding:2px 6px; border-radius:4px; background:#334155; color:#a7f3d0;
+  }
+  .qa-badge.real { background:#1e293b; color:#93c5fd; }
+
+
+  /* --- Audit Dashboard --- */
+.audit-btn { padding: 8px 12px; border: 1px solid #3a83f6; border-radius: 6px; background:#1b2a4a; color:#cfe1ff; cursor:pointer; }
+.audit-btn:hover { filter: brightness(1.1); }
+
+.audit-modal {
+  position: fixed; inset: 0; display: none; background: rgba(0,0,0,0.55);
+  z-index: 9999; align-items: center; justify-content: center;
+}
+.audit-card {
+  width: min(1100px, 95vw); max-height: 90vh; overflow: auto;
+  background: #0e1424; color: #e8eefc; border: 1px solid #263353; border-radius: 10px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.45);
+}
+.audit-card header {
+  display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid #223055;
+}
+.audit-card h3 { margin:0; font-weight:600; letter-spacing:.3px; }
+.audit-close { background:none; border:0; color:#9fb7ff; font-size:20px; cursor:pointer; }
+
+.audit-body { padding: 14px 16px; display:grid; gap:14px; }
+.audit-filters { display:flex; flex-wrap:wrap; gap:10px; align-items:end; }
+.audit-filters label { font-size:12px; color:#a7b5d8; display:block; margin-bottom:4px; }
+.audit-filters input, .audit-filters select {
+  background:#0a1120; color:#e8eefc; border:1px solid #2b3b63; border-radius:6px; padding:6px 8px;
+}
+.audit-apply { padding: 8px 12px; background:#2248ff; border:0; border-radius:6px; color:#fff; cursor:pointer; }
+.audit-apply:hover { filter:brightness(1.1); }
+.audit-export { padding: 8px 12px; background:#1a874a; border:0; border-radius:6px; color:#fff; cursor:pointer; }
+
+.audit-grid {
+  display:grid; grid-template-columns: repeat(12, 1fr); gap:12px;
+}
+.audit-block {
+  grid-column: span 4;
+  background:#0a1020; border:1px solid #243256; border-radius:8px; padding:12px;
+}
+.audit-block h4 { margin:0 0 8px 0; font-weight:600; font-size:14px; color:#bcd2ff; }
+
+.audit-kpi { display:flex; gap:20px; flex-wrap:wrap; }
+.audit-kpi .k { min-width:110px; }
+.audit-kpi .k .v { font-size:22px; font-weight:700; }
+.audit-kpi .k .l { font-size:11px; color:#9fb0d9; margin-top:2px; }
+
+.audit-table { width:100%; border-collapse: collapse; font-size:13px; }
+.audit-table th, .audit-table td { padding:6px 8px; border-bottom:1px solid #1c2746; }
+.audit-table th { text-align:left; color:#9fb7ff; font-weight:600; }
+.audit-chip { display:inline-block; padding:2px 6px; border-radius:999px; background:#19264a; color:#cfe1ff; font-size:11px; }
+.text-green { color:#46d18f; } .text-red { color:#ff6b6b; } .text-faint { color:#9aa6c4; }
+
+/* --- Floating Audit Badge (FAB) --- */
+#audit-fab {
+    position: fixed;
+    bottom: 18px;
+    right: 18px;
+    z-index: 9998;
+    cursor: pointer;
+    user-select: none;
+  }
+  #audit-fab .fab-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 999px;
+    background: rgba(12,18,36,0.9);
+    border: 1px solid #263353;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+    color: #dfe9ff;
+    backdrop-filter: blur(4px);
+  }
+  #audit-fab .fab-title {
+    font-size: 12px;
+    letter-spacing: .3px;
+    color: #9fb0d9;
+  }
+  #audit-fab .fab-value {
+    font-size: 16px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #172545;
+    border: 1px solid #2a3a64;
+  }
+  #audit-fab .fab-value.ok  { color: #46d18f; border-color:#2e7b59; background:#0f2b22; }
+  #audit-fab .fab-value.mid { color: #ffcf5a; border-color:#7f6a2a; background:#2a240f; }
+  #audit-fab .fab-value.bad { color: #ff6b6b; border-color:#7b2e2e; background:#2b0f0f; }
+
+  /* Audit */
+  /* .dock.collapsed .dock-stack { display: none } */
+/* Corner Dock */
+.dock {
+    position: fixed;
+    left: 12px;
+    bottom: 12px;
+    z-index: 2000;
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+  }
+  .dock-toggle {
+    all: unset;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    padding: 4px 8px;
+    cursor: pointer;
+    color: #cbd5e1;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .dock-stack {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(9, 12, 20, 0.9);
+    border: 1px solid #1f2a37;
+    padding: 8px 10px;
+    border-radius: 10px;
+    backdrop-filter: blur(3px);
+  }
+  .dock.collapsed .dock-stack { display: none; }
+  
+  /* Voice pill */
+  .voice-pill {
+    background: #0b1220;
+    border: 1px solid #2a3b52;
+    color: #a7c7ff;
+    padding: 6px 10px;
+    border-radius: 999px;
+    user-select: none;
+  }
+  .voice-pill:hover { filter: brightness(1.1); cursor: pointer; }
+  
+  /* Audit button quick style (if not already styled) */
+  .audit-btn {
+    background: #0c2c17;
+    color: #bdfcc9;
+    border: 1px solid #155e2b;
+    padding: 6px 10px;
+    border-radius: 6px;
+  }
+  .audit-btn:hover { filter: brightness(1.08); }

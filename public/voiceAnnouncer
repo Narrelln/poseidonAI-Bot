@@ -1,0 +1,137 @@
+Announcer.speak('BNB breakout detected at 851.3, confidence 82%');
+
+Announcer.setVoiceByName('Microsoft Jenny Online (Natural)');
+Announcer.setRate(1.05);
+Announcer.setPitch(1.0);
+Announcer.setVolume(0.9);
+Announcer.setEnabled(true); // or false to mute
+Announcer.listVoices(); // see available voices
+
+// Robust voice announcer (TTS only; no mic). Idempotent and UI-wired.
+// Usage:
+//   window.dispatchEvent(new CustomEvent('poseidon:voice:say', { detail: "Hello" }));
+//   window.dispatchEvent(new CustomEvent('poseidon:voice:init'));
+//   window.dispatchEvent(new CustomEvent('poseidon:voice:enable'));  // optional auto-on
+
+let VOICE_ON = false;
+let READY = false;
+let preferredName = localStorage.getItem('poseidon.voice.name') || ''; // your choice stored here
+let selectedVoice = null;
+
+const btn = document.getElementById('voice-toggle');
+
+function listVoices() {
+  try { return window.speechSynthesis.getVoices() || []; } catch { return []; }
+}
+
+function pickVoice() {
+  const voices = listVoices();
+  if (!voices.length) return null;
+
+  // 1) exact preferredName (if user changed it previously)
+  if (preferredName) {
+    const v = voices.find(v => v.name === preferredName);
+    if (v) return v;
+  }
+
+  // 2) reasonable defaults: look for an “en” high‑quality voice
+  const pri = voices.find(v => /en/i.test(v.lang) && /Google|Premium|Natural/i.test(v.name));
+  if (pri) return pri;
+
+  // 3) any English voice
+  const eng = voices.find(v => /en/i.test(v.lang));
+  if (eng) return eng;
+
+  // 4) first voice
+  return voices[0];
+}
+
+function syncButton() {
+  if (!btn) return;
+  btn.classList.toggle('on', VOICE_ON);
+  btn.textContent = `Voice: ${VOICE_ON ? 'ON' : 'OFF'}`;
+}
+
+function speak(text) {
+  if (!VOICE_ON || !READY || !text) return;
+  try {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(String(text));
+    u.voice = selectedVoice || pickVoice();
+    if (u.voice) selectedVoice = u.voice;
+    u.rate = 1.03;  // subtle pacing
+    u.pitch = 1.0;
+    u.volume = 1.0;
+    window.speechSynthesis.speak(u);
+  } catch (e) { /* ignore */ }
+}
+
+function enableVoice(on) {
+  VOICE_ON = !!on;
+  localStorage.setItem('poseidon.voice.enabled', String(VOICE_ON));
+  syncButton();
+  if (VOICE_ON && !READY) bootVoices(); // ensure voices are loaded
+}
+
+async function bootVoices() {
+  // voices ship in late; wait once
+  if (READY && selectedVoice) return;
+  const tryLoad = () => new Promise(res => {
+    let t = 0;
+    const tick = () => {
+      t += 1;
+      const voices = listVoices();
+      if (voices.length || t >= 20) return res(voices);
+      setTimeout(tick, 100);
+    };
+    tick();
+  });
+  const voices = await tryLoad();
+  selectedVoice = pickVoice();
+  READY = true;
+  // speak small “ready” if already enabled
+  if (VOICE_ON) speak('Voice online');
+}
+
+// Wire the UI toggle (user gesture grants TTS)
+if (btn) {
+  btn.addEventListener('click', async () => {
+    const next = !VOICE_ON;
+    // first click: warm voices to satisfy permission paths on some browsers
+    if (!READY) await bootVoices();
+    enableVoice(next);
+    if (VOICE_ON) speak('Poseidon voice enabled');
+  });
+}
+
+// Bus hooks
+window.addEventListener('poseidon:voice:init', () => { bootVoices(); });
+window.addEventListener('poseidon:voice:enable', () => { enableVoice(true); });
+window.addEventListener('poseidon:voice:disable', () => { enableVoice(false); });
+window.addEventListener('poseidon:voice:say', e => speak(e.detail));
+
+// Expose small API
+window.poseidonVoice = {
+  say: speak,
+  enable: enableVoice,
+  setVoice(name) {
+    preferredName = String(name || '');
+    localStorage.setItem('poseidon.voice.name', preferredName);
+    selectedVoice = pickVoice();
+    if (VOICE_ON && READY) speak(`Voice set to ${selectedVoice?.name || 'default'}`);
+  }
+};
+
+// Restore last on/off
+if (localStorage.getItem('poseidon.voice.enabled') === 'true') {
+  // don’t auto-speak until user clicks the page at least once
+  document.addEventListener('pointerdown', function once() {
+    document.removeEventListener('pointerdown', once);
+    enableVoice(true);
+    bootVoices().then(()=> speak('Voice restored'));
+  });
+}
+
+// Safari & some Chromium variants need this:
+try { window.speechSynthesis.onvoiceschanged = () => { if (!READY) bootVoices(); }; } catch {}
+syncButton();
